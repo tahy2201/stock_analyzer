@@ -91,15 +91,25 @@ class DatabaseManager:
             logger.error(f"Error inserting technical indicators for {symbol}: {e}")
             return False
     
-    def get_companies(self, is_enterprise_only: bool = False) -> List[Dict]:
+    def get_companies(self, is_enterprise_only: bool = False, markets: List[str] | None = None) -> List[Dict]:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM companies"
+                conditions = []
+                
                 if is_enterprise_only:
-                    query += " WHERE is_enterprise = 1"
+                    conditions.append("is_enterprise = 1")
+                
+                if markets:
+                    market_placeholders = ','.join(['?' for _ in markets])
+                    conditions.append(f"market IN ({market_placeholders})")
+                
+                if conditions:
+                    query += " WHERE " + " AND ".join(conditions)
                 
                 cursor = conn.cursor()
-                cursor.execute(query)
+                params = markets if markets else []
+                cursor.execute(query, params)
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
             logger.error(f"Error getting companies: {e}")

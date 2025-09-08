@@ -439,14 +439,14 @@ class StockDataCollector:
         
         return results
     
-    def update_all_stocks(self, enterprise_only: bool = True, force_update: bool = False) -> Dict[str, int]:
+    def update_all_stocks(self, enterprise_only: bool = True, force_update: bool = False, markets: List[str] = []) -> Dict[str, int]:
         """
         全銘柄のデータ更新
         """
         logger.info("全銘柄データ更新を開始します")
         
         # 銘柄リストの取得
-        companies = self.db_manager.get_companies(is_enterprise_only=enterprise_only)
+        companies = self.db_manager.get_companies(is_enterprise_only=enterprise_only, markets=markets if markets else None)
         if not companies:
             logger.warning("銘柄データが見つかりません。先にJPXデータを更新してください。")
             return {'success': 0, 'failed': 0, 'total': 0}
@@ -501,10 +501,17 @@ class StockDataCollector:
             'market_indices_total': len(MARKET_INDICES)
         }
     
-    def update_specific_stocks(self, symbols: List[str]) -> Dict[str, bool]:
+    def update_specific_stocks(self, symbols: List[str], markets: List[str] = []) -> Dict[str, bool]:
         """
         指定銘柄のみデータ更新
         """
+        # 市場フィルターが指定されている場合、シンボルを絞り込み
+        if markets:
+            companies = self.db_manager.get_companies(markets=markets)
+            market_symbols = {company['symbol'] for company in companies}
+            symbols = [s for s in symbols if s in market_symbols]
+            logger.info(f"市場フィルター適用後: {len(symbols)} 銘柄")
+        
         logger.info(f"指定銘柄データ更新: {len(symbols)} 銘柄")
         return self.collect_batch_stocks(symbols)
 

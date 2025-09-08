@@ -21,7 +21,7 @@
 
 ### 1. リポジトリのクローン
 ```bash
-git clone <repository-url>
+git clone https://github.com/tahy2201/stock_analyzer.git
 cd stock_analyzer
 ```
 
@@ -61,19 +61,19 @@ for company in test_data:
 #### 2. 株価データ収集
 ```bash
 # 特定銘柄のデータ収集
-uv run python batch/run_batch.py --mode data-only --symbols 7203,6758
+uv run stock-analyzer --mode data-only --symbols 7203,6758
 
 # 全エンタープライズ企業のデータ収集
-uv run python batch/run_batch.py --mode data-only
+uv run stock-analyzer --mode data-only
 ```
 
 #### 3. 技術分析実行
 ```bash
 # 特定銘柄の技術分析
-uv run python batch/run_batch.py --mode analysis-only --symbols 7203,6758
+uv run stock-analyzer --mode analysis-only --symbols 7203,6758
 
 # 全企業の技術分析
-uv run python batch/run_batch.py --mode analysis-only
+uv run stock-analyzer --mode analysis-only
 ```
 
 #### 4. 投資候補の抽出
@@ -92,19 +92,16 @@ for i, candidate in enumerate(candidates[:5]):
 #### 基本コマンド
 ```bash
 # 日次更新（推奨）
-uv run python batch/run_batch.py --mode daily
+uv run stock-analyzer --mode daily
 
 # 完全更新（初回またはデータリセット時）
-uv run python batch/run_batch.py --mode full
+uv run stock-analyzer --mode full
 
 # JPXデータ更新のみ
-uv run python batch/run_batch.py --mode jpx-only
+uv run stock-analyzer --mode jpx-only
 
 # 企業フィルタリングのみ
-uv run python batch/run_batch.py --mode filter-only
-
-# uvのscriptコマンドを使用（推奨）
-uv run stock-analyzer --mode daily
+uv run stock-analyzer --mode filter-only
 ```
 
 #### オプション
@@ -301,8 +298,10 @@ MIT License - 詳細は LICENSE ファイルを参照してください。
 
 ## 🔄 更新履歴
 
-### v1.0.0 (2025-08-21)
+### v1.0.0 (2025-09-01)
 - 初回リリース
 - 基本的なデータ収集・技術分析・投資候補抽出機能
 - バッチ処理システム
 - SQLiteデータベース対応
+- GitHub CLI統合
+- 型安全性の改善（List[str] = None → List[str] = []）

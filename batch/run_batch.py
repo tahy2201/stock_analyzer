@@ -16,6 +16,13 @@ from utils.market_analyzer import MarketAnalyzer
 from database.database_manager import DatabaseManager
 from config.settings import LOG_LEVEL, LOG_FORMAT
 
+# 市場コードマッピング
+MARKET_CODE_MAPPING = {
+    'prime': 'プライム（内国株式）',
+    'standard': 'スタンダード（内国株式）',
+    'growth': 'グロース（内国株式）'
+}
+
 # ログ設定
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
@@ -52,13 +59,13 @@ class BatchRunner:
             logger.error(f"JPXデータ更新エラー: {e}")
             return False
 
-    def run_company_filtering(self, stock_codes: List[str] = []) -> bool:
+    def run_company_filtering(self, stock_codes: List[str] = [], markets: List[str] = []) -> bool:
         """
         企業フィルタリング実行
         """
         logger.info("=== 企業フィルタリング開始 ===")
         try:
-            results = self.company_filter.update_company_enterprise_status(stock_codes)
+            results = self.company_filter.update_company_enterprise_status(stock_codes, markets)
             success_count = sum(1 for r in results.values() if r['success'])
             logger.info(f"企業フィルタリング完了: 成功 {success_count}/{len(results)}")
             return success_count > 0
@@ -66,19 +73,19 @@ class BatchRunner:
             logger.error(f"企業フィルタリングエラー: {e}")
             return False
     
-    def run_stock_data_collection(self, stock_codes: List[str] = [], enterprise_only: bool = True) -> bool:
+    def run_stock_data_collection(self, stock_codes: List[str] = [], enterprise_only: bool = True, markets: List[str] = []) -> bool:
         """
         株価データ収集
         """
         logger.info("=== 株価データ収集開始 ===")
         try:
             if stock_codes:
-                results = self.data_collector.update_specific_stocks(stock_codes)
+                results = self.data_collector.update_specific_stocks(stock_codes, markets)
                 success_count = sum(1 for success in results.values() if success)
                 logger.info(f"指定銘柄データ収集完了: 成功 {success_count}/{len(stock_codes)}")
                 return success_count > 0
             else:
-                results = self.data_collector.update_all_stocks(enterprise_only=enterprise_only)
+                results = self.data_collector.update_all_stocks(enterprise_only=enterprise_only, markets=markets)
                 success = results['success'] > 0
                 logger.info(f"全銘柄データ収集完了: 成功 {results['success']}/{results['total']}")
                 return success
@@ -86,20 +93,20 @@ class BatchRunner:
             logger.error(f"株価データ収集エラー: {e}")
             return False
     
-    def run_technical_analysis(self, symbols: List[str] = []) -> bool:
+    def run_technical_analysis(self, symbols: List[str] = [], markets: List[str] = []) -> bool:
         """
         技術分析実行
         """
         logger.info("=== 技術分析開始 ===")
         try:
             if symbols:
-                results = self.technical_analyzer.analyze_batch_stocks(symbols)
+                results = self.technical_analyzer.analyze_batch_stocks(symbols, markets)
                 success_count = sum(1 for r in results.values() if r is not None)
             else:
                 # 全企業の技術分析
-                companies = self.db_manager.get_companies(is_enterprise_only=True)
+                companies = self.db_manager.get_companies(is_enterprise_only=True, markets=markets if markets else None)
                 symbols_list = [company['symbol'] for company in companies]
-                results = self.technical_analyzer.analyze_batch_stocks(symbols_list)
+                results = self.technical_analyzer.analyze_batch_stocks(symbols_list, markets)
                 success_count = sum(1 for r in results.values() if r is not None)
             
             logger.info(f"技術分析完了: 成功 {success_count}")
@@ -263,6 +270,9 @@ def main():
                        action='store_true',
                        default=True,
                        help='エンタープライズ企業のみ処理')
+    parser.add_argument('--markets',
+                       type=str,
+                       help='処理対象市場（カンマ区切り）例: prime,standard,growth')
     
     args = parser.parse_args()
     
@@ -273,6 +283,13 @@ def main():
     stock_codes = []
     if args.symbols:
         stock_codes = [s.strip() for s in args.symbols.split(',')]
+    
+    # 市場リストの処理（英語コードを日本語名に変換）
+    markets = []
+    if args.markets:
+        market_codes = [m.strip() for m in args.markets.split(',')]
+        markets = [MARKET_CODE_MAPPING.get(code, code) for code in market_codes if code]
+        logger.info(f"指定市場: {markets}")
 
     results = {}
     try:
@@ -283,11 +300,11 @@ def main():
         elif args.mode == 'jpx-only':
             results = {'jpx_update': batch_runner.run_jpx_update()}
         elif args.mode == 'data-only':
-            results = {'stock_data_collection': batch_runner.run_stock_data_collection(stock_codes, args.enterprise_only)}
+            results = {'stock_data_collection': batch_runner.run_stock_data_collection(stock_codes, args.enterprise_only, markets)}
         elif args.mode == 'analysis-only':
-            results = {'technical_analysis': batch_runner.run_technical_analysis(stock_codes)}
+            results = {'technical_analysis': batch_runner.run_technical_analysis(stock_codes, markets)}
         elif args.mode == 'filter-only':
-            results = {'company_filtering': batch_runner.run_company_filtering(stock_codes)}
+            results = {'company_filtering': batch_runner.run_company_filtering(stock_codes, markets)}
 
         # 終了コード
         success_count = sum(1 for success in results.values() if success)

@@ -144,15 +144,15 @@ class CompanyFilter:
         
         return is_enterprise, "; ".join(reasons)
     
-    def update_company_enterprise_status(self, symbols: List[str] = None) -> Dict[str, Dict]:
+    def update_company_enterprise_status(self, symbols: List[str] = [], markets: List[str] = []) -> Dict[str, Dict]:
         """
         企業のエンタープライズステータスを更新
         """
         results = {}
         
-        if symbols is None:
-            # データベースから全企業を取得
-            companies = self.db_manager.get_companies()
+        if not symbols:
+            # データベースから全企業を取得（市場フィルタ適用）
+            companies = self.db_manager.get_companies(markets=markets if markets else None)
             symbols = [company['symbol'] for company in companies]
         
         logger.info(f"企業情報更新開始: {len(symbols)} 銘柄")
