@@ -171,12 +171,15 @@ class CompanyFilter:
                 # エンタープライズ判定
                 is_enterprise, reason = self.is_enterprise_company(company_info)
                 
+                # 既存の企業情報を取得して日本語名を保持
+                existing_company = self.db_manager.get_company_by_symbol(symbol)
+                
                 # データベースの企業情報を更新
                 update_data = {
                     'symbol': symbol,
-                    'name': company_info['name'],
+                    'name': existing_company.get('name') if existing_company else company_info['name'],  # 既存の日本語名を保持
                     'sector': company_info.get('sector'),
-                    'market': None,  # 市場区分は既存データを保持
+                    'market': existing_company.get('market') if existing_company else None,  # 市場区分は既存データを保持
                     'employees': company_info.get('employees'),
                     'revenue': company_info.get('revenue'),
                     'is_enterprise': is_enterprise

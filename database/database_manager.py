@@ -1,7 +1,7 @@
 import sqlite3
 import pandas as pd
 from datetime import datetime
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 from config.settings import DATABASE_PATH
 import logging
 
@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
-    def __init__(self, db_path: str = None):
+    def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or DATABASE_PATH
         self.ensure_database_exists()
     
@@ -91,7 +91,7 @@ class DatabaseManager:
             logger.error(f"Error inserting technical indicators for {symbol}: {e}")
             return False
     
-    def get_companies(self, is_enterprise_only: bool = False, markets: List[str] | None = None) -> List[Dict]:
+    def get_companies(self, is_enterprise_only: bool = False, markets: Optional[List[str]] = None) -> List[Dict]:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM companies"
@@ -115,7 +115,18 @@ class DatabaseManager:
             logger.error(f"Error getting companies: {e}")
             return []
     
-    def get_stock_prices(self, symbol: str, start_date: str = None, end_date: str = None) -> pd.DataFrame:
+    def get_company_by_symbol(self, symbol: str) -> Optional[Dict]:
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM companies WHERE symbol = ?", (symbol,))
+                row = cursor.fetchone()
+                return dict(row) if row else None
+        except Exception as e:
+            logger.error(f"Error getting company {symbol}: {e}")
+            return None
+    
+    def get_stock_prices(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> pd.DataFrame:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM stock_prices WHERE symbol = ?"
@@ -140,7 +151,7 @@ class DatabaseManager:
             logger.error(f"Error getting stock prices for {symbol}: {e}")
             return pd.DataFrame()
     
-    def get_technical_indicators(self, symbol: str, start_date: str = None, end_date: str = None) -> pd.DataFrame:
+    def get_technical_indicators(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> pd.DataFrame:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM technical_indicators WHERE symbol = ?"
@@ -166,10 +177,10 @@ class DatabaseManager:
             return pd.DataFrame()
     
     def get_filtered_companies(self, 
-                             divergence_min: float = None,
-                             divergence_max: float = None,
-                             dividend_yield_min: float = None,
-                             dividend_yield_max: float = None,
+                             divergence_min: Optional[float] = None,
+                             divergence_max: Optional[float] = None,
+                             dividend_yield_min: Optional[float] = None,
+                             dividend_yield_max: Optional[float] = None,
                              is_enterprise_only: bool = True) -> List[Dict]:
         try:
             with self.get_connection() as conn:
