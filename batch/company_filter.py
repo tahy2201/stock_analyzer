@@ -1,11 +1,13 @@
-import yfinance as yf
-import pandas as pd
 import logging
-from typing import List, Dict, Optional, Tuple
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+
+import pandas as pd
+import yfinance as yf
+
+from batch.data_collector import StockDataCollector
 from config.settings import MIN_EMPLOYEES, MIN_REVENUE
 from database.database_manager import DatabaseManager
-from batch.data_collector import StockDataCollector
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

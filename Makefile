@@ -23,6 +23,10 @@ lint:
 lint-fix:
 	uv run ruff check --fix .
 
+# importソート
+sort-imports:
+	uv run ruff check --select I --fix .
+
 # 型チェック
 typecheck:
 	uv run mypy .

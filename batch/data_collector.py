@@ -1,13 +1,15 @@
-import yfinance as yf
-import pandas as pd
-import time
-import logging
 import json
+import logging
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Optional, Tuple
 from datetime import datetime, timedelta
-from config.settings import DATA_DAYS, BATCH_SIZE, YFINANCE_REQUEST_DELAY, MARKET_INDICES
+from typing import Dict, List, Optional, Tuple
+
+import pandas as pd
+import yfinance as yf
+
+from config.settings import BATCH_SIZE, DATA_DAYS, MARKET_INDICES, YFINANCE_REQUEST_DELAY
 from database.database_manager import DatabaseManager
 from utils.jpx_parser import JPXParser
 

@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Optional, dict
+from typing import Optional
 
 from database.database_manager import DatabaseManager
 

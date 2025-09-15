@@ -1,9 +1,11 @@
-import sqlite3
-import pandas as pd
-from datetime import datetime
-from typing import List, Dict, Optional
-from config.settings import DATABASE_PATH
 import logging
+import sqlite3
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import pandas as pd
+
+from config.settings import DATABASE_PATH
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
