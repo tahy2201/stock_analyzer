@@ -1,7 +1,8 @@
-from typing import List, Dict, Optional
-from dataclasses import dataclass
-from database.database_manager import DatabaseManager
 import logging
+from dataclasses import dataclass
+from typing import Optional, dict
+
+from database.database_manager import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ class FilterCriteria:
     """銘柄フィルタリング条件を定義するクラス"""
 
     # 市場区分フィルタ
-    markets: Optional[List[str]] = None
+    markets: Optional[list[str]] = None
 
     # 企業規模フィルタ
     is_enterprise_only: bool = False
@@ -19,8 +20,8 @@ class FilterCriteria:
     # 今後追加予定のフィルタ
     min_market_cap: Optional[int] = None
     max_market_cap: Optional[int] = None
-    sectors: Optional[List[str]] = None
-    excluded_sectors: Optional[List[str]] = None
+    sectors: Optional[list[str]] = None
+    excluded_sectors: Optional[list[str]] = None
     min_employees: Optional[int] = None
     max_employees: Optional[int] = None
     min_revenue: Optional[int] = None
@@ -36,7 +37,7 @@ class FilterCriteria:
 
     """
     引数からFilterCriteriaオブジェクトを作成
-    
+
     使用例:
     filter_criteria = symbol_filter.create_filter_from_args(
         markets=['プライム（内国株式）'],
@@ -52,7 +53,7 @@ class SymbolFilter:
     def __init__(self) -> None:
         self.db_manager = DatabaseManager()
 
-    def get_filtered_symbols(self, criteria: FilterCriteria) -> List[str]:
+    def get_filtered_symbols(self, criteria: FilterCriteria) -> list[str]:
         """
         フィルタ条件に基づいて銘柄リストを取得
 
@@ -68,7 +69,7 @@ class SymbolFilter:
         logger.info(f"フィルタリング結果: {len(symbols)} 銘柄が条件に合致")
         return symbols
 
-    def get_filtered_companies(self, criteria: FilterCriteria) -> List[Dict]:
+    def get_filtered_companies(self, criteria: FilterCriteria) -> list[dict]:
         """
         フィルタ条件に基づいて企業情報を取得
 
@@ -84,7 +85,7 @@ class SymbolFilter:
             logger.error(f"企業情報フィルタリングエラー: {e}")
             return []
 
-    def _get_companies_by_criteria(self, criteria: FilterCriteria) -> List[Dict]:
+    def _get_companies_by_criteria(self, criteria: FilterCriteria) -> list[dict]:
         """
         内部メソッド: フィルタ条件に基づいて企業データを取得
         """
@@ -101,7 +102,7 @@ class SymbolFilter:
 
         return filtered_companies
 
-    def _matches_criteria(self, company: Dict, criteria: FilterCriteria) -> bool:
+    def _matches_criteria(self, company: dict, criteria: FilterCriteria) -> bool:
         """
         企業が条件に合致するかチェック
         """
