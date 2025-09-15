@@ -1,9 +1,8 @@
 import argparse
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
@@ -34,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 
 class BatchRunner:
-    def __init__(self) -> None:
+    def __init__(self, filter_criteria: Optional[FilterCriteria] = None) -> None:
+        self.filter_criteria = filter_criteria
         self.jpx_parser = JPXParser()
         self.data_collector = StockDataCollector()
         self.technical_analyzer = TechnicalAnalyzer()
@@ -59,12 +59,12 @@ class BatchRunner:
             logger.error(f"JPXデータ更新エラー: {e}")
             return False
 
-    def run_company_filtering(self, filter_criteria: Optional[FilterCriteria] = None) -> List[str]:
+    def run_company_filtering(self, filter_criteria: Optional[FilterCriteria] = None) -> list[str]:
         """
         企業フィルタリング実行
         """
         logger.info("=== 企業フィルタリング開始 ===")
-        results: List[str] = []
+        results: list[str] = []
         if filter_criteria is None:
             # デフォルトで全企業をフィルタリング
             results = self.symbol_filter.get_filtered_symbols(FilterCriteria())
@@ -72,7 +72,7 @@ class BatchRunner:
             results = self.symbol_filter.get_filtered_symbols(filter_criteria)
         return results
 
-    def run_stock_data_collection(self, symbols: List[str]) -> bool:
+    def run_stock_data_collection(self, symbols: list[str]) -> bool:
         """
         株価データ収集
         """
@@ -87,7 +87,7 @@ class BatchRunner:
             logger.error(f"株価データ収集エラー: {e}")
             return False
 
-    def run_technical_analysis(self, symbols: List[str]) -> bool:
+    def run_technical_analysis(self, symbols: list[str]) -> bool:
         """
         技術分析実行
         """
@@ -165,12 +165,12 @@ class BatchRunner:
 
     #     return results
 
-    def run_batch_a(self) -> None:
+    def exec(self, filter_criteria: Optional[FilterCriteria] = None) -> None:
         # jpxファイル取り込み
         self.run_jpx_update()
 
         # 企業フィルタ
-        targets = self.run_company_filtering()
+        targets = self.run_company_filtering(filter_criteria)
 
         # 株価データ取得
         self.run_stock_data_collection(targets)
@@ -178,11 +178,14 @@ class BatchRunner:
         # 株価データ分析
         self.run_technical_analysis(targets)
 
-
-def main() -> None:
-    print("バッチ処理を開始します")
-
+def parse_param() -> Optional[FilterCriteria]:
+    """
+    コマンドライン引数を解析してフィルタ条件を作成
+    """
     parser = argparse.ArgumentParser(description="株式分析システム バッチ処理")
+    # 実行モード
+    # 実装済み: primeのみ、スタンダードのみ、グロースのみ、全市場
+    # 未実装: エンタープライズ企業のみ、従業員数1000人以上、時価総額1000億以上、配当利回り3%以上
     parser.add_argument(
         "--mode",
         choices=["full", "daily", "jpx-only", "data-only", "analysis-only", "filter-only"],
@@ -199,85 +202,34 @@ def main() -> None:
     )
 
     args = parser.parse_args()
-
-    # バッチランナーの初期化
-    batch_runner = BatchRunner()
-
-    # フィルタ条件の作成
     filter_criteria = FilterCriteria()
 
     # 市場リストの処理（英語コードを日本語名に変換）
-    # if args.markets:
-    #     market_codes = [m.strip() for m in args.markets.split(',')]
-    #     markets = [MARKET_CODE_MAPPING.get(code, code) for code in market_codes]
-    #     # Noneを除外
-    #     filter_criteria.markets = [m for m in markets if m is not None]
-    #     logger.info(f"指定市場: {filter_criteria.markets}")
+    if args.markets:
+        market_codes = [m.strip() for m in args.markets.split(',')]
+        markets = [MARKET_CODE_MAPPING.get(code, code) for code in market_codes]
+        # Noneを除外
+        filter_criteria.markets = [m for m in markets if m is not None]
+        logger.info(f"指定市場: {filter_criteria.markets}")
 
-    # # エンタープライズフィルタ
-    # if args.enterprise_only:
-    #     filter_criteria.is_enterprise_only = True
+    # エンタープライズフィルタ
+    if args.enterprise_only:
+        filter_criteria.is_enterprise_only = True
 
-    # # 特定銘柄の処理（フィルタをオーバーライド）
-    # specific_symbols = []
-    # if args.symbols:
-    #     specific_symbols = [s.strip() for s in args.symbols.split(',')]
-    #     # 特定銘柄指定時はフィルタを無効化
-    #     filter_criteria = None
+    # 特定銘柄
+    if args.symbols:
+        filter_criteria.specific_symbols = [s.strip() for s in args.symbols.split(',')]
 
-    # results = {}
-    # try:
-    #     if args.mode == 'full':
-    #         if specific_symbols:
-    #             # 特定銘柄用の処理は既存のcompany_filterを使用
-    #             results['company_filtering'] = batch_runner.run_company_filtering()
-    #             if results['company_filtering']:
-    #                 success = batch_runner.data_collector.update_specific_stocks(specific_symbols)
-    #                 results['stock_data_collection'] = bool(sum(1 for s in success.values() if s) > 0) if isinstance(success, dict) else success
-    #                 analysis_results = batch_runner.technical_analyzer.analyze_batch_stocks(specific_symbols)
-    #                 results['technical_analysis'] = bool(sum(1 for r in analysis_results.values() if r is not None) > 0) if isinstance(analysis_results, dict) else analysis_results
-    #         else:
-    #             results = batch_runner.run_full_batch(filter_criteria, skip_jpx=args.skip_jpx)
-    #     elif args.mode == 'daily':
-    #         results = batch_runner.run_daily_update(filter_criteria)
-    #     elif args.mode == 'jpx-only':
-    #         results = {'jpx_update': batch_runner.run_jpx_update()}
-    #     elif args.mode == 'data-only':
-    #         if specific_symbols:
-    #             success = batch_runner.data_collector.update_specific_stocks(specific_symbols)
-    #             results = {'stock_data_collection': bool(sum(1 for s in success.values() if s) > 0) if isinstance(success, dict) else success}
-    #         else:
-    #             results = {'stock_data_collection': batch_runner.run_stock_data_collection(filter_criteria)}
-    #     elif args.mode == 'analysis-only':
-    #         if specific_symbols:
-    #             analysis_results = batch_runner.technical_analyzer.analyze_batch_stocks(specific_symbols)
-    #             results = {'technical_analysis': bool(sum(1 for r in analysis_results.values() if r is not None) > 0) if isinstance(analysis_results, dict) else analysis_results}
-    #         else:
-    #             results = {'technical_analysis': batch_runner.run_technical_analysis(filter_criteria)}
-    #     elif args.mode == 'filter-only':
-    #         results = {'company_filtering': batch_runner.run_company_filtering(filter_criteria)}
+    return filter_criteria
 
-    #     # 終了コード
-    #     success_count = sum(1 for success in results.values() if success)
-    #     total_count = len(results)
+def main() -> None:
+    print("バッチ処理を開始します")
 
-    #     if success_count == total_count:
-    #         logger.info("全ての処理が成功しました")
-    #         sys.exit(0)
-    #     elif success_count > 0:
-    #         logger.warning(f"一部の処理が失敗しました ({success_count}/{total_count})")
-    #         sys.exit(1)
-    #     else:
-    #         logger.error("全ての処理が失敗しました")
-    #         sys.exit(2)
+    # コマンドライン引数からフィルタを作成
+    filter_criteria = parse_param()
 
-    # except KeyboardInterrupt:
-    #     logger.info("処理が中断されました")
-    #     sys.exit(130)
-    # except Exception as e:
-    #     logger.error(f"予期しないエラー: {e}")
-    #     sys.exit(1)
-
+    batch_runner = BatchRunner(filter_criteria)
+    batch_runner.exec()
 
 if __name__ == "__main__":
     main()
