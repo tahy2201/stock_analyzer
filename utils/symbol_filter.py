@@ -17,6 +17,9 @@ class FilterCriteria:
     # 企業規模フィルタ
     is_enterprise_only: bool = False
 
+    # 特定銘柄コードリスト
+    specific_symbols: Optional[list[str]] = None
+
     # 今後追加予定のフィルタ
     min_market_cap: Optional[int] = None
     max_market_cap: Optional[int] = None
@@ -187,6 +190,9 @@ class SymbolFilter:
 
         if criteria.is_enterprise_only:
             conditions.append("エンタープライズ企業のみ")
+
+        if criteria.specific_symbols:
+            conditions.append(f"特定銘柄: {', '.join(criteria.specific_symbols)}")
 
         if criteria.min_employees:
             conditions.append(f"従業員数 >= {criteria.min_employees:,}")

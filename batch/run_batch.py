@@ -68,6 +68,8 @@ class BatchRunner:
         if filter_criteria is None:
             # デフォルトで全企業をフィルタリング
             results = self.symbol_filter.get_filtered_symbols(FilterCriteria())
+        elif filter_criteria.specific_symbols:
+            results = filter_criteria.specific_symbols
         else:
             results = self.symbol_filter.get_filtered_symbols(filter_criteria)
         return results
