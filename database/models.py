@@ -2,11 +2,12 @@ import sqlite3
 from pathlib import Path
 from config.settings import DATABASE_PATH
 
+
 def create_tables():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    
-    cursor.execute('''
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS companies (
             symbol VARCHAR(10) PRIMARY KEY,
             name VARCHAR(255),
@@ -18,9 +19,9 @@ def create_tables():
             dividend_yield DECIMAL(5,2),
             last_updated DATETIME
         )
-    ''')
-    
-    cursor.execute('''
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS stock_prices (
             symbol VARCHAR(10),
             date DATE,
@@ -32,9 +33,9 @@ def create_tables():
             PRIMARY KEY (symbol, date),
             FOREIGN KEY (symbol) REFERENCES companies(symbol)
         )
-    ''')
-    
-    cursor.execute('''
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS technical_indicators (
             symbol VARCHAR(10),
             date DATE,
@@ -45,27 +46,28 @@ def create_tables():
             PRIMARY KEY (symbol, date),
             FOREIGN KEY (symbol) REFERENCES companies(symbol)
         )
-    ''')
-    
-    cursor.execute('''
+    """)
+
+    cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_stock_prices_symbol_date 
         ON stock_prices(symbol, date)
-    ''')
-    
-    cursor.execute('''
+    """)
+
+    cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_technical_indicators_symbol_date 
         ON technical_indicators(symbol, date)
-    ''')
-    
+    """)
+
     # 既存のcompaniesテーブルにdividend_yield列を追加（存在しない場合）
     try:
-        cursor.execute('ALTER TABLE companies ADD COLUMN dividend_yield DECIMAL(5,2)')
+        cursor.execute("ALTER TABLE companies ADD COLUMN dividend_yield DECIMAL(5,2)")
     except sqlite3.OperationalError:
         # 列が既に存在する場合はスキップ
         pass
-    
+
     conn.commit()
     conn.close()
+
 
 if __name__ == "__main__":
     DATABASE_PATH.parent.mkdir(exist_ok=True)

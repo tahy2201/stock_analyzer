@@ -8,105 +8,112 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class DatabaseManager:
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or DATABASE_PATH
         self.ensure_database_exists()
-    
+
     def ensure_database_exists(self):
         from database.models import create_tables
+
         create_tables()
-    
+
     def get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
-    
+
     def insert_company(self, company_data: Dict) -> bool:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute('''
+                cursor.execute(
+                    """
                     INSERT OR REPLACE INTO companies 
                     (symbol, name, sector, market, employees, revenue, is_enterprise, dividend_yield, last_updated)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    company_data['symbol'],
-                    company_data['name'],
-                    company_data.get('sector'),
-                    company_data.get('market'),
-                    company_data.get('employees'),
-                    company_data.get('revenue'),
-                    company_data.get('is_enterprise', False),
-                    company_data.get('dividend_yield'),
-                    datetime.now().isoformat()
-                ))
+                """,
+                    (
+                        company_data["symbol"],
+                        company_data["name"],
+                        company_data.get("sector"),
+                        company_data.get("market"),
+                        company_data.get("employees"),
+                        company_data.get("revenue"),
+                        company_data.get("is_enterprise", False),
+                        company_data.get("dividend_yield"),
+                        datetime.now().isoformat(),
+                    ),
+                )
                 conn.commit()
                 return True
         except Exception as e:
             logger.error(f"Error inserting company {company_data.get('symbol')}: {e}")
             return False
-    
+
     def insert_stock_prices(self, symbol: str, price_data: pd.DataFrame) -> bool:
         try:
             with self.get_connection() as conn:
                 # データの準備
                 data_copy = price_data.copy()
-                data_copy['symbol'] = symbol
-                data_copy.index = data_copy.index.strftime('%Y-%m-%d')
+                data_copy["symbol"] = symbol
+                data_copy.index = data_copy.index.strftime("%Y-%m-%d")
                 data_copy.reset_index(inplace=True)
-                data_copy.rename(columns={'Date': 'date'}, inplace=True)
-                
+                data_copy.rename(columns={"Date": "date"}, inplace=True)
+
                 # 既存データの削除（同じシンボルのデータ）
                 cursor = conn.cursor()
-                cursor.execute('DELETE FROM stock_prices WHERE symbol = ?', (symbol,))
-                
+                cursor.execute("DELETE FROM stock_prices WHERE symbol = ?", (symbol,))
+
                 # 新しいデータの挿入
-                data_copy.to_sql('stock_prices', conn, if_exists='append', index=False)
+                data_copy.to_sql("stock_prices", conn, if_exists="append", index=False)
                 conn.commit()
                 return True
         except Exception as e:
             logger.error(f"Error inserting stock prices for {symbol}: {e}")
             return False
-    
+
     def insert_technical_indicators(self, symbol: str, indicators_data: pd.DataFrame) -> bool:
         try:
             with self.get_connection() as conn:
                 # データの準備
                 data_copy = indicators_data.copy()
-                data_copy['symbol'] = symbol
-                data_copy.index = data_copy.index.strftime('%Y-%m-%d')
+                data_copy["symbol"] = symbol
+                data_copy.index = data_copy.index.strftime("%Y-%m-%d")
                 data_copy.reset_index(inplace=True)
-                data_copy.rename(columns={'Date': 'date'}, inplace=True)
-                
+                data_copy.rename(columns={"Date": "date"}, inplace=True)
+
                 # 既存データの削除（同じシンボルのデータ）
                 cursor = conn.cursor()
-                cursor.execute('DELETE FROM technical_indicators WHERE symbol = ?', (symbol,))
-                
+                cursor.execute("DELETE FROM technical_indicators WHERE symbol = ?", (symbol,))
+
                 # 新しいデータの挿入
-                data_copy.to_sql('technical_indicators', conn, if_exists='append', index=False)
+                data_copy.to_sql("technical_indicators", conn, if_exists="append", index=False)
                 conn.commit()
                 return True
         except Exception as e:
             logger.error(f"Error inserting technical indicators for {symbol}: {e}")
             return False
-    
-    def get_companies(self, is_enterprise_only: bool = False, markets: Optional[List[str]] = None) -> List[Dict]:
+
+    def get_companies(
+        self, is_enterprise_only: bool = False, markets: Optional[List[str]] = None
+    ) -> List[Dict]:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM companies"
                 conditions = []
-                
+
                 if is_enterprise_only:
                     conditions.append("is_enterprise = 1")
-                
+
                 if markets:
-                    market_placeholders = ','.join(['?' for _ in markets])
+                    market_placeholders = ",".join(["?" for _ in markets])
                     conditions.append(f"market IN ({market_placeholders})")
-                
+
                 if conditions:
                     query += " WHERE " + " AND ".join(conditions)
-                
+
                 cursor = conn.cursor()
                 params = markets if markets else []
                 cursor.execute(query, params)
@@ -114,7 +121,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error getting companies: {e}")
             return []
-    
+
     def get_company_by_symbol(self, symbol: str) -> Optional[Dict]:
         try:
             with self.get_connection() as conn:
@@ -125,66 +132,72 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error getting company {symbol}: {e}")
             return None
-    
-    def get_stock_prices(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> pd.DataFrame:
+
+    def get_stock_prices(
+        self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None
+    ) -> pd.DataFrame:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM stock_prices WHERE symbol = ?"
                 params = [symbol]
-                
+
                 if start_date:
                     query += " AND date >= ?"
                     params.append(start_date)
-                
+
                 if end_date:
                     query += " AND date <= ?"
                     params.append(end_date)
-                
+
                 query += " ORDER BY date"
-                
+
                 df = pd.read_sql_query(query, conn, params=params)
                 if not df.empty:
-                    df['date'] = pd.to_datetime(df['date'])
-                    df.set_index('date', inplace=True)
+                    df["date"] = pd.to_datetime(df["date"])
+                    df.set_index("date", inplace=True)
                 return df
         except Exception as e:
             logger.error(f"Error getting stock prices for {symbol}: {e}")
             return pd.DataFrame()
-    
-    def get_technical_indicators(self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None) -> pd.DataFrame:
+
+    def get_technical_indicators(
+        self, symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None
+    ) -> pd.DataFrame:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM technical_indicators WHERE symbol = ?"
                 params = [symbol]
-                
+
                 if start_date:
                     query += " AND date >= ?"
                     params.append(start_date)
-                
+
                 if end_date:
                     query += " AND date <= ?"
                     params.append(end_date)
-                
+
                 query += " ORDER BY date"
-                
+
                 df = pd.read_sql_query(query, conn, params=params)
                 if not df.empty:
-                    df['date'] = pd.to_datetime(df['date'])
-                    df.set_index('date', inplace=True)
+                    df["date"] = pd.to_datetime(df["date"])
+                    df.set_index("date", inplace=True)
                 return df
         except Exception as e:
             logger.error(f"Error getting technical indicators for {symbol}: {e}")
             return pd.DataFrame()
-    
-    def get_filtered_companies(self, 
-                             divergence_min: Optional[float] = None,
-                             divergence_max: Optional[float] = None,
-                             dividend_yield_min: Optional[float] = None,
-                             dividend_yield_max: Optional[float] = None,
-                             is_enterprise_only: bool = True) -> List[Dict]:
+
+    def get_filtered_companies(
+        self,
+        divergence_min: Optional[float] = None,
+        divergence_max: Optional[float] = None,
+        dividend_yield_min: Optional[float] = None,
+        dividend_yield_max: Optional[float] = None,
+        is_enterprise_only: bool = True,
+    ) -> List[Dict]:
         try:
             with self.get_connection() as conn:
-                query = '''
+                query = """
                     SELECT DISTINCT c.*, ti.divergence_rate, ti.dividend_yield, ti.date
                     FROM companies c
                     JOIN technical_indicators ti ON c.symbol = ti.symbol
@@ -192,70 +205,73 @@ class DatabaseManager:
                         SELECT MAX(date) FROM technical_indicators ti2 
                         WHERE ti2.symbol = c.symbol
                     )
-                '''
+                """
                 params = []
-                
+
                 if is_enterprise_only:
                     query += " AND c.is_enterprise = 1"
-                
+
                 if divergence_min is not None:
                     query += " AND ABS(ti.divergence_rate) >= ?"
                     params.append(divergence_min)
-                
+
                 if divergence_max is not None:
                     query += " AND ABS(ti.divergence_rate) <= ?"
                     params.append(divergence_max)
-                
+
                 if dividend_yield_min is not None:
                     query += " AND ti.dividend_yield >= ?"
                     params.append(dividend_yield_min)
-                
+
                 if dividend_yield_max is not None:
                     query += " AND ti.dividend_yield <= ?"
                     params.append(dividend_yield_max)
-                
+
                 cursor = conn.cursor()
                 cursor.execute(query, params)
                 return [dict(row) for row in cursor.fetchall()]
         except Exception as e:
             logger.error(f"Error getting filtered companies: {e}")
             return []
-    
+
     def delete_old_data(self, symbol: str, table: str, days_to_keep: int = 365):
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute(f'''
+                cursor.execute(
+                    f"""
                     DELETE FROM {table} 
                     WHERE symbol = ? AND date < date('now', '-{days_to_keep} days')
-                ''', (symbol,))
+                """,
+                    (symbol,),
+                )
                 conn.commit()
                 logger.info(f"Old data deleted for {symbol} from {table}")
         except Exception as e:
             logger.error(f"Error deleting old data for {symbol}: {e}")
-    
+
     def get_database_stats(self) -> Dict:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                
+
                 cursor.execute("SELECT COUNT(*) FROM companies")
                 companies_count = cursor.fetchone()[0]
-                
+
                 cursor.execute("SELECT COUNT(DISTINCT symbol) FROM stock_prices")
                 symbols_with_prices = cursor.fetchone()[0]
-                
+
                 cursor.execute("SELECT COUNT(DISTINCT symbol) FROM technical_indicators")
                 symbols_with_indicators = cursor.fetchone()[0]
-                
+
                 cursor.execute("SELECT MAX(date) FROM stock_prices")
                 latest_price_date = cursor.fetchone()[0]
-                
+
                 return {
-                    'companies_count': companies_count,
-                    'symbols_with_prices': symbols_with_prices,
-                    'symbols_with_indicators': symbols_with_indicators,
-                    'latest_price_date': latest_price_date
+                    "companies_count": companies_count,
+                    "symbols_with_prices": symbols_with_prices,
+                    "symbols_with_indicators": symbols_with_indicators,
+                    "latest_price_date": latest_price_date,
                 }
         except Exception as e:
             logger.error(f"Error getting database stats: {e}")

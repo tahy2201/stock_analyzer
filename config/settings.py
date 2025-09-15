@@ -25,10 +25,6 @@ LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 YFINANCE_REQUEST_DELAY = 0.1
 
-MARKET_INDICES = {
-    "NIKKEI": "^N225",
-    "TOPIX": "^TPX",
-    "JASDAQ": "^JASDAQ"
-}
+MARKET_INDICES = {"NIKKEI": "^N225", "TOPIX": "^TPX", "JASDAQ": "^JASDAQ"}
 
 DATA_DIR.mkdir(exist_ok=True)
