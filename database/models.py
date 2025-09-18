@@ -1,5 +1,4 @@
 import sqlite3
-from pathlib import Path
 
 from config.settings import DATABASE_PATH
 
@@ -50,12 +49,12 @@ def create_tables() -> None:
     """)
 
     cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_stock_prices_symbol_date 
+        CREATE INDEX IF NOT EXISTS idx_stock_prices_symbol_date
         ON stock_prices(symbol, date)
     """)
 
     cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_technical_indicators_symbol_date 
+        CREATE INDEX IF NOT EXISTS idx_technical_indicators_symbol_date
         ON technical_indicators(symbol, date)
     """)
 

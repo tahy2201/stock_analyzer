@@ -1,7 +1,6 @@
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
-import numpy as np
 import pandas as pd
 
 from config.settings import DIVERGENCE_THRESHOLD, DIVIDEND_YIELD_MAX, DIVIDEND_YIELD_MIN, MA_PERIOD
@@ -12,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class TechnicalAnalyzer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.db_manager = DatabaseManager()
 
     def calculate_moving_average(self, prices: pd.Series, period: int = MA_PERIOD) -> pd.Series:
@@ -62,7 +61,7 @@ class TechnicalAnalyzer:
             logger.warning(f"配当利回り取得エラー {symbol}: {e}")
             return 0.0
 
-    def analyze_single_stock(self, symbol: str) -> Optional[Dict]:
+    def analyze_single_stock(self, symbol: str) -> Optional[dict]:
         """
         単一銘柄の技術分析を実行
         """
@@ -142,12 +141,14 @@ class TechnicalAnalyzer:
             return None
 
     def analyze_batch_stocks(
-        self, symbols: List[str], markets: List[str] = []
-    ) -> Dict[str, Optional[Dict]]:
+        self, symbols: list[str], markets: Optional[list[str]] = None
+    ) -> dict[str, Optional[dict]]:
         """
         複数銘柄の技術分析をバッチ実行
         """
         # 市場フィルターが指定されている場合、シンボルを絞り込み
+        if markets is None:
+            markets = []
         if markets:
             companies = self.db_manager.get_companies(markets=markets)
             market_symbols = {company["symbol"] for company in companies}
@@ -175,7 +176,7 @@ class TechnicalAnalyzer:
         divergence_threshold: float = DIVERGENCE_THRESHOLD,
         dividend_min: float = DIVIDEND_YIELD_MIN,
         dividend_max: float = DIVIDEND_YIELD_MAX,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         投資候補銘柄を抽出
         """
@@ -228,7 +229,7 @@ class TechnicalAnalyzer:
             logger.error(f"投資候補抽出エラー: {e}")
             return []
 
-    def _calculate_investment_score(self, candidate: Dict) -> float:
+    def _calculate_investment_score(self, candidate: dict) -> float:
         """
         投資魅力度スコアを計算
         """
@@ -272,7 +273,7 @@ class TechnicalAnalyzer:
             logger.warning(f"スコア計算エラー: {e}")
             return 0.0
 
-    def get_technical_summary(self, symbol: str) -> Optional[Dict]:
+    def get_technical_summary(self, symbol: str) -> Optional[dict]:
         """
         銘柄の技術分析サマリーを取得
         """
