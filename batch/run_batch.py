@@ -81,10 +81,14 @@ class BatchRunner:
         logger.info("=== 株価データ収集開始 ===")
         try:
             logger.info(f"対象銘柄数: {len(symbols)}")
-            results = self.data_collector.update_specific_stocks(symbols)
-            success_count = sum(1 for success in results.values() if success)
-            logger.info(f"株価データ収集完了: 成功 {success_count}/{len(symbols)}")
-            return success_count > 0
+            results = self.data_collector.update_tiker(symbols)
+
+            prices_success = results['prices_success']
+            info_success = results['info_success']
+            total = results['total']
+
+            logger.info(f"株価データ収集完了: 価格 {prices_success}/{total}, 企業情報 {info_success}/{total}")
+            return prices_success > 0 or info_success > 0
         except Exception as e:
             logger.error(f"株価データ収集エラー: {e}")
             return False
