@@ -277,6 +277,7 @@ class StockDataCollector:
             # Yahoo Financeから株価データを取得
             prices = yf.download(
                 formatted_symbols,
+                auto_adjust=True,
                 start=start_date,
                 end=end_date
             )
