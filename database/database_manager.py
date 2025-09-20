@@ -42,6 +42,25 @@ class DatabaseManager:
             logger.error(f"Error fetching latest price dates for {symbols}: {e}")
         return latest_dates
 
+    def get_latest_ticker_info_dates(self, symbols: list[str]) -> dict[str, Optional[datetime]]:
+        """
+        指定された銘柄のticker_infoの最終更新日を取得
+        """
+        latest_dates = {}
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    f"SELECT symbol, MAX(last_updated) FROM ticker_info WHERE symbol IN ({','.join(['?'] * len(symbols))}) GROUP BY symbol",
+                    symbols
+                )
+                rows = cursor.fetchall()
+                for row in rows:
+                    latest_dates[row["symbol"]] = datetime.fromisoformat(row[1]) if row[1] else None
+        except Exception as e:
+            logger.error(f"Error fetching latest ticker info dates for {symbols}: {e}")
+        return latest_dates
+
     def insert_company(self, company_data: Dict) -> bool:
         try:
             with self.get_connection() as conn:

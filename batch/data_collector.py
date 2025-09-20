@@ -229,21 +229,52 @@ class StockDataCollector:
 
         return results
 
-    def update_tiker_info(self, symbols: list[str]) -> dict[str, bool]:
+    def update_tiker_info(self, symbols: list[str], force_update: bool = False) -> dict[str, bool]:
         """
         ティッカー企業情報の更新（100件ずつ処理、レート制限考慮）
+        force_update: Trueの場合、2週間インターバルを無視して強制更新
         """
         logger.info(f"企業情報更新開始: {len(symbols)} 銘柄")
         results = {}
 
         try:
+            # 各銘柄の最終更新日を取得（2週間インターバルチェック）
+            if not force_update:
+                latest_dates = self.db_manager.get_latest_ticker_info_dates(symbols)
+                today = datetime.now().date()
+                two_weeks_ago = today - timedelta(days=14)
+
+                # 2週間以内に更新された銘柄をフィルタリング
+                symbols_to_update = []
+                for symbol in symbols:
+                    latest_date = latest_dates.get(symbol)
+                    if latest_date is None:
+                        # データが存在しない銘柄は更新対象
+                        symbols_to_update.append(symbol)
+                    elif latest_date.date() < two_weeks_ago:
+                        # 最終更新が2週間より古い場合は更新対象
+                        symbols_to_update.append(symbol)
+                    else:
+                        # 2週間以内に更新済みの場合はスキップ
+                        logger.debug(f"スキップ（2週間以内に更新済み）: {symbol} (最終更新: {latest_date.date()})")
+                        results[symbol] = True
+
+                if not symbols_to_update:
+                    logger.info("全銘柄が2週間以内に更新済みです。企業情報更新をスキップします。")
+                    return dict.fromkeys(symbols, True)
+
+                logger.info(f"更新対象銘柄: {len(symbols_to_update)}/{len(symbols)}")
+            else:
+                symbols_to_update = symbols
+                logger.info("強制更新モード: 全銘柄を更新対象とします")
+
             # 100件ずつバッチ処理（レート制限対策）
             batch_size = 100
             max_attempts = 3
             retry_delay = 2
             abort_processing = False
-            for i in range(0, len(symbols), batch_size):
-                batch_symbols = symbols[i:i + batch_size]
+            for i in range(0, len(symbols_to_update), batch_size):
+                batch_symbols = symbols_to_update[i:i + batch_size]
                 logger.info(f"企業情報取得バッチ {i//batch_size + 1}: {len(batch_symbols)} 銘柄")
 
                 try:
@@ -273,7 +304,7 @@ class StockDataCollector:
                         for symbol in batch_symbols:
                             results[symbol] = False
 
-                        for remaining_symbol in symbols[i + batch_size:]:
+                        for remaining_symbol in symbols_to_update[i + batch_size:]:
                             if remaining_symbol not in results:
                                 results[remaining_symbol] = False
 
@@ -319,7 +350,7 @@ class StockDataCollector:
                             results[symbol] = False
 
                     # バッチ間の待機（API制限対策 - infoは特に厳しい）
-                    if i + batch_size < len(symbols):
+                    if i + batch_size < len(symbols_to_update):
                         logger.info("次のバッチまで待機中（企業情報取得はレート制限あり）...")
                         time.sleep(10)  # 10秒待機
 
