@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 import time
@@ -43,6 +44,15 @@ class StockDataCollector:
         if not symbol.endswith(".T"):
             return f"{symbol}.T"
         return symbol
+
+    def get_ticker_info_update_interval_days(self, symbol: str, base_days: int = 14) -> int:
+        """
+        シンボルのハッシュ値を使って分散された更新間隔を計算
+        base_days + (0-6日) = 14-20日の間隔で分散
+        """
+        hash_obj = hashlib.md5(symbol.encode('utf-8'))
+        offset = int(hash_obj.hexdigest(), 16) % 7
+        return base_days + offset
 
     def collect_market_indices(self) -> dict[str, bool]:
         """
@@ -232,35 +242,39 @@ class StockDataCollector:
     def update_tiker_info(self, symbols: list[str], force_update: bool = False) -> dict[str, bool]:
         """
         ティッカー企業情報の更新（100件ずつ処理、レート制限考慮）
-        force_update: Trueの場合、2週間インターバルを無視して強制更新
+        各銘柄のハッシュ値による分散更新間隔（14-20日）で負荷分散
+        force_update: Trueの場合、更新間隔を無視して強制更新
         """
         logger.info(f"企業情報更新開始: {len(symbols)} 銘柄")
         results = {}
 
         try:
-            # 各銘柄の最終更新日を取得（2週間インターバルチェック）
+            # 各銘柄の最終更新日を取得（ハッシュベース分散間隔チェック）
             if not force_update:
                 latest_dates = self.db_manager.get_latest_ticker_info_dates(symbols)
                 today = datetime.now().date()
-                two_weeks_ago = today - timedelta(days=14)
 
-                # 2週間以内に更新された銘柄をフィルタリング
+                # 銘柄ごとの分散された更新間隔でフィルタリング
                 symbols_to_update = []
                 for symbol in symbols:
                     latest_date = latest_dates.get(symbol)
+                    update_interval_days = self.get_ticker_info_update_interval_days(symbol)
+                    cutoff_date = today - timedelta(days=update_interval_days)
+
                     if latest_date is None:
                         # データが存在しない銘柄は更新対象
                         symbols_to_update.append(symbol)
-                    elif latest_date.date() < two_weeks_ago:
-                        # 最終更新が2週間より古い場合は更新対象
+                    elif latest_date.date() < cutoff_date:
+                        # 最終更新が更新間隔より古い場合は更新対象
                         symbols_to_update.append(symbol)
+                        logger.debug(f"更新対象: {symbol} (最終更新: {latest_date.date()}, 間隔: {update_interval_days}日)")
                     else:
-                        # 2週間以内に更新済みの場合はスキップ
-                        logger.debug(f"スキップ（2週間以内に更新済み）: {symbol} (最終更新: {latest_date.date()})")
+                        # 更新間隔内に更新済みの場合はスキップ
+                        logger.debug(f"スキップ（更新間隔内）: {symbol} (最終更新: {latest_date.date()}, 間隔: {update_interval_days}日)")
                         results[symbol] = True
 
                 if not symbols_to_update:
-                    logger.info("全銘柄が2週間以内に更新済みです。企業情報更新をスキップします。")
+                    logger.info("全銘柄が各々の更新間隔内に更新済みです。企業情報更新をスキップします。")
                     return dict.fromkeys(symbols, True)
 
                 logger.info(f"更新対象銘柄: {len(symbols_to_update)}/{len(symbols)}")
@@ -404,9 +418,14 @@ if __name__ == "__main__":
     collector = StockDataCollector()
 
     # テスト用: 特定銘柄のデータ収集
-    test_symbols = ["7203", "6758", "9984"]  # トヨタ、ソニーG、ソフトバンクG
+    test_symbols = ["7203", "6758", "9984", "1301", "1332", "1333", "1375", "1377"]
 
-    print("テスト用データ収集を開始...")
+    print("ハッシュベース分散間隔テスト:")
+    for symbol in test_symbols:
+        interval = collector.get_ticker_info_update_interval_days(symbol)
+        print(f"  {symbol}: {interval}日間隔")
+
+    print("\nテスト用データ収集を開始...")
     results = collector.update_tiker_info(test_symbols)
 
     print("結果:")
