@@ -137,12 +137,12 @@ class StockDataCollector:
                 if latest_date is None:
                     # データが存在しない銘柄は更新対象
                     symbols_to_update.append(symbol)
-                elif latest_date < yesterday:
+                elif latest_date.date() < yesterday:
                     # 最新データが昨日より古い場合は更新対象
                     symbols_to_update.append(symbol)
                 else:
                     # 最新データが昨日以降の場合はスキップ
-                    logger.debug(f"スキップ（最新データあり）: {symbol} (最新: {latest_date})")
+                    logger.debug(f"スキップ（最新データあり）: {symbol} (最新: {latest_date.date()})")
                     results[symbol] = True
 
             if not symbols_to_update:
