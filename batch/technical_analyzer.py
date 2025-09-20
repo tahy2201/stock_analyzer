@@ -140,21 +140,10 @@ class TechnicalAnalyzer:
             logger.error(f"技術分析エラー {symbol}: {e}")
             return None
 
-    def analyze_batch_stocks(
-        self, symbols: list[str], markets: Optional[list[str]] = None
-    ) -> dict[str, Optional[dict]]:
+    def analyze_batch_stocks(self, symbols: list[str]) -> dict[str, Optional[dict]]:
         """
         複数銘柄の技術分析をバッチ実行
         """
-        # 市場フィルターが指定されている場合、シンボルを絞り込み
-        if markets is None:
-            markets = []
-        if markets:
-            companies = self.db_manager.get_companies(markets=markets)
-            market_symbols = {company["symbol"] for company in companies}
-            symbols = [s for s in symbols if s in market_symbols]
-            logger.info(f"市場フィルター適用後: {len(symbols)} 銘柄")
-
         results = {}
 
         logger.info(f"技術分析開始: {len(symbols)} 銘柄")
