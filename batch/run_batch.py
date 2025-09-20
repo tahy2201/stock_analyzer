@@ -2,7 +2,6 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
@@ -33,8 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class BatchRunner:
-    def __init__(self, filter_criteria: Optional[FilterCriteria] = None) -> None:
-        self.filter_criteria = filter_criteria
+    def __init__(self) -> None:
         self.jpx_parser = JPXParser()
         self.data_collector = StockDataCollector()
         self.technical_analyzer = TechnicalAnalyzer()
@@ -59,16 +57,14 @@ class BatchRunner:
             logger.error(f"JPXデータ更新エラー: {e}")
             return False
 
-    def run_company_filtering(self, filter_criteria: Optional[FilterCriteria] = None) -> list[str]:
+    def run_company_filtering(self, filter_criteria: FilterCriteria) -> list[str]:
         """
         企業フィルタリング実行
         """
         logger.info("=== 企業フィルタリング開始 ===")
+
         results: list[str] = []
-        if filter_criteria is None:
-            # デフォルトで全企業をフィルタリング
-            results = self.symbol_filter.get_filtered_symbols(FilterCriteria())
-        elif filter_criteria.specific_symbols:
+        if filter_criteria.specific_symbols:
             results = filter_criteria.specific_symbols
         else:
             results = self.symbol_filter.get_filtered_symbols(filter_criteria)
@@ -171,7 +167,7 @@ class BatchRunner:
 
     #     return results
 
-    def exec(self, filter_criteria: Optional[FilterCriteria] = None) -> None:
+    def exec(self, filter_criteria: FilterCriteria) -> None:
         # jpxファイル取り込み
         self.run_jpx_update()
 
@@ -182,9 +178,9 @@ class BatchRunner:
         self.run_stock_data_collection(targets)
 
         # 株価データ分析
-        self.run_technical_analysis(targets)
+        # self.run_technical_analysis(targets)
 
-def parse_param() -> Optional[FilterCriteria]:
+def parse_param() -> FilterCriteria:
     """
     コマンドライン引数を解析してフィルタ条件を作成
     """
@@ -234,8 +230,8 @@ def main() -> None:
     # コマンドライン引数からフィルタを作成
     filter_criteria = parse_param()
 
-    batch_runner = BatchRunner(filter_criteria)
-    batch_runner.exec()
+    batch_runner = BatchRunner()
+    batch_runner.exec(filter_criteria)
 
 if __name__ == "__main__":
     main()
