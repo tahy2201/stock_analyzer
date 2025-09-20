@@ -4,6 +4,7 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
+import requests
 import yfinance as yf
 
 from config.settings import DATA_DAYS, MARKET_INDICES, YFINANCE_REQUEST_DELAY
@@ -12,6 +13,19 @@ from utils.jpx_parser import JPXParser
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class TimeoutSession(requests.Session):
+    """requests.Session subclass that enforces a default timeout."""
+
+    def __init__(self, timeout: float) -> None:
+        super().__init__()
+        self._timeout = timeout
+
+    def request(self, *args, **kwargs):  # type: ignore[override]
+        if "timeout" not in kwargs:
+            kwargs["timeout"] = self._timeout
+        return super().request(*args, **kwargs)
 
 
 class StockDataCollector:
@@ -207,13 +221,50 @@ class StockDataCollector:
         try:
             # 100件ずつバッチ処理（レート制限対策）
             batch_size = 100
+            max_attempts = 3
+            retry_delay = 2
+            timeout_seconds = 10.0
+            abort_processing = False
             for i in range(0, len(symbols), batch_size):
                 batch_symbols = symbols[i:i + batch_size]
                 logger.info(f"企業情報取得バッチ {i//batch_size + 1}: {len(batch_symbols)} 銘柄")
 
                 try:
-                    # yfinance Tickersで一括取得
-                    info_data = self.get_stock_info(batch_symbols)
+                    info_data = {}
+                    for attempt in range(1, max_attempts + 1):
+                        # yfinance Tickersで一括取得
+                        info_data = self.get_stock_info(batch_symbols, timeout_seconds)
+                        if info_data:
+                            break
+
+                        logger.warning(
+                            "企業情報取得失敗 (試行 %d/%d): %s",
+                            attempt,
+                            max_attempts,
+                            ",".join(batch_symbols)
+                        )
+
+                        if attempt < max_attempts:
+                            logger.info("再試行前に待機中 (%d秒)...", retry_delay)
+                            time.sleep(retry_delay)
+
+                    if not info_data:
+                        logger.error(
+                            "企業情報バッチ %d: 3回試行後も取得できませんでした。処理を終了します",
+                            i // batch_size + 1
+                        )
+                        for symbol in batch_symbols:
+                            results[symbol] = False
+
+                        for remaining_symbol in symbols[i + batch_size:]:
+                            if remaining_symbol not in results:
+                                results[remaining_symbol] = False
+
+                        abort_processing = True
+                        break
+
+                    if abort_processing:
+                        break
 
                     if not info_data:
                         logger.warning(f"バッチ {i//batch_size + 1}: 企業情報が取得できませんでした")
@@ -260,6 +311,9 @@ class StockDataCollector:
                     for symbol in batch_symbols:
                         results[symbol] = False
 
+                if abort_processing:
+                    break
+
             success_count = sum(1 for success in results.values() if success)
             logger.info(f"企業情報更新完了: 成功 {success_count}/{len(symbols)}")
 
@@ -285,13 +339,14 @@ class StockDataCollector:
             logger.error(f"Error fetching data for {formatted_symbols}: {e}")
         return prices if prices is not None else pd.DataFrame()
 
-    def get_stock_info(self, symbols: list[str]) -> dict[str, dict]:
+    def get_stock_info(self, symbols: list[str], timeout: float = 10.0) -> dict[str, dict]:
         formatted_symbols = [self.format_symbol(symbol) for symbol in symbols]
 
         info = None
         try:
             # Yahoo Financeから株価データを取得
-            tickers = yf.Tickers(" ".join(formatted_symbols))
+            session = TimeoutSession(timeout)
+            tickers = yf.Tickers(" ".join(formatted_symbols), session=session)
             info = {symbol: tickers.tickers[symbol].info for symbol in formatted_symbols}
         except Exception as e:
             logger.error(f"Error fetching data for {formatted_symbols}: {e}")
