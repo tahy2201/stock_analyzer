@@ -178,7 +178,7 @@ class BatchRunner:
         self.run_stock_data_collection(targets)
 
         # 株価データ分析
-        # self.run_technical_analysis(targets)
+        self.run_technical_analysis(targets)
 
 def parse_param() -> FilterCriteria:
     """
