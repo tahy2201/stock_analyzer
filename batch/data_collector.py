@@ -117,19 +117,37 @@ class StockDataCollector:
         try:
             # 各銘柄の最新日付を取得
             latest_dates = self.db_manager.get_latest_price_dates(symbols)
+            today = datetime.now().date()
+            yesterday = today - timedelta(days=1)
 
-            # データが存在しない銘柄は過去252日分、存在する銘柄は最新日から取得
+            # 最新データを持つ銘柄をフィルタリング（差分更新対象）
+            symbols_to_update = []
+            for symbol in symbols:
+                latest_date = latest_dates.get(symbol)
+                if latest_date is None:
+                    # データが存在しない銘柄は更新対象
+                    symbols_to_update.append(symbol)
+                elif latest_date < yesterday:
+                    # 最新データが昨日より古い場合は更新対象
+                    symbols_to_update.append(symbol)
+                else:
+                    # 最新データが昨日以降の場合はスキップ
+                    logger.debug(f"スキップ（最新データあり）: {symbol} (最新: {latest_date})")
+                    results[symbol] = True
+
+            if not symbols_to_update:
+                logger.info("全銘柄が最新データを保持しています。更新をスキップします。")
+                return dict.fromkeys(symbols, True)
+
+            logger.info(f"更新対象銘柄: {len(symbols_to_update)}/{len(symbols)}")
+
+            # 更新対象銘柄のみ処理（過去252日分）
             start_date = datetime.now() - timedelta(days=DATA_DAYS + 30)
-            if latest_dates and any(date for date in latest_dates.values() if date):
-                # 最新データがある場合は、最古の日付から取得
-                oldest_date = min(date for date in latest_dates.values() if date)
-                if oldest_date > start_date:
-                    start_date = oldest_date
 
             # 1000件ずつバッチ処理
             batch_size = 1000
-            for i in range(0, len(symbols), batch_size):
-                batch_symbols = symbols[i:i + batch_size]
+            for i in range(0, len(symbols_to_update), batch_size):
+                batch_symbols = symbols_to_update[i:i + batch_size]
                 logger.info(f"価格データ取得バッチ {i//batch_size + 1}: {len(batch_symbols)} 銘柄")
 
                 try:
@@ -193,7 +211,7 @@ class StockDataCollector:
                             results[symbol] = False
 
                     # バッチ間の待機（API制限対策）
-                    if i + batch_size < len(symbols):
+                    if i + batch_size < len(symbols_to_update):
                         logger.info("次のバッチまで待機中...")
                         time.sleep(2)
 
@@ -223,7 +241,6 @@ class StockDataCollector:
             batch_size = 100
             max_attempts = 3
             retry_delay = 2
-            timeout_seconds = 10.0
             abort_processing = False
             for i in range(0, len(symbols), batch_size):
                 batch_symbols = symbols[i:i + batch_size]
@@ -233,7 +250,7 @@ class StockDataCollector:
                     info_data = {}
                     for attempt in range(1, max_attempts + 1):
                         # yfinance Tickersで一括取得
-                        info_data = self.get_stock_info(batch_symbols, timeout_seconds)
+                        info_data = self.get_stock_info(batch_symbols)
                         if info_data:
                             break
 
@@ -339,14 +356,13 @@ class StockDataCollector:
             logger.error(f"Error fetching data for {formatted_symbols}: {e}")
         return prices if prices is not None else pd.DataFrame()
 
-    def get_stock_info(self, symbols: list[str], timeout: float = 10.0) -> dict[str, dict]:
+    def get_stock_info(self, symbols: list[str]) -> dict[str, dict]:
         formatted_symbols = [self.format_symbol(symbol) for symbol in symbols]
 
         info = None
         try:
-            # Yahoo Financeから株価データを取得
-            session = TimeoutSession(timeout)
-            tickers = yf.Tickers(" ".join(formatted_symbols), session=session)
+            # Yahoo Financeから株価データを取得（セッションを指定せずYFに任せる）
+            tickers = yf.Tickers(" ".join(formatted_symbols))
             info = {symbol: tickers.tickers[symbol].info for symbol in formatted_symbols}
         except Exception as e:
             logger.error(f"Error fetching data for {formatted_symbols}: {e}")
