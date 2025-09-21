@@ -20,6 +20,9 @@ dependencies = [
     "openpyxl>=3.1.0",
     "xlrd>=2.0.0",
     "numpy>=1.21.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -38,7 +41,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["batch", "database", "config", "utils", "frontend"]
+packages = ["batch", "database", "config", "utils", "frontend", "api"]
 
 [tool.ruff]
 line-length = 100
