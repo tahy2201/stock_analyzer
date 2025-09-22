@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from config.settings import DATABASE_PATH
+from backend.shared.config.settings import DATABASE_PATH
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class DatabaseManager:
         self.ensure_database_exists()
 
     def ensure_database_exists(self) -> None:
-        from database.models import create_tables
+        from backend.shared.database.models import create_tables
 
         create_tables()
 
