@@ -3,7 +3,6 @@ import logging
 from typing import Optional
 
 import pandas as pd
-
 from config.settings import DIVERGENCE_THRESHOLD, DIVIDEND_YIELD_MAX, DIVIDEND_YIELD_MIN, MA_PERIOD
 from database.database_manager import DatabaseManager
 

@@ -424,13 +424,13 @@ class DatabaseManager:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    """
+                    f"""
                     SELECT c.symbol
                     FROM companies c
                     LEFT JOIN ticker_info ti ON c.symbol = ti.symbol
                     WHERE ti.last_updated IS NULL
-                       OR ti.last_updated < datetime('now', '-{} days')
-                    """.format(days_old)
+                       OR ti.last_updated < datetime('now', '-{days_old} days')
+                    """
                 )
                 return [row[0] for row in cursor.fetchall()]
         except Exception as e:

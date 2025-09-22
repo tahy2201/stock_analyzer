@@ -1,12 +1,10 @@
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
-
-from config.settings import MA_PERIOD, MARKET_INDICES
+from config.settings import MARKET_INDICES
 from database.database_manager import DatabaseManager
 
 logging.basicConfig(
@@ -372,7 +370,7 @@ if __name__ == "__main__":
 
     # 過熱分析の詳細
     overheated = analyzer.is_market_overheated()
-    print(f"\n過熱分析:")
+    print("\n過熱分析:")
     print(f"  過熱指数数: {overheated['overheated_indices_count']}/{overheated['total_indices']}")
     for index_name, status in overheated["indices_status"].items():
         status_text = "過熱" if status["overheated"] else "正常"
@@ -380,7 +378,7 @@ if __name__ == "__main__":
 
     # セクター分析
     sector_analysis = analyzer.get_sector_rotation_analysis()
-    print(f"\nセクター分析:")
+    print("\nセクター分析:")
     print(f"  総セクター数: {sector_analysis.get('total_sectors', 0)}")
 
     sector_dist = sector_analysis.get("sector_distribution", {})

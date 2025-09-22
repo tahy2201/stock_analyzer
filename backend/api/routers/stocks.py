@@ -1,7 +1,7 @@
 from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from datetime import datetime
 
 from backend.shared.database.database_manager import DatabaseManager
 

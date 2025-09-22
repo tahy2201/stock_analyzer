@@ -1,10 +1,7 @@
 import logging
-from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-import pandas as pd
 import yfinance as yf
-
 from batch.data_collector import StockDataCollector
 
 try:

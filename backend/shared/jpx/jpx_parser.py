@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-
 from config.settings import DATA_DIR, JPX_FILE_NAME
 from database.database_manager import DatabaseManager
 

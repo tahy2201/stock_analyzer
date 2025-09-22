@@ -1,9 +1,9 @@
 from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from backend.services.filtering.company_filter_service import CompanyFilterService
-from backend.shared.database.database_manager import DatabaseManager
 
 router = APIRouter()
 
