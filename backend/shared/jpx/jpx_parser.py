@@ -7,7 +7,11 @@ import pandas as pd
 from config.settings import DATA_DIR, JPX_FILE_NAME
 from database.database_manager import DatabaseManager
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s], [%(levelname)s], %(name)s -- %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 

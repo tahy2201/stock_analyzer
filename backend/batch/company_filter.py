@@ -6,10 +6,15 @@ import pandas as pd
 import yfinance as yf
 
 from batch.data_collector import StockDataCollector
-from config.settings import MIN_EMPLOYEES, MIN_REVENUE
+
+try:
+    from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, MIN_EMPLOYEES, MIN_REVENUE
+except ModuleNotFoundError:
+    from config.settings import LOG_DATE_FORMAT, LOG_FORMAT, MIN_EMPLOYEES, MIN_REVENUE
+
 from database.database_manager import DatabaseManager
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
 
 

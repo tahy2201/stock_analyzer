@@ -5,9 +5,9 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from backend.shared.config.settings import DATABASE_PATH
+from backend.shared.config.settings import DATABASE_PATH, LOG_DATE_FORMAT, LOG_FORMAT
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
 
 

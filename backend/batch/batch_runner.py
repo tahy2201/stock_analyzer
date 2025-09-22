@@ -6,9 +6,10 @@ from backend.services.data.stock_data_service import StockDataService
 from backend.services.filtering.company_filter_service import CompanyFilterService
 from backend.services.jpx.jpx_service import JPXService
 from backend.shared.config.models import FilterCriteria
+from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
 from backend.shared.database.database_manager import DatabaseManager
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
 
 
