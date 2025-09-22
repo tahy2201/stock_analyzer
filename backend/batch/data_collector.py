@@ -7,12 +7,15 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 import yfinance as yf
-
 from config.settings import DATA_DAYS, MARKET_INDICES, YFINANCE_REQUEST_DELAY
 from database.database_manager import DatabaseManager
 from utils.jpx_parser import JPXParser
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s], [%(levelname)s], %(name)s -- %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 

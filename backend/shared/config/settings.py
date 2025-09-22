@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,7 +20,8 @@ JPX_URL = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
 JPX_FILE_NAME = "data_j.xls"
 
 LOG_LEVEL = "INFO"
-LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+LOG_FORMAT = "[%(asctime)s], [%(levelname)s], %(name)s -- %(message)s"
+LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 YFINANCE_REQUEST_DELAY = 0.1
 
