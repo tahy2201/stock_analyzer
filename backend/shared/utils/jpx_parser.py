@@ -4,8 +4,8 @@ from typing import Optional
 
 import pandas as pd
 
-from config.settings import DATA_DIR, JPX_FILE_NAME
-from database.database_manager import DatabaseManager
+from backend.shared.config.settings import DATA_DIR, JPX_FILE_NAME
+from backend.shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
