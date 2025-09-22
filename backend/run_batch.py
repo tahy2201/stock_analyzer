@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from backend.batch.batch_runner import BatchRunner
 from backend.shared.config.models import FilterCriteria
-from backend.shared.config.settings import LOG_FORMAT, LOG_LEVEL
+from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, LOG_LEVEL
 
 # 市場コードマッピング
 MARKET_CODE_MAPPING = {
@@ -26,6 +26,7 @@ MARKET_CODE_MAPPING = {
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
     format=LOG_FORMAT,
+    datefmt=LOG_DATE_FORMAT,
     handlers=[logging.FileHandler("batch_log.txt"), logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ def main() -> None:
         print("✅ バッチ処理が正常に完了しました")
 
     except Exception as e:
-        logger.error(f"❌ バッチ処理エラー: {e}")
+        logger.error(f"❌ バッチ処理エラー: {e}", exc_info=True)
         sys.exit(1)
 
 

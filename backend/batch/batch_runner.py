@@ -1,4 +1,5 @@
 import logging
+import traceback
 from typing import Optional
 
 from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
@@ -6,9 +7,10 @@ from backend.services.data.stock_data_service import StockDataService
 from backend.services.filtering.company_filter_service import CompanyFilterService
 from backend.services.jpx.jpx_service import JPXService
 from backend.shared.config.models import FilterCriteria
+from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
 from backend.shared.database.database_manager import DatabaseManager
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
 
 
@@ -32,25 +34,32 @@ class BatchRunner:
 
         try:
             # JPXファイル取り込み
-            self.run_jpx_update()
+            jpx_success = self.run_jpx_update()
+            if not jpx_success:
+                logger.error("JPXデータ更新に失敗しました。バッチ処理を中止します。")
+                raise RuntimeError("JPXデータ更新失敗")
 
             # 企業フィルタ
             targets = self.run_company_filtering(filter_criteria)
 
             if not targets:
-                logger.warning("フィルタリング対象が見つかりませんでした")
+                logger.warning("フィルタリング対象が見つかりませんでした。処理を終了します。")
                 return
 
             # 株価データ更新
-            self.run_stock_data_update(targets)
+            stock_results = self.run_stock_data_update(targets)
+            if not stock_results:
+                logger.warning("株価データ更新対象がありませんでした。処理をスキップします。")
 
             # 技術分析実行
-            self.run_technical_analysis(targets)
+            analysis_results = self.run_technical_analysis(targets)
+            if not analysis_results:
+                logger.warning("技術分析対象がありませんでした。処理をスキップします。")
 
             logger.info("バッチ処理完了")
 
         except Exception as e:
-            logger.error(f"バッチ処理エラー: {e}")
+            logger.error(f"バッチ処理エラー: {e}", exc_info=True)
             raise
 
     def run_jpx_update(self) -> bool:
@@ -65,12 +74,12 @@ class BatchRunner:
             if success:
                 logger.info("JPXデータ更新完了")
             else:
-                logger.warning("JPXデータ更新失敗")
+                logger.error("JPXデータ更新失敗")
 
             return success
 
         except Exception as e:
-            logger.error(f"JPXデータ更新エラー: {e}")
+            logger.error(f"JPXデータ更新エラー: {e}", exc_info=True)
             return False
 
     def run_company_filtering(self, filter_criteria: FilterCriteria) -> list[str]:
@@ -85,7 +94,7 @@ class BatchRunner:
             return symbols
 
         except Exception as e:
-            logger.error(f"企業フィルタリングエラー: {e}")
+            logger.error(f"企業フィルタリングエラー: {e}", exc_info=True)
             return []
 
     def run_stock_data_update(self, symbols: list[str]) -> dict:
@@ -101,10 +110,16 @@ class BatchRunner:
             ticker_success = sum(1 for success in results["ticker_updates"].values() if success)
 
             logger.info(f"株価データ更新完了: 価格 {price_success}件, ティッカー {ticker_success}件")
+
+            # 全ての銘柄で失敗した場合のみエラー（一部成功は正常）
+            if len(symbols) > 0 and price_success == 0 and ticker_success == 0:
+                logger.error("株価データ更新が全て失敗しました")
+                return {}
+
             return results
 
         except Exception as e:
-            logger.error(f"株価データ更新エラー: {e}")
+            logger.error(f"株価データ更新エラー: {e}", exc_info=True)
             return {}
 
     def run_technical_analysis(self, symbols: list[str]) -> dict:
@@ -119,10 +134,15 @@ class BatchRunner:
             success_count = sum(1 for result in results.values() if result is not None)
             logger.info(f"技術分析完了: 成功 {success_count}/{len(symbols)}")
 
+            # 全ての銘柄で失敗した場合のみエラー（一部成功は正常）
+            if len(symbols) > 0 and success_count == 0:
+                logger.error("技術分析が全て失敗しました")
+                return {}
+
             return results
 
         except Exception as e:
-            logger.error(f"技術分析エラー: {e}")
+            logger.error(f"技術分析エラー: {e}", exc_info=True)
             return {}
 
     def get_investment_candidates(
@@ -147,5 +167,5 @@ class BatchRunner:
             return candidates
 
         except Exception as e:
-            logger.error(f"投資候補銘柄取得エラー: {e}")
+            logger.error(f"投資候補銘柄取得エラー: {e}", exc_info=True)
             return []
