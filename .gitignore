@@ -66,6 +66,7 @@ development_instructions.md
 # Temporary files
 *.tmp
 *.temp
+tmp
 
 # Streamlit
 .streamlit/
