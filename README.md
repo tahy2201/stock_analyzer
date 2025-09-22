@@ -37,106 +37,69 @@ uv run python -c "from database.models import create_tables; create_tables()"
 
 ## 📊 使い方
 
-### 基本的な使い方
+### 🚀 バッチ処理（推奨）
 
-#### 1. 企業データの登録
+新しいbackend構造を使用したバッチ処理システムです。
+
+#### 基本コマンド
 ```bash
-# JPXデータ（手動ダウンロード後）
-uv run python utils/jpx_parser.py
+# プロジェクトルートディレクトリで実行
+cd stock_analyzer
 
-# またはテスト用サンプルデータ
-uv run python -c "
-import pandas as pd
-from database.database_manager import DatabaseManager
-test_data = [
-    {'symbol': '7203', 'name': 'トヨタ自動車', 'sector': 'Transportation', 'market': 'プライム', 'is_enterprise': True},
-    {'symbol': '6758', 'name': 'ソニーグループ', 'sector': 'Technology', 'market': 'プライム', 'is_enterprise': True}
-]
-db = DatabaseManager()
-for company in test_data:
-    db.insert_company(company)
-"
+# 特定銘柄のみ処理（高速テスト用）
+python backend/run_batch.py --symbols 7203
+
+# プライム市場のエンタープライズ企業のみ
+python backend/run_batch.py --markets prime --enterprise-only
+
+# 日次更新（推奨）
+python backend/run_batch.py --mode daily
+
+# 完全更新（初回またはデータリセット時）
+python backend/run_batch.py --mode full
 ```
 
-#### 2. 株価データ収集
+#### オプション
 ```bash
-# 特定銘柄のデータ収集
-uv run stock-analyzer --mode data-only --symbols 7203,6758
+# 複数銘柄指定
+python backend/run_batch.py --symbols 7203,6758,9984
 
-# 全エンタープライズ企業のデータ収集
-uv run stock-analyzer --mode data-only
+# 市場区分指定
+python backend/run_batch.py --markets prime,standard,growth
+
+# JPXデータ更新をスキップ
+python backend/run_batch.py --symbols 7203 --skip-jpx
+
+# エンタープライズ企業のみ処理
+python backend/run_batch.py --enterprise-only
 ```
 
-#### 3. 技術分析実行
+#### ヘルプ
 ```bash
-# 特定銘柄の技術分析
-uv run stock-analyzer --mode analysis-only --symbols 7203,6758
-
-# 全企業の技術分析
-uv run stock-analyzer --mode analysis-only
+python backend/run_batch.py --help
 ```
 
-#### 4. 投資候補の抽出
+### 🎯 投資候補の抽出
 ```bash
-uv run python -c "
-from batch.technical_analyzer import TechnicalAnalyzer
-analyzer = TechnicalAnalyzer()
+# 投資候補抽出
+python -c "
+from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
+analyzer = TechnicalAnalysisService()
 candidates = analyzer.get_investment_candidates()
 for i, candidate in enumerate(candidates[:5]):
     print(f'{i+1}. {candidate[\"symbol\"]} ({candidate[\"name\"]}): 乖離率{candidate.get(\"divergence_rate\", 0):+.1f}%, 配当{candidate.get(\"dividend_yield\", 0):.1f}%')
 "
 ```
 
-### バッチ処理コマンド
+### 🔧 個別サービスの使用
 
-#### 基本コマンド
-```bash
-# 日次更新（推奨）
-uv run stock-analyzer --mode daily
-
-# 完全更新（初回またはデータリセット時）
-uv run stock-analyzer --mode full
-
-# JPXデータ更新のみ
-uv run stock-analyzer --mode jpx-only
-
-# 企業フィルタリングのみ
-uv run stock-analyzer --mode filter-only
-```
-
-#### オプション
-```bash
-# 特定銘柄のみ処理
-uv run stock-analyzer --mode daily --symbols 7203,6758,9984
-
-# JPXデータ更新をスキップ
-uv run stock-analyzer --mode full --skip-jpx
-
-# エンタープライズ企業のみ処理
-uv run stock-analyzer --mode data-only --enterprise-only
-```
-
-### 各モジュールの個別実行
-
-#### 株価データ収集
+#### 技術分析サービス
 ```python
-from batch.data_collector import StockDataCollector
-collector = StockDataCollector()
+from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
+analyzer = TechnicalAnalysisService()
 
-# 特定銘柄
-results = collector.update_specific_stocks(['7203', '6758'])
-
-# 全銘柄
-results = collector.update_all_stocks()
-```
-
-#### 技術分析
-```python
-from batch.technical_analyzer import TechnicalAnalyzer
-analyzer = TechnicalAnalyzer()
-
-# 技術分析実行
-results = analyzer.analyze_batch_stocks(['7203', '6758'])
+# 特定銘柄の技術分析
+result = analyzer.analyze_single_stock('7203')
 
 # 投資候補抽出
 candidates = analyzer.get_investment_candidates(
@@ -146,21 +109,21 @@ candidates = analyzer.get_investment_candidates(
 )
 ```
 
-#### 市場分析
+#### データ収集サービス
 ```python
-from utils.market_analyzer import MarketAnalyzer
-market_analyzer = MarketAnalyzer()
+from backend.services.data.stock_data_service import StockDataService
+data_service = StockDataService()
 
-# 市場サマリー
-summary = market_analyzer.get_market_summary()
+# 株価データ収集
+results = data_service.collect_stock_prices(['7203', '6758'])
 
-# 過熱状況
-overheated = market_analyzer.is_market_overheated()
+# ティッカー情報収集
+results = data_service.collect_ticker_info(['7203', '6758'])
 ```
 
 ## ⚙️ 設定
 
-### config/settings.py での設定変更
+### backend/shared/config/settings.py での設定変更
 
 ```python
 # 分析パラメータ
@@ -224,7 +187,7 @@ print(ticker.history(period='5d'))
 ```bash
 # データベースを再作成
 rm database/stock_data.db
-uv run python -c "from database.models import create_tables; create_tables()"
+uv run python -c "from backend.shared.database.models import create_tables; create_tables()"
 ```
 
 #### 3. 投資候補が抽出されない
@@ -246,25 +209,36 @@ logging.basicConfig(level=logging.DEBUG)
 ```
 
 ## 📁 ディレクトリ構成
-
 ```
 stock_analyzer/
-├── batch/                    # バッチ処理モジュール
-│   ├── data_collector.py     # 株価データ収集
-│   ├── technical_analyzer.py # 技術分析
-│   ├── company_filter.py     # 企業フィルタリング
-│   └── run_batch.py          # バッチ統合実行
-├── database/                 # データベース関連
-│   ├── models.py             # テーブル定義
-│   ├── database_manager.py   # DB操作クラス
-│   └── stock_data.db         # SQLiteファイル
-├── config/                   # 設定ファイル
-│   └── settings.py           # システム設定
-├── utils/                    # ユーティリティ
-│   ├── jpx_parser.py         # JPXデータ解析
-│   └── market_analyzer.py    # 市場分析
-└── frontend/                 # UI関連（今後実装予定）
+├── backend/                  # バックエンドシステム
+│   ├── api/                  # FastAPI アプリケーション
+│   │   ├── main.py           # APIメインエントリーポイント
+│   │   └── routers/          # APIルーター
+│   ├── batch/                # バッチ処理
+│   │   └── batch_runner.py   # 統合バッチ処理
+│   ├── services/             # サービス層（Rails風）
+│   │   ├── analysis/         # 技術分析サービス
+│   │   ├── data/             # データ収集サービス
+│   │   ├── filtering/        # フィルタリングサービス
+│   │   └── jpx/              # JPXデータ処理サービス
+│   ├── shared/               # 共通モジュール
+│   │   ├── config/           # 設定・モデル
+│   │   ├── database/         # データベース管理
+│   │   ├── jpx/              # JPXパーサー
+│   │   └── utils/            # ユーティリティ
+│   └── run_batch.py          # バッチ処理エントリーポイント
+├── front/                    # React + TypeScript + Vite フロントエンド
+│   ├── src/
+│   │   ├── components/       # Reactコンポーネント
+│   │   ├── pages/            # ページコンポーネント
+│   │   └── services/         # API呼び出し
+│   └── package.json          # Node.js依存関係
+├── config/                   # 設定ファイル（共通）
+├── database/                 # データベース関連（共通）
+└── utils/                    # ユーティリティ（共通）
 ```
+
 
 ## 📝 注意事項
 

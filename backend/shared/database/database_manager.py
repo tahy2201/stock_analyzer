@@ -42,6 +42,44 @@ class DatabaseManager:
             logger.error(f"Error fetching latest price dates for {symbols}: {e}")
         return latest_dates
 
+    def get_latest_stock_price_date(self, symbol: str) -> Optional[datetime]:
+        """
+        指定された銘柄の最新株価データの日付を取得
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT MAX(date) FROM stock_prices WHERE symbol = ?",
+                    (symbol,)
+                )
+                result = cursor.fetchone()
+                if result and result[0]:
+                    return datetime.fromisoformat(result[0])
+                return None
+        except Exception as e:
+            logger.error(f"Error fetching latest price date for {symbol}: {e}")
+            return None
+
+    def get_latest_ticker_info_date(self, symbol: str) -> Optional[datetime]:
+        """
+        指定された銘柄の最新ticker_info更新日を取得
+        """
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "SELECT last_updated FROM ticker_info WHERE symbol = ? ORDER BY last_updated DESC LIMIT 1",
+                    (symbol,)
+                )
+                result = cursor.fetchone()
+                if result and result[0]:
+                    return datetime.fromisoformat(result[0])
+                return None
+        except Exception as e:
+            logger.error(f"Error fetching latest ticker info date for {symbol}: {e}")
+            return None
+
     def get_latest_ticker_info_dates(self, symbols: list[str]) -> dict[str, Optional[datetime]]:
         """
         指定された銘柄のticker_infoの最終更新日を取得
@@ -87,6 +125,23 @@ class DatabaseManager:
                 return True
         except Exception as e:
             logger.error(f"Error inserting company {company_data.get('symbol')}: {e}")
+            return False
+
+    def insert_companies(self, companies_data: list[dict]) -> bool:
+        """
+        複数の企業データを一括挿入
+        """
+        try:
+            success_count = 0
+            for company_data in companies_data:
+                if self.insert_company(company_data):
+                    success_count += 1
+
+            logger.info(f"企業データ一括挿入完了: 成功 {success_count}/{len(companies_data)}")
+            return success_count > 0
+
+        except Exception as e:
+            logger.error(f"企業データ一括挿入エラー: {e}")
             return False
 
     def insert_stock_prices(self, symbol: str, price_data: pd.DataFrame) -> bool:

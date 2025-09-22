@@ -21,12 +21,26 @@ class CompanyFilterService:
         try:
             logger.info(f"企業フィルタリング開始: {filter_criteria}")
 
-            # データベースからフィルタリング
+            # 特定銘柄が指定されている場合は、それらのみを返す
+            if filter_criteria.specific_symbols:
+                logger.info(f"特定銘柄フィルタ適用: {filter_criteria.specific_symbols}")
+                # 指定された銘柄がデータベースに存在するかチェック
+                valid_symbols = []
+                for symbol in filter_criteria.specific_symbols:
+                    if self.get_company_info(symbol):
+                        valid_symbols.append(symbol)
+                    else:
+                        logger.warning(f"銘柄 {symbol} はデータベースに存在しません")
+
+                logger.info(f"特定銘柄フィルタリング完了: {len(valid_symbols)} 銘柄")
+                return valid_symbols
+
+            # 通常のフィルタリング処理
             companies = self.db_manager.get_filtered_companies(
-                market_cap_min=filter_criteria.market_cap_min,
-                market_cap_max=filter_criteria.market_cap_max,
-                is_enterprise_only=filter_criteria.is_enterprise_only,
-                exclude_markets=filter_criteria.exclude_markets
+                divergence_min=filter_criteria.divergence_min,
+                dividend_yield_min=filter_criteria.dividend_yield_min,
+                dividend_yield_max=filter_criteria.dividend_yield_max,
+                is_enterprise_only=filter_criteria.is_enterprise_only
             )
 
             symbols = [company["symbol"] for company in companies]
@@ -43,8 +57,12 @@ class CompanyFilterService:
         企業の基本情報を取得
         """
         try:
-            companies = self.db_manager.get_filtered_companies(symbol_filter=symbol)
-            return companies[0] if companies else None
+            # 既存のDBメソッドを使用（symbol_filterパラメータは未対応のため、別途実装が必要）
+            with self.db_manager.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM companies WHERE symbol = ?", (symbol,))
+                result = cursor.fetchone()
+                return dict(result) if result else None
 
         except Exception as e:
             logger.error(f"企業情報取得エラー {symbol}: {e}")
@@ -55,7 +73,13 @@ class CompanyFilterService:
         全企業リストを取得
         """
         try:
-            companies = self.db_manager.get_filtered_companies(limit=limit)
+            # 既存のDBメソッドを使用してすべての企業を取得
+            companies = self.db_manager.get_filtered_companies(is_enterprise_only=False)
+
+            # limit適用
+            if limit:
+                companies = companies[:limit]
+
             logger.info(f"企業リスト取得完了: {len(companies)} 件")
             return companies
 

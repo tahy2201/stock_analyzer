@@ -23,7 +23,7 @@ class JPXService:
             logger.info("JPXデータ更新開始")
 
             # JPXファイルの読み込み
-            companies_data = self.jpx_parser.parse_companies()
+            companies_data = self.jpx_parser.parse_jpx_excel()
 
             if not companies_data:
                 logger.warning("JPXデータが空です")
