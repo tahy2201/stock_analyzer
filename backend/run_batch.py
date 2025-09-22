@@ -90,7 +90,6 @@ def main() -> None:
 
     except Exception as e:
         logger.error(f"❌ バッチ処理エラー: {e}", exc_info=True)
-        print(f"❌ バッチ処理が異常終了しました: {e}")
         sys.exit(1)
 
 
