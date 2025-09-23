@@ -11,17 +11,11 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from backend.services.jpx.jpx_service import JPXService
-from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, LOG_LEVEL
+from backend.shared.config.logging_config import setup_jpx_logging
 from backend.shared.database.database_manager import DatabaseManager
 
-# ログ設定
-logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL),
-    format=LOG_FORMAT,
-    datefmt=LOG_DATE_FORMAT,
-    handlers=[logging.FileHandler("jpx_batch_log.txt"), logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger(__name__)
+# ログ設定（JPX専用のログファイルを使用）
+logger = setup_jpx_logging()
 
 
 class JPXBatchRunner:

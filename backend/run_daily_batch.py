@@ -13,7 +13,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from backend.batch.batch_runner import BatchRunner
 from backend.shared.config.models import FilterCriteria
-from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, LOG_LEVEL
+from backend.shared.config.logging_config import setup_batch_logging
 
 # 市場コードマッピング
 MARKET_CODE_MAPPING = {
@@ -23,13 +23,7 @@ MARKET_CODE_MAPPING = {
 }
 
 # ログ設定
-logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL),
-    format=LOG_FORMAT,
-    datefmt=LOG_DATE_FORMAT,
-    handlers=[logging.FileHandler("batch_log.txt"), logging.StreamHandler(sys.stdout)],
-)
-logger = logging.getLogger(__name__)
+logger = setup_batch_logging()
 
 
 def parse_param() -> FilterCriteria:
