@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-株式分析システム バッチ処理エントリーポイント
-新しいbackend構造を使用
+株式分析システム 日次バッチ処理
+株価データ更新と技術分析を実行する日次バッチ
 """
 import argparse
 import logging
@@ -36,16 +36,15 @@ def parse_param() -> FilterCriteria:
     """
     コマンドライン引数を解析してフィルタ条件を作成
     """
-    parser = argparse.ArgumentParser(description="株式分析システム バッチ処理 (Backend構造)")
+    parser = argparse.ArgumentParser(description="株式分析システム 日次バッチ処理")
 
     parser.add_argument(
         "--mode",
-        choices=["full", "daily", "jpx-only", "data-only", "analysis-only", "filter-only"],
+        choices=["full", "daily", "data-only", "analysis-only", "filter-only"],
         default="daily",
         help="実行モード",
     )
     parser.add_argument("--symbols", type=str, help="特定銘柄のみ処理（カンマ区切り）")
-    parser.add_argument("--skip-jpx", action="store_true", help="JPXデータ更新をスキップ")
     parser.add_argument(
         "--enterprise-only", action="store_true", default=True, help="エンタープライズ企業のみ処理"
     )
@@ -76,20 +75,20 @@ def parse_param() -> FilterCriteria:
 
 
 def main() -> None:
-    print("🚀 株式分析システム バッチ処理を開始します (Backend構造)")
+    print("🚀 株式分析システム 日次バッチ処理を開始します")
 
     try:
         # コマンドライン引数からフィルタを作成
         filter_criteria = parse_param()
 
-        # 新しいバックエンド構造のBatchRunnerを使用
+        # 日次バッチ処理のBatchRunnerを使用
         batch_runner = BatchRunner()
         batch_runner.exec(filter_criteria)
 
-        print("✅ バッチ処理が正常に完了しました")
+        print("✅ 日次バッチ処理が正常に完了しました")
 
     except Exception as e:
-        logger.error(f"❌ バッチ処理エラー: {e}", exc_info=True)
+        logger.error(f"❌ 日次バッチ処理エラー: {e}", exc_info=True)
         sys.exit(1)
 
 

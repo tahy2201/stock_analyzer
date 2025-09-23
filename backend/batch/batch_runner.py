@@ -5,7 +5,6 @@ from typing import Optional
 from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
 from backend.services.data.stock_data_service import StockDataService
 from backend.services.filtering.company_filter_service import CompanyFilterService
-from backend.services.jpx.jpx_service import JPXService
 from backend.shared.config.models import FilterCriteria
 from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
 from backend.shared.database.database_manager import DatabaseManager
@@ -21,7 +20,6 @@ class BatchRunner:
         self.db_manager = db_manager or DatabaseManager()
 
         # サービスクラスの初期化
-        self.jpx_service = JPXService(self.db_manager)
         self.company_filter_service = CompanyFilterService(self.db_manager)
         self.stock_data_service = StockDataService(self.db_manager)
         self.technical_analysis_service = TechnicalAnalysisService(self.db_manager)
@@ -33,12 +31,6 @@ class BatchRunner:
         logger.info("バッチ処理開始")
 
         try:
-            # JPXファイル取り込み
-            jpx_success = self.run_jpx_update()
-            if not jpx_success:
-                logger.error("JPXデータ更新に失敗しました。バッチ処理を中止します。")
-                raise RuntimeError("JPXデータ更新失敗")
-
             # 企業フィルタ
             targets = self.run_company_filtering(filter_criteria)
 
@@ -62,25 +54,6 @@ class BatchRunner:
             logger.error(f"バッチ処理エラー: {e}", exc_info=True)
             raise
 
-    def run_jpx_update(self) -> bool:
-        """
-        JPXデータ更新を実行
-        """
-        logger.info("JPXデータ更新開始")
-
-        try:
-            success = self.jpx_service.update_jpx_data()
-
-            if success:
-                logger.info("JPXデータ更新完了")
-            else:
-                logger.error("JPXデータ更新失敗")
-
-            return success
-
-        except Exception as e:
-            logger.error(f"JPXデータ更新エラー: {e}", exc_info=True)
-            return False
 
     def run_company_filtering(self, filter_criteria: FilterCriteria) -> list[str]:
         """
