@@ -1,12 +1,11 @@
 import logging
 from typing import Optional
 
-from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
+from backend.shared.config.logging_config import get_service_logger
 from backend.shared.database.database_manager import DatabaseManager
 from backend.shared.utils.jpx_parser import JPXParser
 
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-logger = logging.getLogger(__name__)
+logger = get_service_logger(__name__)
 
 
 class JPXService:

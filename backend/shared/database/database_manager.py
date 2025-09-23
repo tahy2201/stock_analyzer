@@ -5,10 +5,10 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from backend.shared.config.settings import DATABASE_PATH, LOG_DATE_FORMAT, LOG_FORMAT
+from backend.shared.config.settings import DATABASE_PATH
+from backend.shared.config.logging_config import get_service_logger
 
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-logger = logging.getLogger(__name__)
+logger = get_service_logger(__name__)
 
 
 class DatabaseManager:

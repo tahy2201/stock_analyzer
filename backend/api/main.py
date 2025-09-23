@@ -2,6 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.routers import analysis, companies, stocks
+from backend.shared.config.logging_config import setup_api_logging
+
+# ログ設定
+logger = setup_api_logging()
 
 app = FastAPI(
     title="株式分析システム API",
@@ -25,10 +29,12 @@ app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 
 @app.get("/")
 async def root():
+    logger.info("APIルートエンドポイントへのアクセス")
     return {"message": "株式分析システム API"}
 
 @app.get("/api/health")
 async def health_check():
+    logger.info("ヘルスチェックエンドポイントへのアクセス")
     return {"status": "healthy"}
 
 if __name__ == "__main__":

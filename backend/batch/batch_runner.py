@@ -6,11 +6,10 @@ from backend.services.analysis.technical_analyzer import TechnicalAnalysisServic
 from backend.services.data.stock_data_service import StockDataService
 from backend.services.filtering.company_filter_service import CompanyFilterService
 from backend.shared.config.models import FilterCriteria
-from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
+from backend.shared.config.logging_config import get_service_logger
 from backend.shared.database.database_manager import DatabaseManager
 
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-logger = logging.getLogger(__name__)
+logger = get_service_logger(__name__)
 
 
 class BatchRunner:
