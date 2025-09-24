@@ -2,7 +2,7 @@ import logging
 import traceback
 from typing import Optional
 
-from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
+from backend.services.analysis.technical_analyzer import TechnicalAnalyzer
 from backend.services.data.stock_data_service import StockDataService
 from backend.services.filtering.company_filter_service import CompanyFilterService
 from backend.shared.config.models import FilterCriteria
@@ -21,7 +21,7 @@ class BatchRunner:
         # サービスクラスの初期化
         self.company_filter_service = CompanyFilterService(self.db_manager)
         self.stock_data_service = StockDataService(self.db_manager)
-        self.technical_analysis_service = TechnicalAnalysisService(self.db_manager)
+        self.technical_analysis_service = TechnicalAnalyzer(self.db_manager)
 
     def exec(self, filter_criteria: FilterCriteria) -> None:
         """

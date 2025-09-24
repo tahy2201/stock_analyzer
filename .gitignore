@@ -28,7 +28,7 @@ MANIFEST
 database/stock_data.db
 
 # Data files
-data/
+./data
 *.xls
 *.xlsx
 *.csv

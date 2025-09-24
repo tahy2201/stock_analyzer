@@ -38,34 +38,46 @@ uv run python -c "from database.models import create_tables; create_tables()"
 #### 起動
 ```bash
 # プライム市場のエンタープライズ企業のみ
-python backend/run_batch.py --markets prime
+python backend/batch/stock_updater.py --markets prime
 
 # 日次更新（推奨）
-python backend/run_batch.py --mode daily
+python backend/batch/stock_updater.py --mode daily
 
 # 完全更新（初回またはデータリセット時）
-python backend/run_batch.py --mode full
+python backend/batch/stock_updater.py --mode full
 ```
 
 #### オプション
 ```bash
 # 複数銘柄指定
-python backend/run_batch.py --symbols 7203,6758,9984
+python backend/batch/stock_updater.py --symbols 7203,6758,9984
 
 # 市場区分指定
-python backend/run_batch.py --markets prime,standard,growth
+python backend/batch/stock_updater.py --markets prime,standard,growth
 
 # JPXデータ更新をスキップ
-python backend/run_batch.py --symbols 7203 --skip-jpx
+python backend/batch/stock_updater.py --symbols 7203 --skip-jpx
 
 # エンタープライズ企業のみ処理
-python backend/run_batch.py --enterprise-only
+python backend/batch/stock_updater.py --enterprise-only
 ```
 
 #### ヘルプ
 ```bash
-python backend/run_batch.py --help
+python backend/batch/stock_updater.py --help
 ```
+
+### 🏢 JPXファイル取り込み（初回セットアップ）
+
+JPX（日本取引所グループ）の上場企業一覧を取り込みます。通常は初回のみ実行します。
+
+```bash
+# JPXファイル取り込み（初回セットアップ時）
+python backend/batch/jpx_importer.py
+```
+
+**注意**: 事前にJPXの上場企業一覧Excelファイルを`data/`フォルダに配置してください。
+- ダウンロード先: https://www.jpx.co.jp/markets/statistics-equities/misc/01.html
 
 ## 📈 データ構造
 

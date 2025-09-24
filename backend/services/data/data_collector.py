@@ -7,9 +7,9 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 import yfinance as yf
-from config.settings import DATA_DAYS, MARKET_INDICES, YFINANCE_REQUEST_DELAY
-from database.database_manager import DatabaseManager
-from utils.jpx_parser import JPXParser
+from backend.shared.config.settings import DATA_DAYS, MARKET_INDICES, YFINANCE_REQUEST_DELAY
+from backend.shared.database.database_manager import DatabaseManager
+from backend.shared.utils.jpx_parser import JPXParser
 
 logging.basicConfig(
     level=logging.INFO,
