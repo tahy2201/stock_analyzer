@@ -3,26 +3,20 @@ import logging
 from typing import Optional
 
 import pandas as pd
-
-from backend.shared.config.settings import (
-    DIVERGENCE_THRESHOLD,
-    DIVIDEND_YIELD_MAX,
-    DIVIDEND_YIELD_MIN,
-    LOG_DATE_FORMAT,
-    LOG_FORMAT,
-    MA_PERIOD,
-)
+from backend.shared.config.settings import DIVERGENCE_THRESHOLD, DIVIDEND_YIELD_MAX, DIVIDEND_YIELD_MIN, MA_PERIOD
 from backend.shared.database.database_manager import DatabaseManager
 
-logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s], [%(levelname)s], %(name)s -- %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 
-class TechnicalAnalysisService:
-    """技術分析を担当するサービスクラス"""
-
-    def __init__(self, db_manager: Optional[DatabaseManager] = None) -> None:
-        self.db_manager = db_manager or DatabaseManager()
+class TechnicalAnalyzer:
+    def __init__(self) -> None:
+        self.db_manager = DatabaseManager()
 
     def calculate_moving_average(self, prices: pd.Series, period: int = MA_PERIOD) -> pd.Series:
         """
@@ -388,5 +382,33 @@ class TechnicalAnalysisService:
             return "Flat"
 
 
-# 後方互換性のためのエイリアス
-TechnicalAnalyzer = TechnicalAnalysisService
+if __name__ == "__main__":
+    analyzer = TechnicalAnalyzer()
+
+    # テスト用: 特定銘柄の技術分析
+    test_symbols = ["7203", "6758", "9984"]
+
+    print("技術分析テストを開始...")
+    results = analyzer.analyze_batch_stocks(test_symbols)
+
+    print("\n技術分析結果:")
+    for symbol, result in results.items():
+        if result:
+            print(
+                f"  {symbol}: 乖離率 {result['divergence_rate']}%, 配当利回り {result['dividend_yield']}%"
+            )
+        else:
+            print(f"  {symbol}: 分析失敗")
+
+    # 投資候補の抽出テスト
+    print("\n投資候補銘柄の抽出...")
+    candidates = analyzer.get_investment_candidates()
+
+    print(f"候補銘柄数: {len(candidates)}")
+    for candidate in candidates[:5]:  # 上位5銘柄
+        print(
+            f"  {candidate['symbol']} ({candidate['name']}): "
+            f"乖離率 {candidate.get('divergence_rate', 0)}%, "
+            f"配当 {candidate.get('dividend_yield', 0)}%, "
+            f"スコア {candidate.get('analysis_score', 0)}"
+        )
