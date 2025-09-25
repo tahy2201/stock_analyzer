@@ -18,6 +18,7 @@ cd stock_analyzer
 
 ### 2. 依存関係のインストール
 ```bash
+cd backend
 uv sync
 ```
 
@@ -37,34 +38,37 @@ uv run python -c "from database.models import create_tables; create_tables()"
 
 #### 起動
 ```bash
+# backend ディレクトリから実行
+cd backend
+
 # プライム市場のエンタープライズ企業のみ
-python backend/batch/stock_updater.py --markets prime
+uv run python batch/stock_updater.py --markets prime
 
 # 日次更新（推奨）
-python backend/batch/stock_updater.py --mode daily
+uv run python batch/stock_updater.py --mode daily
 
 # 完全更新（初回またはデータリセット時）
-python backend/batch/stock_updater.py --mode full
+uv run python batch/stock_updater.py --mode full
 ```
 
 #### オプション
 ```bash
 # 複数銘柄指定
-python backend/batch/stock_updater.py --symbols 7203,6758,9984
+uv run python batch/stock_updater.py --symbols 7203,6758,9984
 
 # 市場区分指定
-python backend/batch/stock_updater.py --markets prime,standard,growth
+uv run python batch/stock_updater.py --markets prime,standard,growth
 
 # JPXデータ更新をスキップ
-python backend/batch/stock_updater.py --symbols 7203 --skip-jpx
+uv run python batch/stock_updater.py --symbols 7203 --skip-jpx
 
 # エンタープライズ企業のみ処理
-python backend/batch/stock_updater.py --enterprise-only
+uv run python batch/stock_updater.py --enterprise-only
 ```
 
 #### ヘルプ
 ```bash
-python backend/batch/stock_updater.py --help
+uv run python batch/stock_updater.py --help
 ```
 
 ### 🏢 JPXファイル取り込み（初回セットアップ）
@@ -72,12 +76,29 @@ python backend/batch/stock_updater.py --help
 JPX（日本取引所グループ）の上場企業一覧を取り込みます。通常は初回のみ実行します。
 
 ```bash
+# backend ディレクトリから実行
+cd backend
+
 # JPXファイル取り込み（初回セットアップ時）
-python backend/batch/jpx_importer.py
+uv run python batch/jpx_importer.py
 ```
 
 **注意**: 事前にJPXの上場企業一覧Excelファイルを`data/`フォルダに配置してください。
 - ダウンロード先: https://www.jpx.co.jp/markets/statistics-equities/misc/01.html
+
+### 🚀 APIサーバー起動
+
+FastAPIサーバーを起動して、フロントエンドからアクセス可能にします。
+
+```bash
+# backend ディレクトリから実行
+cd backend
+
+# APIサーバー起動
+uv run python api/main.py
+```
+
+サーバーは http://localhost:8000 で起動します。
 
 ## 📈 データ構造
 
