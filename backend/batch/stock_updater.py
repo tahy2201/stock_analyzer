@@ -21,7 +21,7 @@ class BatchRunner:
         # サービスクラスの初期化
         self.company_filter_service = CompanyFilterService(self.db_manager)
         self.stock_data_service = StockDataService(self.db_manager)
-        self.technical_analysis_service = TechnicalAnalyzer(self.db_manager)
+        self.technical_analysis_service = TechnicalAnalyzer()
 
     def exec(self, filter_criteria: FilterCriteria) -> None:
         """
