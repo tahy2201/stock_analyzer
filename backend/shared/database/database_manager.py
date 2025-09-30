@@ -1,12 +1,11 @@
-import logging
 import sqlite3
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Optional
 
 import pandas as pd
 
-from backend.shared.config.settings import DATABASE_PATH
 from backend.shared.config.logging_config import get_service_logger
+from backend.shared.config.settings import DATABASE_PATH
 
 logger = get_service_logger(__name__)
 
@@ -99,13 +98,13 @@ class DatabaseManager:
             logger.error(f"Error fetching latest ticker info dates for {symbols}: {e}")
         return latest_dates
 
-    def insert_company(self, company_data: Dict) -> bool:
+    def insert_company(self, company_data: dict) -> bool:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
-                    INSERT OR REPLACE INTO companies 
+                    INSERT OR REPLACE INTO companies
                     (symbol, name, sector, market, employees, revenue, is_enterprise, dividend_yield, last_updated)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -150,9 +149,11 @@ class DatabaseManager:
                 # データの準備
                 data_copy = price_data.copy()
                 data_copy["symbol"] = symbol
-                data_copy.index = data_copy.index.strftime("%Y-%m-%d")
+                # DatetimeIndexを文字列に変換
+                datetime_index = pd.to_datetime(data_copy.index)
+                data_copy.index = datetime_index.strftime("%Y-%m-%d")
                 data_copy.reset_index(inplace=True)
-                data_copy.rename(columns={"Date": "date"}, inplace=True)
+                data_copy.rename(columns={"index": "date"}, inplace=True)
 
                 # 既存データの削除（同じシンボルのデータ）
                 cursor = conn.cursor()
@@ -172,9 +173,11 @@ class DatabaseManager:
                 # データの準備
                 data_copy = indicators_data.copy()
                 data_copy["symbol"] = symbol
-                data_copy.index = data_copy.index.strftime("%Y-%m-%d")
+                # DatetimeIndexを文字列に変換
+                datetime_index = pd.to_datetime(data_copy.index)
+                data_copy.index = datetime_index.strftime("%Y-%m-%d")
                 data_copy.reset_index(inplace=True)
-                data_copy.rename(columns={"Date": "date"}, inplace=True)
+                data_copy.rename(columns={"index": "date"}, inplace=True)
 
                 # 既存データの削除（同じシンボルのデータ）
                 cursor = conn.cursor()
@@ -189,8 +192,8 @@ class DatabaseManager:
             return False
 
     def get_companies(
-        self, is_enterprise_only: bool = False, markets: Optional[List[str]] = None
-    ) -> List[Dict]:
+        self, is_enterprise_only: bool = False, markets: Optional[list[str]] = None
+    ) -> list[dict]:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM companies"
@@ -214,7 +217,7 @@ class DatabaseManager:
             logger.error(f"Error getting companies: {e}")
             return []
 
-    def get_company_by_symbol(self, symbol: str) -> Optional[Dict]:
+    def get_company_by_symbol(self, symbol: str) -> Optional[dict]:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
@@ -231,7 +234,7 @@ class DatabaseManager:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM stock_prices WHERE symbol = ?"
-                params = [symbol]
+                params: list[Any] = [symbol]
 
                 if start_date:
                     query += " AND date >= ?"
@@ -243,7 +246,7 @@ class DatabaseManager:
 
                 query += " ORDER BY date"
 
-                df = pd.read_sql_query(query, conn, params=params)
+                df = pd.read_sql_query(query, conn, params=params or None)
                 if not df.empty:
                     df["date"] = pd.to_datetime(df["date"])
                     df.set_index("date", inplace=True)
@@ -258,7 +261,7 @@ class DatabaseManager:
         try:
             with self.get_connection() as conn:
                 query = "SELECT * FROM technical_indicators WHERE symbol = ?"
-                params = [symbol]
+                params: list[Any] = [symbol]
 
                 if start_date:
                     query += " AND date >= ?"
@@ -270,7 +273,7 @@ class DatabaseManager:
 
                 query += " ORDER BY date"
 
-                df = pd.read_sql_query(query, conn, params=params)
+                df = pd.read_sql_query(query, conn, params=params or None)
                 if not df.empty:
                     df["date"] = pd.to_datetime(df["date"])
                     df.set_index("date", inplace=True)
@@ -286,7 +289,8 @@ class DatabaseManager:
         dividend_yield_min: Optional[float] = None,
         dividend_yield_max: Optional[float] = None,
         is_enterprise_only: bool = True,
-    ) -> List[Dict]:
+        market_filter: Optional[str] = None,
+    ) -> list[dict]:
         try:
             with self.get_connection() as conn:
                 query = """
@@ -294,11 +298,11 @@ class DatabaseManager:
                     FROM companies c
                     JOIN technical_indicators ti ON c.symbol = ti.symbol
                     WHERE ti.date = (
-                        SELECT MAX(date) FROM technical_indicators ti2 
+                        SELECT MAX(date) FROM technical_indicators ti2
                         WHERE ti2.symbol = c.symbol
                     )
                 """
-                params = []
+                params: list[Any] = []
 
                 if is_enterprise_only:
                     query += " AND c.is_enterprise = 1"
@@ -319,6 +323,10 @@ class DatabaseManager:
                     query += " AND ti.dividend_yield <= ?"
                     params.append(dividend_yield_max)
 
+                if market_filter is not None:
+                    query += " AND c.market = ?"
+                    params.append(market_filter)
+
                 cursor = conn.cursor()
                 cursor.execute(query, params)
                 return [dict(row) for row in cursor.fetchall()]
@@ -326,13 +334,13 @@ class DatabaseManager:
             logger.error(f"Error getting filtered companies: {e}")
             return []
 
-    def delete_old_data(self, symbol: str, table: str, days_to_keep: int = 365):
+    def delete_old_data(self, symbol: str, table: str, days_to_keep: int = 365) -> None:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
                     f"""
-                    DELETE FROM {table} 
+                    DELETE FROM {table}
                     WHERE symbol = ? AND date < date('now', '-{days_to_keep} days')
                 """,
                     (symbol,),
@@ -342,7 +350,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error deleting old data for {symbol}: {e}")
 
-    def insert_ticker_info(self, symbol: str, ticker_info: Dict) -> bool:
+    def insert_ticker_info(self, symbol: str, ticker_info: dict) -> bool:
         """
         ティッカー情報をデータベースに保存
         """
@@ -402,7 +410,7 @@ class DatabaseManager:
             logger.error(f"Error inserting ticker info for {symbol}: {e}")
             return False
 
-    def get_ticker_info(self, symbol: str) -> Optional[Dict]:
+    def get_ticker_info(self, symbol: str) -> Optional[dict]:
         """
         ティッカー情報を取得
         """
@@ -416,7 +424,7 @@ class DatabaseManager:
             logger.error(f"Error getting ticker info for {symbol}: {e}")
             return None
 
-    def get_symbols_needing_ticker_update(self, days_old: int = 30) -> List[str]:
+    def get_symbols_needing_ticker_update(self, days_old: int = 30) -> list[str]:
         """
         ティッカー情報の更新が必要な銘柄一覧を取得（月1更新用）
         """
@@ -437,7 +445,7 @@ class DatabaseManager:
             logger.error(f"Error getting symbols needing ticker update: {e}")
             return []
 
-    def get_database_stats(self) -> Dict:
+    def get_database_stats(self) -> dict:
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
