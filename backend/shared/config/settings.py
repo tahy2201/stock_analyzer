@@ -1,6 +1,7 @@
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BASE_DIR.parent.parent  # stock_analyzerディレクトリ
 
 MA_PERIOD = 25
 DIVERGENCE_THRESHOLD = 5.0
@@ -13,8 +14,8 @@ MIN_REVENUE = 10_000_000_000
 DATA_DAYS = 252
 BATCH_SIZE = 50
 
-DATABASE_PATH = BASE_DIR / "database" / "stock_data.db"
-DATA_DIR = BASE_DIR / "data"
+DATABASE_PATH = PROJECT_ROOT / "data" / "stock_data.db"  # プロジェクトルートのdataディレクトリに統一
+DATA_DIR = PROJECT_ROOT / "data"  # プロジェクトルートのdataディレクトリ
 
 JPX_URL = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
 JPX_FILE_NAME = "data_j.xls"

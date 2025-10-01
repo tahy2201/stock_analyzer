@@ -1,16 +1,21 @@
 import logging
+import sys
 import traceback
+from pathlib import Path
 from typing import Optional
+
+import click
+import click_log
+
+# プロジェクトルートをPythonパスに追加
+sys.path.append(str(Path(__file__).parent.parent))
 
 from services.analysis.technical_analyzer import TechnicalAnalyzer
 from services.data.stock_data_service import StockDataService
 from services.filtering.company_filter_service import CompanyFilterService
 from shared.config.models import FilterCriteria
-from shared.config.logging_config import get_service_logger
+from shared.config.logging_config import get_click_logger
 from shared.database.database_manager import DatabaseManager
-
-logger = get_service_logger(__name__)
-
 
 class BatchRunner:
     """バッチ処理の実行を管理するメインクラス"""
@@ -83,10 +88,14 @@ class BatchRunner:
 
             logger.info(f"株価データ更新完了: 価格 {price_success}件, ティッカー {ticker_success}件")
 
-            # 全ての銘柄で失敗した場合のみエラー（一部成功は正常）
+            # 全ての銘柄で失敗した場合のみエラー（更新対象なしは正常）
             if len(symbols) > 0 and price_success == 0 and ticker_success == 0:
-                logger.error("株価データ更新が全て失敗しました")
-                return {}
+                # 更新対象がなかった場合は正常終了
+                if not results["price_updates"] and not results["ticker_updates"]:
+                    logger.info("全ての銘柄で最新データが既に存在します")
+                else:
+                    logger.error("株価データ更新が全て失敗しました")
+                    return {}
 
             return results
 
@@ -141,3 +150,67 @@ class BatchRunner:
         except Exception as e:
             logger.error(f"投資候補銘柄取得エラー: {e}", exc_info=True)
             return []
+
+
+# グローバルloggerを作成（main関数とBatchRunnerで共有）
+logger = get_click_logger(__name__)
+
+@click.command()
+@click_log.simple_verbosity_option(logger)
+@click.option(
+    "--markets",
+    type=click.Choice(['prime', 'standard', 'growth', 'all']),
+    help="対象市場を指定"
+)
+@click.option(
+    "--symbols",
+    multiple=True,
+    help="銘柄コードを指定（複数可）"
+)
+def main(markets: str | None, symbols: tuple[str, ...]) -> None:
+    """株価データ更新バッチ処理
+
+    指定した市場または銘柄の株価データを更新します。
+
+    例:
+    \b
+        # プライム市場の株価更新
+        uv run python batch/stock_updater.py --markets prime
+
+        # 特定銘柄の株価更新
+        uv run python batch/stock_updater.py --symbols 7203 --symbols 6758
+    """
+
+    if not markets and not symbols:
+        logger.error("--markets または --symbols のいずれかを指定してください")
+        sys.exit(1)
+
+    logger.info("株価データ更新バッチを開始します")
+
+    try:
+        batch_runner = BatchRunner()
+
+        # FilterCriteriaを作成
+        filter_criteria = None
+        if symbols:
+            symbol_list = list(symbols)
+            logger.info(f"指定銘柄: {symbol_list}")
+            filter_criteria = FilterCriteria(specific_symbols=symbol_list)
+        elif markets:
+            logger.info(f"対象市場: {markets}")
+            filter_criteria = FilterCriteria(markets=[markets] if markets != 'all' else None)
+
+        if filter_criteria:
+            # バッチ処理を実行
+            batch_runner.exec(filter_criteria)
+        else:
+            logger.error("FilterCriteriaの作成に失敗しました")
+            sys.exit(1)
+
+    except Exception as e:
+        logger.error(f"株価データ更新バッチエラー: {e}", exc_info=True)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
