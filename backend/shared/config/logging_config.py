@@ -145,3 +145,18 @@ def get_service_logger(service_name: str, log_dir: Optional[Path] = None) -> log
         logger.addHandler(console_handler)
 
     return logger
+
+
+def get_click_logger(service_name: str) -> logging.Logger:
+    """
+    click_log用のログ設定
+    click_logが自動的にハンドラーを管理するため、独自のハンドラーは追加しない
+    """
+    logger = logging.getLogger(service_name)
+    logger.setLevel(getattr(logging, LOG_LEVEL))
+
+    # click_logがハンドラーを管理するため、独自のハンドラーは追加しない
+    # propagate=Trueにして親ロガーへ伝搬させる（click_logが処理）
+    logger.propagate = True
+
+    return logger

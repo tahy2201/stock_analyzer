@@ -14,11 +14,11 @@ import click_log
 sys.path.append(str(Path(__file__).parent.parent))
 
 from services.jpx.jpx_service import JPXService
-from shared.config.logging_config import setup_jpx_logging
+from shared.config.logging_config import get_click_logger
 from shared.database.database_manager import DatabaseManager
 
-# ログ設定（JPX専用のログファイルを使用）
-logger = setup_jpx_logging()
+# ログ設定（click_log用）
+logger = get_click_logger(__name__)
 
 
 class JPXBatchRunner:
