@@ -4,8 +4,8 @@ from typing import Optional
 
 import pandas as pd
 
-from backend.shared.config.settings import DATA_DIR, JPX_FILE_NAME
-from backend.shared.database.database_manager import DatabaseManager
+from shared.config.settings import DATA_DIR, JPX_FILE_NAME
+from shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(
     level=logging.INFO,

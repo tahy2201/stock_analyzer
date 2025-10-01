@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.shared.database.database_manager import DatabaseManager
+from shared.database.database_manager import DatabaseManager
 
 router = APIRouter()
 
@@ -103,7 +103,7 @@ async def get_stock_detail(symbol: str, days: int = 100):
         # 動的配当利回り計算
         dividend_yield = None
         if current_price:
-            from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
+            from services.analysis.technical_analyzer import TechnicalAnalysisService
             analyzer = TechnicalAnalysisService()
             dividend_yield = analyzer.get_dividend_yield(symbol, current_price)
 

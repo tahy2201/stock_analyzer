@@ -1,9 +1,9 @@
 import logging
 from typing import Optional
 
-from backend.shared.config.models import FilterCriteria
-from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
-from backend.shared.database.database_manager import DatabaseManager
+from shared.config.models import FilterCriteria
+from shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
+from shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)

@@ -6,8 +6,8 @@ from typing import Optional
 import pandas as pd
 import yfinance as yf
 
-from backend.shared.config.settings import YFINANCE_REQUEST_DELAY
-from backend.shared.database.database_manager import DatabaseManager
+from shared.config.settings import YFINANCE_REQUEST_DELAY
+from shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

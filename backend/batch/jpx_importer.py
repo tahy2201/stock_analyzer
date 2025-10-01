@@ -10,9 +10,9 @@ from pathlib import Path
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
 
-from backend.services.jpx.jpx_service import JPXService
-from backend.shared.config.logging_config import setup_jpx_logging
-from backend.shared.database.database_manager import DatabaseManager
+from services.jpx.jpx_service import JPXService
+from shared.config.logging_config import setup_jpx_logging
+from shared.database.database_manager import DatabaseManager
 
 # ログ設定（JPX専用のログファイルを使用）
 logger = setup_jpx_logging()

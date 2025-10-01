@@ -2,12 +2,12 @@ import logging
 import traceback
 from typing import Optional
 
-from backend.services.analysis.technical_analyzer import TechnicalAnalyzer
-from backend.services.data.stock_data_service import StockDataService
-from backend.services.filtering.company_filter_service import CompanyFilterService
-from backend.shared.config.models import FilterCriteria
-from backend.shared.config.logging_config import get_service_logger
-from backend.shared.database.database_manager import DatabaseManager
+from services.analysis.technical_analyzer import TechnicalAnalyzer
+from services.data.stock_data_service import StockDataService
+from services.filtering.company_filter_service import CompanyFilterService
+from shared.config.models import FilterCriteria
+from shared.config.logging_config import get_service_logger
+from shared.database.database_manager import DatabaseManager
 
 logger = get_service_logger(__name__)
 

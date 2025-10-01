@@ -24,7 +24,8 @@ uv sync
 
 ### 3. データベース初期化
 ```bash
-uv run python -c "from database.models import create_tables; create_tables()"
+cd backend
+uv run python -c "from shared.database.models import create_tables; create_tables()"
 ```
 
 ## 📊 使い方
@@ -42,33 +43,40 @@ uv run python -c "from database.models import create_tables; create_tables()"
 cd backend
 
 # プライム市場のエンタープライズ企業のみ
-uv run python batch/stock_updater.py --markets prime
+uv run python batch/stock_analyzer_cli.py update --markets prime
 
-# 日次更新（推奨）
-uv run python batch/stock_updater.py --mode daily
+# テクニカル分析実行
+uv run python batch/stock_analyzer_cli.py analysis --markets prime
 
-# 完全更新（初回またはデータリセット時）
-uv run python batch/stock_updater.py --mode full
+# 投資候補銘柄取得
+uv run python batch/stock_analyzer_cli.py candidates
+
+# JPXデータ更新
+uv run python batch/stock_analyzer_cli.py jpx
 ```
 
 #### オプション
 ```bash
-# 複数銘柄指定
-uv run python batch/stock_updater.py --symbols 7203,6758,9984
+# 複数銘柄指定（株価更新）
+uv run python batch/stock_analyzer_cli.py update --symbols 7203 6758 9984
 
-# 市場区分指定
-uv run python batch/stock_updater.py --markets prime,standard,growth
+# 異なる市場区分指定
+uv run python batch/stock_analyzer_cli.py update --markets standard
+uv run python batch/stock_analyzer_cli.py update --markets growth
 
-# JPXデータ更新をスキップ
-uv run python batch/stock_updater.py --symbols 7203 --skip-jpx
+# 更新銘柄数の上限指定
+uv run python batch/stock_analyzer_cli.py update --markets prime --limit 50
 
-# エンタープライズ企業のみ処理
-uv run python batch/stock_updater.py --enterprise-only
+# 投資候補の条件指定
+uv run python batch/stock_analyzer_cli.py candidates --divergence-threshold -3.0 --dividend-min 1.5 --dividend-max 8.0
 ```
 
 #### ヘルプ
 ```bash
-uv run python batch/stock_updater.py --help
+uv run python batch/stock_analyzer_cli.py --help
+uv run python batch/stock_analyzer_cli.py update --help
+uv run python batch/stock_analyzer_cli.py analysis --help
+uv run python batch/stock_analyzer_cli.py candidates --help
 ```
 
 ### 🏢 JPXファイル取り込み（初回セットアップ）
@@ -80,7 +88,7 @@ JPX（日本取引所グループ）の上場企業一覧を取り込みます�
 cd backend
 
 # JPXファイル取り込み（初回セットアップ時）
-uv run python batch/jpx_importer.py
+uv run python batch/stock_analyzer_cli.py jpx
 ```
 
 **注意**: 事前にJPXの上場企業一覧Excelファイルを`data/`フォルダに配置してください。
@@ -95,7 +103,7 @@ FastAPIサーバーを起動して、フロントエンドからアクセス可�
 cd backend
 
 # APIサーバー起動
-uv run python api/main.py
+uv run python -m api.main
 ```
 
 サーバーは http://localhost:8000 で起動します。
@@ -135,7 +143,8 @@ stock_analyzer/
 │   │   ├── main.py           # APIメインエントリーポイント
 │   │   └── routers/          # APIルーター
 │   ├── batch/                # バッチ処理
-│   │   └── batch_runner.py   # 統合バッチ処理
+│   │   ├── stock_analyzer_cli.py  # CLIエントリーポイント
+│   │   └── stock_updater.py  # 統合バッチ処理
 │   ├── services/             # サービス層（Rails風）
 │   │   ├── analysis/         # 技術分析サービス
 │   │   ├── data/             # データ収集サービス
@@ -146,16 +155,17 @@ stock_analyzer/
 │   │   ├── database/         # データベース管理
 │   │   ├── jpx/              # JPXパーサー
 │   │   └── utils/            # ユーティリティ
-│   └── run_batch.py          # バッチ処理エントリーポイント
+│   ├── mypy.ini              # mypy設定
+│   └── pyproject.toml        # プロジェクト設定
 ├── front/                    # React + TypeScript + Vite フロントエンド
 │   ├── src/
 │   │   ├── components/       # Reactコンポーネント
 │   │   ├── pages/            # ページコンポーネント
 │   │   └── services/         # API呼び出し
 │   └── package.json          # Node.js依存関係
-├── config/                   # 設定ファイル（共通）
-├── database/                 # データベース関連（共通）
-└── utils/                    # ユーティリティ（共通）
+├── .vscode/                  # VSCode設定
+├── config/                   # デプロイメント設定
+└── README.md                 # このファイル
 ```
 
 ## 📝 注意事項

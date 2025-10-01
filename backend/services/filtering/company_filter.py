@@ -2,9 +2,9 @@ import logging
 from typing import Dict, List, Optional, Tuple
 
 import yfinance as yf
-from backend.services.data.data_collector import StockDataCollector
-from backend.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, MIN_EMPLOYEES, MIN_REVENUE
-from backend.shared.database.database_manager import DatabaseManager
+from services.data.data_collector import StockDataCollector
+from shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, MIN_EMPLOYEES, MIN_REVENUE
+from shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
