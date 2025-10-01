@@ -3,8 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
-from backend.shared.database.database_manager import DatabaseManager
+from services.analysis.technical_analyzer import TechnicalAnalysisService
+from shared.database.database_manager import DatabaseManager
 
 router = APIRouter()
 

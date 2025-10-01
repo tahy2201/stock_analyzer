@@ -4,8 +4,8 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from backend.shared.config.logging_config import get_service_logger
-from backend.shared.config.settings import DATABASE_PATH
+from shared.config.logging_config import get_service_logger
+from shared.config.settings import DATABASE_PATH
 
 logger = get_service_logger(__name__)
 
@@ -16,7 +16,7 @@ class DatabaseManager:
         self.ensure_database_exists()
 
     def ensure_database_exists(self) -> None:
-        from backend.shared.database.models import create_tables
+        from shared.database.models import create_tables
 
         create_tables()
 

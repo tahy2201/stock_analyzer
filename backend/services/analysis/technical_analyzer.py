@@ -3,8 +3,8 @@ import logging
 from typing import Optional
 
 import pandas as pd
-from backend.shared.config.settings import DIVERGENCE_THRESHOLD, DIVIDEND_YIELD_MAX, DIVIDEND_YIELD_MIN, MA_PERIOD
-from backend.shared.database.database_manager import DatabaseManager
+from shared.config.settings import DIVERGENCE_THRESHOLD, DIVIDEND_YIELD_MAX, DIVIDEND_YIELD_MIN, MA_PERIOD
+from shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(
     level=logging.INFO,

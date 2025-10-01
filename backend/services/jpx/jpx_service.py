@@ -1,9 +1,9 @@
 import logging
 from typing import Optional
 
-from backend.shared.config.logging_config import get_service_logger
-from backend.shared.database.database_manager import DatabaseManager
-from backend.shared.utils.jpx_parser import JPXParser
+from shared.config.logging_config import get_service_logger
+from shared.database.database_manager import DatabaseManager
+from shared.utils.jpx_parser import JPXParser
 
 logger = get_service_logger(__name__)
 

@@ -1,6 +1,6 @@
 import sqlite3
 
-from backend.shared.config.settings import DATABASE_PATH
+from shared.config.settings import DATABASE_PATH
 
 
 def create_tables() -> None:

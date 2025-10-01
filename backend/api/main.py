@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api.routers import analysis, companies, stocks
-from backend.shared.config.logging_config import setup_api_logging
+from api.routers import analysis, companies, stocks
+from shared.config.logging_config import setup_api_logging
 
 # ログ設定
 logger = setup_api_logging()

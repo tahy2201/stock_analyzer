@@ -1,0 +1,18 @@
+{
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "**/__pycache__",
+        "**/.mypy_cache"
+    ],
+    "extraPaths": [
+        "."
+    ],
+    "pythonVersion": "3.12",
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "strictListInference": true,
+    "strictDictionaryInference": true,
+    "strictSetInference": true
+}

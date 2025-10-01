@@ -3,7 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from backend.services.filtering.company_filter_service import CompanyFilterService
+from services.filtering.company_filter_service import CompanyFilterService
 
 router = APIRouter()
 
@@ -96,7 +96,7 @@ async def get_investment_candidates(
 ):
     """投資候補銘柄を取得"""
     try:
-        from backend.services.analysis.technical_analyzer import TechnicalAnalysisService
+        from services.analysis.technical_analyzer import TechnicalAnalysisService
 
         analyzer = TechnicalAnalysisService()
         candidates = analyzer.get_investment_candidates(
