@@ -3,9 +3,12 @@
 JPXファイル取り込み専用バッチ処理
 JPXファイルは毎日更新されるものではないため、独立したバッチとして分離
 """
-import logging
 import sys
 from pathlib import Path
+from typing import Optional
+
+import click
+import click_log
 
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
@@ -21,7 +24,7 @@ logger = setup_jpx_logging()
 class JPXBatchRunner:
     """JPXファイル取り込み専用のバッチランナー"""
 
-    def __init__(self, db_manager: DatabaseManager = None) -> None:
+    def __init__(self, db_manager: Optional[DatabaseManager] = None) -> None:
         self.db_manager = db_manager or DatabaseManager()
         self.jpx_service = JPXService(self.db_manager)
 
@@ -35,22 +38,26 @@ class JPXBatchRunner:
             success = self.jpx_service.update_jpx_data()
 
             if success:
-                logger.info("JPXファイル取り込み完了")
-                print("✅ JPXファイル取り込みが正常に完了しました")
+                logger.info("JPXファイル取り込みが正常に完了しました")
             else:
-                logger.error("JPXファイル取り込み失敗")
-                print("❌ JPXファイル取り込みに失敗しました")
+                logger.error("JPXファイル取り込みに失敗しました")
 
             return success
 
         except Exception as e:
             logger.error(f"JPXファイル取り込みエラー: {e}", exc_info=True)
-            print(f"❌ JPXファイル取り込みエラー: {e}")
             return False
 
 
+@click.command()
+@click_log.simple_verbosity_option(logger)
 def main() -> None:
-    print("🚀 JPXファイル取り込みバッチを開始します")
+    """JPXファイル取り込みバッチ処理
+
+    JPX（日本取引所グループ）の上場企業一覧Excelファイルを
+    データベースに取り込みます。
+    """
+    logger.info("JPXファイル取り込みバッチを開始します")
 
     try:
         jpx_batch_runner = JPXBatchRunner()
@@ -60,8 +67,7 @@ def main() -> None:
             sys.exit(1)
 
     except Exception as e:
-        logger.error(f"❌ JPXバッチ処理エラー: {e}", exc_info=True)
-        print(f"❌ JPXバッチ処理エラー: {e}")
+        logger.error(f"JPXバッチ処理エラー: {e}", exc_info=True)
         sys.exit(1)
 
 
