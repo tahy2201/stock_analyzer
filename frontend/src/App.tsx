@@ -6,7 +6,6 @@ import StockList from './pages/StockList'
 import StockDetail from './pages/StockDetail'
 import Candidates from './pages/Candidates'
 import Analysis from './pages/Analysis'
-import './App.css'
 
 // React Query設定
 const queryClient = new QueryClient({
