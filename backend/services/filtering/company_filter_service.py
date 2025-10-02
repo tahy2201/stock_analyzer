@@ -37,11 +37,18 @@ class CompanyFilterService:
                 return valid_symbols
 
             # 通常のフィルタリング処理
+            # marketsが指定されている場合、最初のマーケットのみ適用（複数指定には未対応）
+            market_filter = None
+            if filter_criteria.markets and len(filter_criteria.markets) > 0:
+                market_filter = filter_criteria.markets[0]
+                logger.info(f"市場フィルタ適用: {market_filter}")
+
             companies = self.db_manager.get_filtered_companies(
                 divergence_min=filter_criteria.divergence_min,
                 dividend_yield_min=filter_criteria.dividend_yield_min,
                 dividend_yield_max=filter_criteria.dividend_yield_max,
-                is_enterprise_only=filter_criteria.is_enterprise_only
+                is_enterprise_only=filter_criteria.is_enterprise_only,
+                market_filter=market_filter
             )
 
             symbols = [company["symbol"] for company in companies]

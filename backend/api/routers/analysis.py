@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from services.analysis.technical_analyzer import TechnicalAnalysisService
+from services.analysis.technical_analyzer import TechnicalAnalyzer
 from shared.database.database_manager import DatabaseManager
 
 router = APIRouter()
@@ -31,7 +31,7 @@ class SystemStats(BaseModel):
 async def get_technical_analysis(symbol: str):
     """個別銘柄の技術分析を取得"""
     try:
-        analyzer = TechnicalAnalysisService()
+        analyzer = TechnicalAnalyzer()
 
         # 技術分析サマリーを取得
         summary = analyzer.get_technical_summary(symbol)
@@ -76,7 +76,7 @@ async def get_system_stats():
 async def run_analysis(symbol: str):
     """個別銘柄の技術分析を実行"""
     try:
-        analyzer = TechnicalAnalysisService()
+        analyzer = TechnicalAnalyzer()
 
         # 分析実行
         result = analyzer.analyze_single_stock(symbol)

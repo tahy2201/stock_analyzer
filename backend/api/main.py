@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routers import analysis, companies, stocks
+from api.routers import analysis, candidates, companies, stocks
 from shared.config.logging_config import setup_api_logging
 
 # ログ設定
@@ -26,6 +26,7 @@ app.add_middleware(
 app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
 app.include_router(companies.router, prefix="/api/companies", tags=["companies"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
+app.include_router(candidates.router, prefix="/api/candidates", tags=["candidates"])
 
 @app.get("/")
 async def root():

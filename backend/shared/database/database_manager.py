@@ -312,7 +312,7 @@ class DatabaseManager:
                     params.append(divergence_min)
 
                 if divergence_max is not None:
-                    query += " AND ABS(ti.divergence_rate) <= ?"
+                    query += " AND ti.divergence_rate <= ?"
                     params.append(divergence_max)
 
                 if dividend_yield_min is not None:

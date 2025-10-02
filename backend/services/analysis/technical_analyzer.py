@@ -207,17 +207,30 @@ class TechnicalAnalyzer:
         divergence_threshold: float = DIVERGENCE_THRESHOLD,
         dividend_min: float = DIVIDEND_YIELD_MIN,
         dividend_max: float = DIVIDEND_YIELD_MAX,
+        market_filter: Optional[str] = None,
     ) -> list[dict]:
         """
         投資候補銘柄を抽出
         """
         try:
+            # 市場フィルタを日本語名に変換
+            actual_market_filter = None
+            if market_filter:
+                market_mapping = {
+                    'prime': 'プライム（内国株式）',
+                    'standard': 'スタンダード（内国株式）',
+                    'growth': 'グロース（内国株式）'
+                }
+                actual_market_filter = market_mapping.get(market_filter, market_filter)
+
             # フィルタリング条件でデータベースから抽出
+            # divergence_thresholdがマイナス値の場合は、それより低い（より悪い）乖離率を指定
             candidates = self.db_manager.get_filtered_companies(
-                divergence_min=divergence_threshold,
+                divergence_max=divergence_threshold,  # 乖離率の上限（株価が移動平均線より低い場合）
                 dividend_yield_min=dividend_min,
                 dividend_yield_max=dividend_max,
                 is_enterprise_only=True,
+                market_filter=actual_market_filter,
             )
 
             logger.info(f"投資候補銘柄: {len(candidates)} 銘柄が抽出されました")

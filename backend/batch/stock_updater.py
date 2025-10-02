@@ -1,6 +1,4 @@
-import logging
 import sys
-import traceback
 from pathlib import Path
 from typing import Optional
 
@@ -198,7 +196,14 @@ def main(markets: str | None, symbols: tuple[str, ...]) -> None:
             filter_criteria = FilterCriteria(specific_symbols=symbol_list)
         elif markets:
             logger.info(f"対象市場: {markets}")
-            filter_criteria = FilterCriteria(markets=[markets] if markets != 'all' else None)
+            # 市場名をデータベースの表記に変換
+            market_mapping = {
+                'prime': 'プライム（内国株式）',
+                'standard': 'スタンダード（内国株式）',
+                'growth': 'グロース（内国株式）'
+            }
+            actual_market = market_mapping.get(markets, markets)
+            filter_criteria = FilterCriteria(markets=[actual_market] if markets != 'all' else None)
 
         if filter_criteria:
             # バッチ処理を実行
