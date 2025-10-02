@@ -40,70 +40,46 @@ const Candidates = () => {
 
   if (loading) {
     return (
-      <div className="candidates" style={{
-        backgroundColor: '#1a1a1a',
-        padding: '20px',
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center'
-      }}>
-        <p>読み込み中...</p>
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-5">
+        <p className="text-gray-100">読み込み中...</p>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="candidates" style={{
-        backgroundColor: '#1a1a1a',
-        padding: '20px',
-        minHeight: '100vh'
-      }}>
-        <h1>🎯 投資候補</h1>
-        <p style={{ color: '#ff6b6b' }}>エラー: {error}</p>
+      <div className="min-h-screen bg-gray-900 p-5">
+        <h1 className="text-2xl font-bold text-gray-100 mb-4">🎯 投資候補</h1>
+        <p className="text-red-400">エラー: {error}</p>
       </div>
     )
   }
 
   return (
-    <div className="candidates" style={{
-      backgroundColor: '#1a1a1a',
-      padding: '20px',
-      minHeight: '100vh'
-    }}>
-      <h1>🎯 投資候補</h1>
-      <p>25日移動平均線より5%以上下回る（乖離率-5%以下）、プライム企業</p>
+    <div className="min-h-screen bg-gray-900 p-5">
+      <h1 className="text-3xl font-bold text-gray-100 mb-2">🎯 投資候補</h1>
+      <p className="text-gray-300 mb-5">25日移動平均線より5%以上下回る（乖離率-5%以下）、プライム企業</p>
 
-      <div style={{ marginTop: '20px' }}>
+      <div className="mt-5">
         {candidates.length === 0 ? (
-          <p>条件に合致する銘柄が見つかりませんでした</p>
+          <p className="text-gray-400">条件に合致する銘柄が見つかりませんでした</p>
         ) : (
-          <div style={{
-            display: 'grid',
-            gap: '15px',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
-          }}>
+          <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
             {candidates.map((candidate) => (
               <div
                 key={candidate.symbol}
-                style={{
-                  backgroundColor: '#2a2a2a',
-                  padding: '15px',
-                  borderRadius: '8px',
-                  border: '1px solid #444'
-                }}
+                className="bg-gray-800 p-4 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors"
               >
-                <h3 style={{ margin: '0 0 10px 0', color: '#4a9eff' }}>
+                <h3 className="text-blue-400 font-semibold mb-3 text-lg">
                   {candidate.symbol} - {candidate.name || '---'}
                 </h3>
-                <div style={{ fontSize: '14px', lineHeight: '1.4' }}>
-                  <p><strong>業種:</strong> {candidate.sector || '---'}</p>
-                  <p><strong>市場:</strong> {candidate.market || '---'}</p>
-                  <p><strong>最新価格:</strong> {candidate.latest_price ? `¥${candidate.latest_price.toLocaleString()}` : '---'}</p>
-                  <p><strong>乖離率:</strong> {candidate.divergence_rate ? `${candidate.divergence_rate.toFixed(2)}%` : '---'}</p>
-                  <p><strong>配当利回り:</strong> {candidate.dividend_yield ? `${candidate.dividend_yield.toFixed(2)}%` : '---'}</p>
-                  <p><strong>分析スコア:</strong> {candidate.analysis_score ? candidate.analysis_score.toFixed(1) : '0.0'}</p>
+                <div className="text-sm space-y-2 text-gray-300">
+                  <p><span className="font-medium text-gray-100">業種:</span> {candidate.sector || '---'}</p>
+                  <p><span className="font-medium text-gray-100">市場:</span> {candidate.market || '---'}</p>
+                  <p><span className="font-medium text-gray-100">最新価格:</span> {candidate.latest_price ? `¥${candidate.latest_price.toLocaleString()}` : '---'}</p>
+                  <p><span className="font-medium text-gray-100">乖離率:</span> {candidate.divergence_rate ? `${candidate.divergence_rate.toFixed(2)}%` : '---'}</p>
+                  <p><span className="font-medium text-gray-100">配当利回り:</span> {candidate.dividend_yield ? `${candidate.dividend_yield.toFixed(2)}%` : '---'}</p>
+                  <p><span className="font-medium text-gray-100">分析スコア:</span> {candidate.analysis_score ? candidate.analysis_score.toFixed(1) : '0.0'}</p>
                 </div>
               </div>
             ))}

@@ -281,24 +281,27 @@ class TechnicalAnalyzer:
 
         try:
             # 乖離率スコア（絶対値が大きいほど高スコア）
-            divergence_rate = abs(candidate.get("divergence_rate", 0))
-            if divergence_rate >= 10:
-                score += 5
-            elif divergence_rate >= 7:
-                score += 4
-            elif divergence_rate >= 5:
-                score += 3
-            elif divergence_rate >= 3:
-                score += 2
+            divergence_rate_raw = candidate.get("divergence_rate")
+            if divergence_rate_raw is not None:
+                divergence_rate = abs(divergence_rate_raw)
+                if divergence_rate >= 10:
+                    score += 5
+                elif divergence_rate >= 7:
+                    score += 4
+                elif divergence_rate >= 5:
+                    score += 3
+                elif divergence_rate >= 3:
+                    score += 2
 
             # 配当利回りスコア
-            dividend_yield = candidate.get("dividend_yield", 0)
-            if 3.5 <= dividend_yield <= 4.5:
-                score += 3
-            elif 3.0 <= dividend_yield <= 5.0:
-                score += 2
-            elif dividend_yield > 0:
-                score += 1
+            dividend_yield = candidate.get("dividend_yield")
+            if dividend_yield is not None and dividend_yield > 0:
+                if 3.5 <= dividend_yield <= 4.5:
+                    score += 3
+                elif 3.0 <= dividend_yield <= 5.0:
+                    score += 2
+                else:
+                    score += 1
 
             # 企業規模スコア
             if candidate.get("is_enterprise"):
