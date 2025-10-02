@@ -250,6 +250,10 @@ class TechnicalAnalyzer:
                             else 0
                         )
 
+                        # 配当利回りを再計算（technical_indicatorsから取得できていない場合）
+                        if candidate.get("dividend_yield") is None:
+                            candidate["dividend_yield"] = self.get_dividend_yield(candidate["symbol"], latest_price)
+
                         candidate.update(
                             {
                                 "latest_price": latest_price,

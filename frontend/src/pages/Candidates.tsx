@@ -78,7 +78,7 @@ const Candidates = () => {
                   <p><span className="font-medium text-gray-100">市場:</span> {candidate.market || '---'}</p>
                   <p><span className="font-medium text-gray-100">最新価格:</span> {candidate.latest_price ? `¥${candidate.latest_price.toLocaleString()}` : '---'}</p>
                   <p><span className="font-medium text-gray-100">乖離率:</span> {candidate.divergence_rate ? `${candidate.divergence_rate.toFixed(2)}%` : '---'}</p>
-                  <p><span className="font-medium text-gray-100">配当利回り:</span> {candidate.dividend_yield ? `${candidate.dividend_yield.toFixed(2)}%` : '---'}</p>
+                  <p><span className="font-medium text-gray-100">配当利回り:</span> {candidate.dividend_yield !== null && candidate.dividend_yield !== undefined ? `${candidate.dividend_yield.toFixed(2)}%` : '---'}</p>
                   <p><span className="font-medium text-gray-100">分析スコア:</span> {candidate.analysis_score ? candidate.analysis_score.toFixed(1) : '0.0'}</p>
                 </div>
               </div>
