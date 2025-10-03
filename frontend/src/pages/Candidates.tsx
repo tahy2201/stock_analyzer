@@ -22,7 +22,7 @@ const Candidates = () => {
   useEffect(() => {
     const fetchCandidates = async () => {
       try {
-        const response = await fetch('http://localhost:8000/api/candidates/?limit=10&max_divergence=-5.0&min_dividend=0.0&market_filter=prime')
+        const response = await fetch('http://localhost:8000/api/candidates/?limit=30&max_divergence=-5.0&min_dividend=3.0&market_filter=prime')
         if (!response.ok) {
           throw new Error('データの取得に失敗しました')
         }
@@ -58,7 +58,7 @@ const Candidates = () => {
   return (
     <div className="min-h-screen bg-gray-900 p-5">
       <h1 className="text-3xl font-bold text-gray-100 mb-2">🎯 投資候補</h1>
-      <p className="text-gray-300 mb-5">25日移動平均線より5%以上下回る（乖離率-5%以下）、プライム企業</p>
+      <p className="text-gray-300 mb-5">25日移動平均線より5%以上下回る（乖離率-5%以下）、配当利回り3%以上、プライム企業</p>
 
       <div className="mt-5">
         {candidates.length === 0 ? (

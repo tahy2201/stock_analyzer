@@ -42,61 +42,51 @@ class TechnicalAnalyzer:
 
     def get_dividend_yield(self, symbol: str, current_price: Optional[float] = None) -> Optional[float]:
         """
-        配当利回りを計算（現在の株価と最新配当金から動的計算）
+        配当利回りを計算（ticker_infoの年間配当金と現在の株価から計算）
         """
         try:
-            # 最新の配当金データを取得
             with self.db_manager.get_connection() as conn:
                 cursor = conn.cursor()
+
+                # ticker_infoテーブルから年間配当金を取得
                 cursor.execute(
                     """
-                    SELECT corporate_actions_dividend FROM ticker_info WHERE symbol = ?
+                    SELECT trailing_annual_dividend_rate, current_price as ticker_price
+                    FROM ticker_info
+                    WHERE symbol = ?
                     ORDER BY last_updated DESC LIMIT 1
-                """,
+                    """,
                     (symbol,),
                 )
-                dividend_result = cursor.fetchone()
+                ticker_result = cursor.fetchone()
 
-                if not dividend_result or dividend_result["corporate_actions_dividend"] is None:
-                    logger.debug(f"配当金データなし: {symbol}")
+                if not ticker_result:
+                    logger.debug(f"ticker_infoデータなし: {symbol}")
                     return 0.0
 
-                # Python辞書形式の配当金データをパース
-                dividend_data_str = dividend_result["corporate_actions_dividend"]
-                try:
-                    dividend_data = ast.literal_eval(dividend_data_str)
-                    if not dividend_data or not isinstance(dividend_data, list):
-                        logger.debug(f"配当金データが空またはリストでない: {symbol}")
-                        return 0.0
-
-                    # 最新の配当金額を取得（最後の要素）
-                    latest_dividend_info = dividend_data[-1]
-                    if not isinstance(latest_dividend_info, dict) or 'amount' not in latest_dividend_info:
-                        logger.debug(f"配当金データの形式が不正: {symbol}")
-                        return 0.0
-
-                    latest_dividend = float(latest_dividend_info['amount'])
-                    if latest_dividend <= 0:
-                        return 0.0
-
-                except (ValueError, SyntaxError, KeyError, IndexError) as e:
-                    logger.debug(f"配当金データのパースエラー {symbol}: {e}")
+                annual_dividend = ticker_result["trailing_annual_dividend_rate"]
+                if annual_dividend is None or annual_dividend <= 0:
+                    logger.debug(f"年間配当金データなし: {symbol}")
                     return 0.0
 
-                # 現在の株価を取得（引数で指定されていない場合）
+                # 現在の株価を取得（引数で指定されていない場合は最新の株価データを使用）
                 if current_price is None:
                     price_data = self.db_manager.get_stock_prices(symbol)
                     if price_data.empty:
-                        logger.debug(f"株価データなし: {symbol}")
-                        return 0.0
-                    current_price = float(price_data["close"].iloc[-1])
+                        # 株価データがない場合はticker_infoの株価を使用
+                        current_price = ticker_result["ticker_price"]
+                        if current_price is None or current_price <= 0:
+                            logger.debug(f"株価データなし: {symbol}")
+                            return 0.0
+                    else:
+                        current_price = float(price_data["close"].iloc[-1])
 
                 if current_price <= 0:
                     logger.warning(f"無効な株価: {symbol}, price: {current_price}")
                     return 0.0
 
                 # 配当利回り計算：(年間配当金 / 現在株価) * 100
-                dividend_yield = (latest_dividend / current_price) * 100
+                dividend_yield = (float(annual_dividend) / current_price) * 100
                 return round(dividend_yield, 2)
 
         except Exception as e:
