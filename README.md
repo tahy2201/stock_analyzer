@@ -91,6 +91,25 @@ uv run python -m api.main
 
 サーバーは http://localhost:8000 で起動します。
 
+### 🎨 フロントエンド起動
+
+React + Vite + TypeScript で構築されたフロントエンドアプリケーションを起動します。
+
+```bash
+# frontend ディレクトリから実行
+cd frontend
+
+# 依存関係のインストール（初回のみ）
+bun install
+
+# 開発サーバー起動
+bun run dev
+```
+
+フロントエンドは http://localhost:5173 で起動します。
+
+**注意**: フロントエンドを使用する場合は、事前にAPIサーバーを起動しておく必要があります。
+
 ## 📄 ログ出力について
 
 ### ログレベルとオプション
