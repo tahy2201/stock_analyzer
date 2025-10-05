@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ConfigProvider } from 'antd'
+import jaJP from 'antd/locale/ja_JP'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import StockList from './pages/StockList'
@@ -19,20 +21,22 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/stocks" element={<StockList />} />
-            <Route path="/stocks/:symbol" element={<StockDetail />} />
-            <Route path="/candidates" element={<Candidates />} />
-            <Route path="/analysis" element={<Analysis />} />
-            <Route path="/analysis/:symbol" element={<Analysis />} />
-          </Routes>
-        </Layout>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ConfigProvider locale={jaJP}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/stocks" element={<StockList />} />
+              <Route path="/stocks/:symbol" element={<StockDetail />} />
+              <Route path="/candidates" element={<Candidates />} />
+              <Route path="/analysis" element={<Analysis />} />
+              <Route path="/analysis/:symbol" element={<Analysis />} />
+            </Routes>
+          </Layout>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ConfigProvider>
   )
 }
 
