@@ -85,4 +85,5 @@ addopts = "--cov=. --cov-report=html --cov-report=term-missing"
 dev = [
     "pandas-stubs>=2.2.2.240807",
     "ruff>=0.13.0",
+    "types-click-log>=0.4.0.20250413",
 ]

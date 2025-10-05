@@ -2572,6 +2572,7 @@ dev = [
     { name = "pandas-stubs", version = "2.2.2.240807", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pandas-stubs", version = "2.3.2.250827", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "ruff" },
+    { name = "types-click-log" },
 ]
 
 [package.metadata]
@@ -2602,6 +2603,7 @@ provides-extras = ["dev"]
 dev = [
     { name = "pandas-stubs", specifier = ">=2.2.2.240807" },
     { name = "ruff", specifier = ">=0.13.0" },
+    { name = "types-click-log", specifier = ">=0.4.0.20250413" },
 ]
 
 [[package]]
@@ -2710,6 +2712,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e8/59/593bd0f40f7355806bf6573b47b8c22f8e1374c9b6fd03114bd6b7a3dcfd/tornado-6.5.2-cp39-abi3-win32.whl", hash = "sha256:c6f29e94d9b37a95013bb669616352ddb82e3bfe8326fccee50583caebc8a5f0", size = 445023, upload-time = "2025-08-08T18:26:56.677Z" },
     { url = "https://files.pythonhosted.org/packages/c7/2a/f609b420c2f564a748a2d80ebfb2ee02a73ca80223af712fca591386cafb/tornado-6.5.2-cp39-abi3-win_amd64.whl", hash = "sha256:e56a5af51cc30dd2cae649429af65ca2f6571da29504a07995175df14c18f35f", size = 445427, upload-time = "2025-08-08T18:26:57.91Z" },
     { url = "https://files.pythonhosted.org/packages/5e/4f/e1f65e8f8c76d73658b33d33b81eed4322fb5085350e4328d5c956f0c8f9/tornado-6.5.2-cp39-abi3-win_arm64.whl", hash = "sha256:d6c33dc3672e3a1f3618eb63b7ef4683a7688e7b9e6e8f0d9aa5726360a004af", size = 444456, upload-time = "2025-08-08T18:26:59.207Z" },
+]
+
+[[package]]
+name = "types-click-log"
+version = "0.4.0.20250413"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click", version = "8.1.8", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
+    { name = "click", version = "8.2.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2d/6b/f4583195dfc4d4f9fb5552f6c5ad872dc4232bb812f666b583ea43cca1cf/types_click_log-0.4.0.20250413.tar.gz", hash = "sha256:d853730c9aafb1de3968fa0271f88a2c2bf5c434b53e1885f74b5ac0b0de0489", size = 7362, upload-time = "2025-04-13T04:04:03.277Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/34/37ec32fc794e6effd6547c047578969504ce337a5aef13d4ea160713fcf6/types_click_log-0.4.0.20250413-py3-none-any.whl", hash = "sha256:6c14a45b42776a577066f2dcab9162ccd48e7aeb6716bfe272ad2ad25405428a", size = 8172, upload-time = "2025-04-13T04:04:02.108Z" },
 ]
 
 [[package]]
