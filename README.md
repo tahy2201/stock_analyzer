@@ -39,7 +39,21 @@ uv run python -c "from shared.database.models import create_tables; create_table
 
 #### 起動
 
+**JPXデータ取り込み**
+
+**注意**: 事前にJPXの上場企業一覧Excelファイルを`data/`フォルダに配置してください。
+- ダウンロード先: https://www.jpx.co.jp/markets/statistics-equities/misc/01.html
+
+```bash
+# JPXデータ更新（初回セットアップ時に実行）
+uv run python batch/jpx_importer.py
+
+# ログレベルを詳細にして実行
+uv run python batch/jpx_importer.py -v
+```
+
 **基本実行**
+
 ```bash
 # backend ディレクトリから実行
 cd backend
@@ -54,51 +68,12 @@ uv run python batch/stock_updater.py --symbols 7203 6758
 uv run python batch/stock_updater.py --markets standard
 ```
 
-**JPXデータ取り込み**
-```bash
-# JPXデータ更新（初回セットアップ時に実行）
-uv run python batch/jpx_importer.py
-
-# ログレベルを詳細にして実行
-uv run python batch/jpx_importer.py -v
-```
-
-#### オプション例
-```bash
-# 株価データ更新のオプション例
-uv run python batch/stock_updater.py --markets prime
-uv run python batch/stock_updater.py --symbols 7203 6758 9984
-uv run python batch/stock_updater.py --markets standard
-
-# JPX取り込み（ログレベル指定可能）
-uv run python batch/jpx_importer.py -v    # 詳細ログ出力
-uv run python batch/jpx_importer.py      # 通常ログ出力
-```
-
 #### ヘルプ
 ```bash
 # 各機能のヘルプ
-uv run python batch/stock_updater.py --help
 uv run python batch/jpx_importer.py --help
+uv run python batch/stock_updater.py --help
 ```
-
-### 🏢 JPXファイル取り込み（初回セットアップ）
-
-JPX（日本取引所グループ）の上場企業一覧を取り込みます。通常は初回のみ実行します。
-
-```bash
-# backend ディレクトリから実行
-cd backend
-
-# JPXファイル取り込み（初回セットアップ時）
-uv run python batch/jpx_importer.py
-
-# ログレベルを詳細にして実行（トラブルシューティング時）
-uv run python batch/jpx_importer.py -v
-```
-
-**注意**: 事前にJPXの上場企業一覧Excelファイルを`data/`フォルダに配置してください。
-- ダウンロード先: https://www.jpx.co.jp/markets/statistics-equities/misc/01.html
 
 **ログ出力について**: click_logを使用しており、`-v`オプションで詳細なログが確認できます。
 
@@ -131,20 +106,6 @@ uv run python batch/jpx_importer.py -v
 
 # 極めて詳細なログ出力
 uv run python batch/jpx_importer.py -vv
-```
-
-### ログ出力例
-
-**stock_updater.py の実行例:**
-```
-[2025-10-02 08:38:06], [INFO], __main__ -- 株価データ更新バッチを開始します
-[2025-10-02 08:38:06], [INFO], __main__ -- 指定銘柄: ['7203']
-[2025-10-02 08:38:06], [INFO], __main__ -- バッチ処理開始
-[2025-10-02 08:38:06], [INFO], __main__ -- 企業フィルタリング開始
-[2025-10-02 08:38:06], [INFO], __main__ -- 株価データ更新開始
-[2025-10-02 08:38:06], [INFO], __main__ -- 全ての銘柄で最新データが既に存在します
-[2025-10-02 08:38:06], [INFO], __main__ -- 技術分析開始
-[2025-10-02 08:38:06], [INFO], __main__ -- バッチ処理完了
 ```
 
 **ログファイル**: 各バッチのログは `logs/` ディレクトリに保存されます。
