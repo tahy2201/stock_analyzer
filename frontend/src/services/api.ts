@@ -1,11 +1,11 @@
 import axios from 'axios'
 import type {
-  StockInfo,
-  StockDetail,
+  CandidatesCount,
   InvestmentCandidate,
-  TechnicalAnalysis,
+  StockDetail,
+  StockInfo,
   SystemStats,
-  CandidatesCount
+  TechnicalAnalysis,
 } from '../types/stock'
 
 const API_BASE_URL = 'http://localhost:8000/api'
@@ -43,10 +43,10 @@ export const candidatesApi = {
     limit = 50,
     minDivergence = -10.0,
     minDividend = 1.0,
-    maxDividend = 10.0
+    maxDividend = 10.0,
   ): Promise<InvestmentCandidate[]> => {
     const response = await api.get(
-      `/candidates?limit=${limit}&min_divergence=${minDivergence}&min_dividend=${minDividend}&max_dividend=${maxDividend}`
+      `/candidates?limit=${limit}&min_divergence=${minDivergence}&min_dividend=${minDividend}&max_dividend=${maxDividend}`,
     )
     return response.data
   },

@@ -15,7 +15,9 @@
   --color-red-400: #f87171;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   background-color: #1a1a1a;
   color: #f9fafb;
   min-height: 100vh;
