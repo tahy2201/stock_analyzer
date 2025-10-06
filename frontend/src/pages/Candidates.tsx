@@ -1,4 +1,4 @@
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons'
+import { ReloadOutlined } from '@ant-design/icons'
 import {
   Button,
   Card,
@@ -7,7 +7,6 @@ import {
   Row,
   Select,
   Slider,
-  Space,
   Table,
   Tag,
 } from 'antd'
@@ -152,16 +151,11 @@ const Candidates = () => {
     }
   }
 
-  // 初回読み込み
+  // フィルター値変更時に自動検索
   useEffect(() => {
     fetchCandidates()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // 検索実行
-  const handleSearch = () => {
-    fetchCandidates()
-  }
+  }, [minDividend, maxDivergence, marketFilter])
 
   // リセット
   const handleReset = () => {
@@ -173,10 +167,6 @@ const Candidates = () => {
       maxDivergence: -5.0,
       marketFilter: 'prime',
     })
-    // リセット後に自動で検索
-    setTimeout(() => {
-      fetchCandidates()
-    }, 0)
   }
 
   if (error) {
@@ -257,14 +247,9 @@ const Candidates = () => {
           </Row>
           <Row style={{ marginTop: 16 }}>
             <Col span={24}>
-              <Space>
-                <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-                  検索
-                </Button>
-                <Button icon={<ReloadOutlined />} onClick={handleReset}>
-                  リセット
-                </Button>
-              </Space>
+              <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                リセット
+              </Button>
             </Col>
           </Row>
         </Form>
