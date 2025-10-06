@@ -1,9 +1,16 @@
+import {
+  AimOutlined,
+  CalendarOutlined,
+  LineChartOutlined,
+  SearchOutlined,
+  ShopOutlined,
+  StarOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
+import { Button, Card, Col, Row, Spin, Statistic } from 'antd'
 import { Link } from 'react-router-dom'
-import { Card, Col, Row, Statistic, Spin, Button } from 'antd'
-import { ShopOutlined, LineChartOutlined, SearchOutlined, StarOutlined, CalendarOutlined, AimOutlined } from '@ant-design/icons'
 import { analysisApi, candidatesApi } from '../services/api'
-import type { SystemStats, CandidatesCount } from '../types/stock'
+import type { CandidatesCount, SystemStats } from '../types/stock'
 
 const Dashboard = () => {
   // システム統計取得
@@ -13,10 +20,11 @@ const Dashboard = () => {
   })
 
   // 投資候補統計取得
-  const { data: candidatesCount, isLoading: candidatesLoading } = useQuery<CandidatesCount>({
-    queryKey: ['candidatesCount'],
-    queryFn: candidatesApi.getCandidatesCount,
-  })
+  const { data: candidatesCount, isLoading: candidatesLoading } =
+    useQuery<CandidatesCount>({
+      queryKey: ['candidatesCount'],
+      queryFn: candidatesApi.getCandidatesCount,
+    })
 
   if (statsLoading || candidatesLoading) {
     return (
@@ -87,9 +95,12 @@ const Dashboard = () => {
           <Card>
             <Statistic
               title="最新更新日"
-              value={systemStats?.latest_price_date ?
-                new Date(systemStats.latest_price_date).toLocaleDateString('ja-JP') :
-                '未更新'
+              value={
+                systemStats?.latest_price_date
+                  ? new Date(systemStats.latest_price_date).toLocaleDateString(
+                      'ja-JP',
+                    )
+                  : '未更新'
               }
               prefix={<CalendarOutlined />}
             />
