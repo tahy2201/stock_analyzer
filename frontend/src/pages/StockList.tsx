@@ -1,5 +1,5 @@
-import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { stockApi } from '../services/api'
 import type { StockInfo } from '../types/stock'
@@ -8,20 +8,36 @@ const StockList = () => {
   const [limit, setLimit] = useState(100)
   const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: stocks, isLoading, error } = useQuery<StockInfo[]>({
+  const {
+    data: stocks,
+    isLoading,
+    error,
+  } = useQuery<StockInfo[]>({
     queryKey: ['stocks', limit],
     queryFn: () => stockApi.getStocks(limit),
   })
 
   // 検索フィルタリング
-  const filteredStocks = stocks?.filter(stock =>
-    stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stock.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stock.sector?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || []
+  const filteredStocks =
+    stocks?.filter(
+      (stock) =>
+        stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        stock.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        stock.sector?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) || []
 
-  if (isLoading) return <div className="max-w-7xl mx-auto p-6"><div className="text-gray-400">読み込み中...</div></div>
-  if (error) return <div className="max-w-7xl mx-auto p-6"><div className="text-red-400">エラーが発生しました</div></div>
+  if (isLoading)
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="text-gray-400">読み込み中...</div>
+      </div>
+    )
+  if (error)
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="text-red-400">エラーが発生しました</div>
+      </div>
+    )
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -67,24 +83,51 @@ const StockList = () => {
           <table className="w-full">
             <thead>
               <tr className="bg-gray-700 border-b border-gray-600">
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">銘柄コード</th>
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">企業名</th>
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">業種</th>
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">市場</th>
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">現在価格</th>
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">配当利回り</th>
-                <th className="px-4 py-4 text-left font-semibold text-gray-200">アクション</th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  銘柄コード
+                </th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  企業名
+                </th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  業種
+                </th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  市場
+                </th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  現在価格
+                </th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  配当利回り
+                </th>
+                <th className="px-4 py-4 text-left font-semibold text-gray-200">
+                  アクション
+                </th>
               </tr>
             </thead>
             <tbody>
               {filteredStocks.map((stock) => (
-                <tr key={stock.symbol} className="border-b border-gray-700 hover:bg-gray-750 transition-colors">
-                  <td className="px-4 py-4 font-mono font-semibold text-blue-400">{stock.symbol}</td>
-                  <td className="px-4 py-4 text-gray-100">{stock.name || '-'}</td>
-                  <td className="px-4 py-4 text-gray-300">{stock.sector || '-'}</td>
-                  <td className="px-4 py-4 text-gray-300">{stock.market || '-'}</td>
+                <tr
+                  key={stock.symbol}
+                  className="border-b border-gray-700 hover:bg-gray-750 transition-colors"
+                >
+                  <td className="px-4 py-4 font-mono font-semibold text-blue-400">
+                    {stock.symbol}
+                  </td>
+                  <td className="px-4 py-4 text-gray-100">
+                    {stock.name || '-'}
+                  </td>
+                  <td className="px-4 py-4 text-gray-300">
+                    {stock.sector || '-'}
+                  </td>
+                  <td className="px-4 py-4 text-gray-300">
+                    {stock.market || '-'}
+                  </td>
                   <td className="px-4 py-4 font-semibold text-green-400">
-                    {stock.current_price ? `¥${stock.current_price.toLocaleString()}` : '-'}
+                    {stock.current_price
+                      ? `¥${stock.current_price.toLocaleString()}`
+                      : '-'}
                   </td>
                   <td className="px-4 py-4 font-medium text-red-400">
                     {stock.dividend_yield ? `${stock.dividend_yield}%` : '-'}
@@ -106,7 +149,9 @@ const StockList = () => {
 
       {filteredStocks.length === 0 && searchTerm && (
         <div className="text-center py-12">
-          <p className="text-gray-400">「{searchTerm}」に該当する銘柄が見つかりませんでした。</p>
+          <p className="text-gray-400">
+            「{searchTerm}」に該当する銘柄が見つかりませんでした。
+          </p>
         </div>
       )}
     </div>
