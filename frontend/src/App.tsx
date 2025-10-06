@@ -1,13 +1,13 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider } from 'antd'
 import jaJP from 'antd/locale/ja_JP'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
-import Dashboard from './pages/Dashboard'
-import StockList from './pages/StockList'
-import StockDetail from './pages/StockDetail'
-import Candidates from './pages/Candidates'
 import Analysis from './pages/Analysis'
+import Candidates from './pages/Candidates'
+import Dashboard from './pages/Dashboard'
+import StockDetail from './pages/StockDetail'
+import StockList from './pages/StockList'
 
 // React Query設定
 const queryClient = new QueryClient({
