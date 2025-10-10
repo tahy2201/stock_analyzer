@@ -316,11 +316,11 @@ class DatabaseManager:
                     params.append(divergence_max)
 
                 if dividend_yield_min is not None:
-                    query += " AND ti.dividend_yield >= ?"
+                    query += " AND ti.dividend_yield IS NOT NULL AND ti.dividend_yield >= ?"
                     params.append(dividend_yield_min)
 
                 if dividend_yield_max is not None:
-                    query += " AND ti.dividend_yield <= ?"
+                    query += " AND ti.dividend_yield IS NOT NULL AND ti.dividend_yield <= ?"
                     params.append(dividend_yield_max)
 
                 if market_filter is not None:
