@@ -12,6 +12,7 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface InvestmentCandidate {
   symbol: string
@@ -28,6 +29,7 @@ interface InvestmentCandidate {
 }
 
 const Candidates = () => {
+  const navigate = useNavigate()
   const [candidates, setCandidates] = useState<InvestmentCandidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -45,6 +47,14 @@ const Candidates = () => {
       key: 'symbol',
       width: 100,
       fixed: 'left',
+      render: (symbol: string) => (
+        <a
+          onClick={() => navigate(`/stocks/${symbol}`)}
+          style={{ color: '#1890ff', cursor: 'pointer' }}
+        >
+          {symbol}
+        </a>
+      ),
     },
     {
       title: '銘柄名',
