@@ -1,9 +1,14 @@
-import ast
 import logging
 from typing import Optional
 
 import pandas as pd
-from shared.config.settings import DIVERGENCE_THRESHOLD, DIVIDEND_YIELD_MAX, DIVIDEND_YIELD_MIN, MA_PERIOD
+
+from shared.config.settings import (
+    DIVERGENCE_THRESHOLD,
+    DIVIDEND_YIELD_MAX,
+    DIVIDEND_YIELD_MIN,
+    MA_PERIOD,
+)
 from shared.database.database_manager import DatabaseManager
 
 logging.basicConfig(
@@ -242,6 +247,7 @@ class TechnicalAnalyzer:
 
                         candidate.update(
                             {
+                                "current_price": latest_price,
                                 "latest_price": latest_price,
                                 "price_change_1d": round(price_change_1d, 2),
                                 "analysis_score": self._calculate_investment_score(candidate),
