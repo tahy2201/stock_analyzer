@@ -294,7 +294,12 @@ class DatabaseManager:
         try:
             with self.get_connection() as conn:
                 query = """
-                    SELECT DISTINCT c.*, ti.divergence_rate, ti.dividend_yield, ti.date
+                    SELECT DISTINCT
+                        c.symbol, c.name, c.sector, c.market, c.employees, c.revenue,
+                        c.is_enterprise, c.last_updated,
+                        ti.divergence_rate,
+                        ti.dividend_yield,
+                        ti.date
                     FROM companies c
                     JOIN technical_indicators ti ON c.symbol = ti.symbol
                     WHERE ti.date = (
