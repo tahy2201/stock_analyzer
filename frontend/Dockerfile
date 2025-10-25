@@ -7,7 +7,7 @@ ARG VITE_API_BASE_URL="http://localhost:8000/api"
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Install dependencies using the lockfile for reproducibility
-COPY bun.lock package.json .
+COPY bun.lock package.json ./
 RUN bun install --frozen-lockfile
 
 # Copy the rest of the frontend source code and build the production bundle
