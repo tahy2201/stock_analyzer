@@ -1,0 +1,50 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # ラズパイで実行
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up environment variables
+        run: |
+          echo "PROD_API_BASE_URL=${{ secrets.PROD_BACKEND_URL }}/api" >> $GITHUB_ENV
+          echo "PROD_FRONTEND_URL=${{ secrets.PROD_FRONTEND_URL }}" >> $GITHUB_ENV
+
+      - name: Pull latest changes
+        run: git pull origin main
+
+      - name: Stop existing containers
+        run: docker compose -f docker-compose.prod.yml down || true
+
+      - name: Build and start containers
+        env:
+          PROD_API_BASE_URL: ${{ secrets.PROD_BACKEND_URL }}/api
+          PROD_FRONTEND_URL: ${{ secrets.PROD_FRONTEND_URL }}
+        run: |
+          docker compose -f docker-compose.prod.yml up -d --build
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for backend to be ready..."
+          timeout 60 bash -c 'until curl -f http://localhost:8000/health 2>/dev/null; do sleep 2; done' || echo "Backend health check skipped"
+          echo "Waiting for frontend to be ready..."
+          timeout 30 bash -c 'until curl -f http://localhost:4173 2>/dev/null; do sleep 2; done' || echo "Frontend health check skipped"
+
+      - name: Show container status
+        run: docker compose -f docker-compose.prod.yml ps
+
+      - name: Show container logs (last 20 lines)
+        if: always()
+        run: |
+          echo "=== Backend logs ==="
+          docker compose -f docker-compose.prod.yml logs --tail=20 backend
+          echo "=== Frontend logs ==="
+          docker compose -f docker-compose.prod.yml logs --tail=20 frontend

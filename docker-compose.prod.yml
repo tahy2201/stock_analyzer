@@ -1,0 +1,26 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/app/data
+    environment:
+      - ALLOWED_ORIGINS=${PROD_FRONTEND_URL}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${PROD_API_BASE_URL}
+    environment:
+      - VITE_API_BASE_URL=${PROD_API_BASE_URL}
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend
+    restart: unless-stopped
