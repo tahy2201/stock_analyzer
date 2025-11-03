@@ -156,22 +156,69 @@ docker-compose -f docker-compose.prod.yml up -d --build
 
 ## 🔄 日常運用
 
-### デプロイ（自動）
+### デプロイ方法
 
-mainブランチにpushするだけで自動デプロイされます。
+デプロイは以下の4つの方法から選択できます。
+
+#### 方法1: デプロイスクリプトを使用（最も簡単）✨
 
 ```bash
-git add .
-git commit -m "Update feature"
-git push origin main
+# 対話形式でデプロイ
+./scripts/deploy.sh
 ```
 
-### デプロイ（手動実行）
+スクリプトでは以下の方法を選択できます：
+1. Git Tagを作成してデプロイ
+2. GitHub Releaseを作成してデプロイ
+3. GitHub Actionsを手動で実行
+4. 直接ラズパイにデプロイ
 
-GitHub Actionsを手動で実行することも可能です。
+#### 方法2: Git Tagでデプロイ（推奨）
 
-1. GitHubリポジトリにアクセス
-2. **Actions > Deploy to Raspberry Pi > Run workflow**
+```bash
+# バージョンタグを作成
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
+タグをpushすると自動的にデプロイが開始されます。
+
+#### 方法3: GitHub Releaseでデプロイ
+
+GitHub CLIを使用：
+```bash
+gh release create v1.0.0 --title "Version 1.0.0" --generate-notes
+```
+
+または、GitHubのWebUI:
+1. **Releases > Create a new release**
+2. タグを作成し、リリースノートを記入
+3. **Publish release**
+
+#### 方法4: GitHub Actionsを手動実行
+
+GitHub CLI:
+```bash
+gh workflow run deploy-to-raspi.yml \
+  -f environment=production \
+  -f reason="Bug fix deployment"
+```
+
+または、GitHubのWebUI:
+1. **Actions > Deploy to Raspberry Pi > Run workflow**
+2. 環境とデプロイ理由を入力
+3. **Run workflow**
+
+#### 方法5: 直接ラズパイにSSH接続してデプロイ
+
+```bash
+ssh pi@192.168.1.100
+cd ~/stock_analyzer
+git pull origin main
+source .env
+docker-compose -f docker-compose.prod.yml down
+docker-compose -f docker-compose.prod.yml up -d --build
+```
 
 ### データベースの同期
 

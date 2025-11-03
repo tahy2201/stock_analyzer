@@ -1,15 +1,50 @@
 name: Deploy to Raspberry Pi
 
 on:
+  # 手動実行（最も柔軟な方法）
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      reason:
+        description: 'Deployment reason (optional)'
+        required: false
+        type: string
+
+  # Git tagがpushされたとき（例: v1.0.0）
   push:
-    branches: [main]
-  workflow_dispatch:  # 手動実行も可能
+    tags:
+      - 'v*.*.*'
+
+  # GitHub Releaseが作成されたとき
+  release:
+    types: [published]
 
 jobs:
   deploy:
     runs-on: self-hosted  # ラズパイで実行
 
     steps:
+      - name: Print deployment info
+        run: |
+          echo "🚀 Starting deployment to Raspberry Pi"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "SHA: ${{ github.sha }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Environment: ${{ inputs.environment }}"
+            echo "Reason: ${{ inputs.reason }}"
+          fi
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "Release: ${{ github.event.release.tag_name }}"
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
 
