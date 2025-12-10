@@ -110,6 +110,28 @@ bun run dev
 
 **注意**: フロントエンドを使用する場合は、事前にAPIサーバーを起動しておく必要があります。
 
+## 🐳 Docker での実行
+
+バックエンドとフロントエンドの環境差異を無くすため、Docker コンテナでも起動できます。
+
+### 1. イメージのビルドと起動
+
+```bash
+docker compose up --build
+```
+
+- バックエンド: http://localhost:8000
+- フロントエンド: http://localhost:4173
+
+初回起動時に `./data` ディレクトリが作成され、SQLite データベースが永続化されます。
+
+### 2. 環境変数
+
+- `VITE_API_BASE_URL`: フロントエンドが使用する API のエンドポイント。Docker Compose では `http://backend:8000/api` に設定されています。
+- `ALLOWED_ORIGINS`: API が許可するオリジン。Docker Compose では `http://localhost:4173` に設定されています。
+
+必要に応じて `docker-compose.yml` を編集し、本番環境向けの設定に変更してください。
+
 ## 📄 ログ出力について
 
 ### ログレベルとオプション
