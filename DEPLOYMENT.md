@@ -9,9 +9,7 @@ Stock Analyzerを本番環境（Raspberry Pi）にデプロイする方法につ
 
 ## デプロイ方法
 
-GitHubでタグまたはリリースを作成すると、Webhookを通じてRaspberry Piに自動デプロイされます。
-
-### 方法1: タグを作成してpush（推奨）
+GitHubでタグを作成してpushすると、Webhookを通じてRaspberry Piに自動デプロイされます。
 
 ```bash
 # バージョンタグを作成
@@ -23,21 +21,16 @@ git push origin v1.0.0
 
 タグをpushすると自動的にデプロイが開始されます。
 
-### 方法2: GitHubでリリースを作成
+### リリースノートを追加する場合（オプション）
 
-#### GitHub CLI を使用
+デプロイ後に、必要に応じてGitHubでリリースノートを追加できます：
 
 ```bash
-gh release create v1.0.0 --title "Version 1.0.0" --generate-notes
+# GitHub CLI を使用
+gh release create v1.0.0 --title "Version 1.0.0" --notes "バグ修正とパフォーマンス改善"
 ```
 
-#### GitHub Web UI を使用
-
-1. GitHubリポジトリページで **Releases** をクリック
-2. **Create a new release** をクリック
-3. タグ名を入力（例: `v1.0.0`）
-4. リリース内容を記入
-5. **Publish release** をクリック
+または、GitHub Web UIで **Releases** → **Create a new release** から作成できます。
 
 ## デプロイの確認
 
