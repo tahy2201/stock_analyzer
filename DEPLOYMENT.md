@@ -21,17 +21,6 @@ git push origin v1.0.0
 
 タグをpushすると自動的にデプロイが開始されます。
 
-### リリースノートを追加する場合（オプション）
-
-デプロイ後に、必要に応じてGitHubでリリースノートを追加できます：
-
-```bash
-# GitHub CLI を使用
-gh release create v1.0.0 --title "Version 1.0.0" --notes "バグ修正とパフォーマンス改善"
-```
-
-または、GitHub Web UIで **Releases** → **Create a new release** から作成できます。
-
 ## デプロイの確認
 
 ### ログの確認
