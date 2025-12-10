@@ -1,0 +1,26 @@
+[Unit]
+Description=Stock Analyzer Deployment Webhook Server
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=rp-tahy
+WorkingDirectory=/home/rp-tahy/stock_analyzer/deploy
+Environment="WEBHOOK_SECRET=CHANGE_THIS_SECRET"
+Environment="REPO_PATH=/home/rp-tahy/stock_analyzer"
+ExecStart=/usr/bin/python3 /home/rp-tahy/stock_analyzer/deploy/webhook_server.py
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=stock-deploy-webhook
+
+[Install]
+WantedBy=multi-user.target
