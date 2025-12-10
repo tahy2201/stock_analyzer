@@ -18,7 +18,7 @@ from datetime import datetime
 WEBHOOK_SECRET = os.environ.get('WEBHOOK_SECRET', '')
 REPO_PATH = os.environ.get('REPO_PATH', os.path.expanduser('~/stock_analyzer'))
 COMPOSE_FILE = 'docker-compose.prod.yml'
-LOG_FILE = os.path.expanduser('~/deploy/deploy.log')
+LOG_FILE = os.path.expanduser('~/logs/deploy.log')
 
 def log_message(message):
     """タイムスタンプ付きでログメッセージを記録"""
