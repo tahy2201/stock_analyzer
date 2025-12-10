@@ -114,7 +114,7 @@ mkdir -p ~/logs
    - **Secret**: 手順3で生成したシークレット
    - **Which events would you like to trigger this webhook?**:
      - "Let me select individual events" を選択
-     - **Pushes** と **Releases** にチェック
+     - **Pushes** のみにチェック
 4. **Add webhook** をクリック
 
 ### 9. 動作確認

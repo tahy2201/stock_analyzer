@@ -2,7 +2,7 @@
 """
 Stock Analyzer デプロイ用 Webhook サーバー
 
-このサーバーはGitHubのWebhookイベント（タグのpushとリリース）を受け取り、
+このサーバーはGitHubのWebhookイベント（タグのpush）を受け取り、
 指定されたバージョンをRaspberry Piに自動デプロイします。
 """
 import hmac
@@ -157,21 +157,17 @@ class WebhookHandler(BaseHTTPRequestHandler):
         event_type = self.headers.get('X-GitHub-Event')
         log_message(f"Webhookを受信: {event_type}")
 
-        tag_name = None
+        # タグpushイベントのみ処理
+        if event_type != 'push' or not data.get('ref', '').startswith('refs/tags/'):
+            log_message("イベントを無視 (タグpushではありません)")
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'Event ignored')
+            return
 
-        # タグpushイベント
-        if event_type == 'push' and data.get('ref', '').startswith('refs/tags/'):
-            tag_name = data['ref'].replace('refs/tags/', '')
-            log_message(f"タグpushを検知: {tag_name}")
-
-        # リリースイベント
-        elif event_type == 'release':
-            action = data.get('action')
-            if action == 'published':
-                tag_name = data.get('release', {}).get('tag_name')
-                log_message(f"リリースが公開されました: {tag_name}")
-            else:
-                log_message(f"リリースアクション '{action}' は無視されました")
+        # タグ名を取得
+        tag_name = data['ref'].replace('refs/tags/', '')
+        log_message(f"タグpushを検知: {tag_name}")
 
         if not tag_name:
             log_message("イベントを無視 (デプロイ可能なタグが見つかりません)")
