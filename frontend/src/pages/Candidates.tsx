@@ -13,6 +13,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { API_BASE_URL } from '../services/api'
 
 interface InvestmentCandidate {
   symbol: string
@@ -145,7 +146,7 @@ const Candidates = () => {
         market_filter: marketFilter,
       })
       const response = await fetch(
-        `http://localhost:8000/api/candidates/?${params}`,
+        `${API_BASE_URL}/candidates/?${params}`,
       )
       if (!response.ok) {
         throw new Error('データの取得に失敗しました')

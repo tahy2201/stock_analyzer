@@ -6,6 +6,7 @@ import {
   ArrowUpOutlined,
   LineChartOutlined,
 } from '@ant-design/icons'
+import { API_BASE_URL } from '../services/api'
 
 interface TickerInfo {
   trailing_pe: number | null
@@ -71,7 +72,7 @@ const StockDetail = () => {
       setError(null)
       try {
         const response = await fetch(
-          `http://localhost:8000/api/stocks/${symbol}`,
+          `${API_BASE_URL}/stocks/${symbol}`,
         )
         if (!response.ok) {
           throw new Error('銘柄データの取得に失敗しました')
