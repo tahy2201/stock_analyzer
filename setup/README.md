@@ -1,10 +1,10 @@
 # Raspberry Pi 初回セットアップガイド
 
-このディレクトリには、Raspberry Piへの自動デプロイシステムの初回セットアップに必要なファイルが含まれています。
+このディレクトリには、Raspberry Piへの初回セットアップに必要なファイルが含まれています。
 
 ## 概要
 
-GitHubでタグまたはリリースを作成すると、Webhookを通じてRaspberry Piに自動デプロイされるシステムをセットアップします。
+Stock Analyzerを本番環境（Raspberry Pi）で運用するための初回セットアップ手順を説明します。
 
 ## 前提条件
 
@@ -24,7 +24,7 @@ Raspberry Piにログインし、リポジトリをクローンします：
 ```bash
 ssh rp-tahy@raspberrypi
 cd ~
-git clone <リポジトリURL> stock_analyzer
+git clone https://github.com/tahy2201/stock_analyzer.git stock_analyzer
 cd stock_analyzer
 ```
 
@@ -42,99 +42,24 @@ ENVEOF
 
 IPアドレスは実際のRaspberry PiのIPに置き換えてください。
 
-### 3. Webhook Secretの生成
-
-強力なランダム文字列を生成します：
+### 3. デプロイスクリプトに実行権限を付与
 
 ```bash
-openssl rand -hex 32
+chmod +x deploy.sh
 ```
 
-このシークレットは後で使用するので、メモしておいてください。
+### 4. 初回デプロイ
 
-### 4. systemdサービスファイルの編集
-
-`setup/stock-deploy-webhook.service` を編集し、`WEBHOOK_SECRET` を設定します：
+デプロイスクリプトを実行して、アプリケーションを起動します：
 
 ```bash
-nano setup/stock-deploy-webhook.service
+./deploy.sh
 ```
 
-以下の行を変更：
-```ini
-Environment="WEBHOOK_SECRET=CHANGE_THIS_SECRET"
-```
-
-↓
-
-```ini
-Environment="WEBHOOK_SECRET=<手順3で生成したシークレット>"
-```
-
-ユーザー名（`User=rp-tahy`）も必要に応じて変更してください。
-
-### 5. スクリプトに実行権限を付与
+タグ名を入力するか、引数で指定できます：
 
 ```bash
-chmod +x setup/webhook_server.py
-```
-
-### 6. systemdサービスの登録
-
-```bash
-# サービスファイルをコピー
-sudo cp setup/stock-deploy-webhook.service /etc/systemd/system/
-
-# systemdを再読み込み
-sudo systemctl daemon-reload
-
-# サービスを有効化（自動起動設定）
-sudo systemctl enable stock-deploy-webhook
-
-# サービスを開始
-sudo systemctl start stock-deploy-webhook
-
-# ステータス確認
-sudo systemctl status stock-deploy-webhook
-```
-
-### 7. ログディレクトリの作成
-
-```bash
-mkdir -p ~/logs
-```
-
-### 8. GitHub Webhookの設定
-
-1. GitHubリポジトリページを開く
-2. **Settings** → **Webhooks** → **Add webhook** をクリック
-3. 以下の情報を入力：
-   - **Payload URL**: `http://<ラズパイのIPアドレス>:9000/webhook`
-   - **Content type**: `application/json`
-   - **Secret**: 手順3で生成したシークレット
-   - **Which events would you like to trigger this webhook?**:
-     - "Let me select individual events" を選択
-     - **Pushes** のみにチェック
-4. **Add webhook** をクリック
-
-### 9. 動作確認
-
-テスト用のタグを作成してデプロイを確認します：
-
-```bash
-# 開発機で
-git tag v0.0.1
-git push origin v0.0.1
-```
-
-Raspberry Pi側でログを確認：
-
-```bash
-# サービスのログを確認
-sudo journalctl -u stock-deploy-webhook -f
-
-# または、デプロイログファイルを確認
-tail -f ~/logs/deploy.log
+./deploy.sh v1.0.0
 ```
 
 デプロイが成功すれば、以下のURLでアプリケーションにアクセスできます：
@@ -157,10 +82,8 @@ PROD_RASPI_USER=rp-tahy \
 
 ```
 setup/
-├── webhook_server.py              # Webhookサーバースクリプト
-├── stock-deploy-webhook.service   # systemdサービスファイル
-├── migrate-db-to-prod.sh          # 初回DB移行スクリプト（オプション）
-└── README.md                      # このファイル
+├── migrate-db-to-prod.sh   # 初回DB移行スクリプト（オプション）
+└── README.md               # このファイル
 ```
 
 ## 次のステップ

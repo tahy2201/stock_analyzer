@@ -5,11 +5,13 @@ Stock Analyzerを本番環境（Raspberry Pi）にデプロイする方法につ
 ## 前提条件
 
 - [初回セットアップ](setup/README.md)が完了していること
-- Webhookサーバーが稼働していること
+- Raspberry PiにSSH接続できること
 
 ## デプロイ方法
 
-GitHubでタグを作成してpushすると、Webhookを通じてRaspberry Piに自動デプロイされます。
+### 基本的なデプロイ手順
+
+1. **開発機でタグを作成してpush**
 
 ```bash
 # バージョンタグを作成
@@ -19,25 +21,51 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-タグをpushすると自動的にデプロイが開始されます。
-
-## デプロイの確認
-
-### ログの確認
+2. **Raspberry PiにSSH接続**
 
 ```bash
-# Raspberry Piにログイン
 ssh rp-tahy@raspberrypi
-
-# リアルタイムでログを確認
-sudo journalctl -u stock-deploy-webhook -f
-
-# 最新100行を表示
-sudo journalctl -u stock-deploy-webhook -n 100
-
-# デプロイログファイルを確認
-cat ~/logs/deploy.log
+cd ~/stock_analyzer  # または ~/work/tahy/stock_analyzer
 ```
+
+3. **デプロイスクリプトを実行**
+
+```bash
+./deploy.sh
+```
+
+または、タグ名を引数で指定：
+
+```bash
+./deploy.sh v1.0.0
+```
+
+スクリプトは以下を自動的に実行します：
+
+- 最新のタグを取得
+- 指定されたタグにチェックアウト
+- 既存のコンテナを停止
+- 新しいコンテナをビルド
+- コンテナを起動
+
+### デプロイスクリプトの使い方
+
+**対話モード（タグ名を指定しない場合）:**
+
+```bash
+./deploy.sh
+
+# 利用可能なタグ一覧が表示されます
+# デプロイするタグ名を入力してください
+```
+
+**直接指定モード:**
+
+```bash
+./deploy.sh v1.0.0
+```
+
+## デプロイの確認
 
 ### コンテナの状態確認
 
@@ -45,6 +73,17 @@ cat ~/logs/deploy.log
 # Raspberry Piで実行
 cd ~/stock_analyzer
 docker compose -f docker-compose.prod.yml ps
+```
+
+### ログの確認
+
+```bash
+# リアルタイムでログを確認
+docker compose -f docker-compose.prod.yml logs -f
+
+# 特定のサービスのログのみ確認
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.prod.yml logs -f frontend
 ```
 
 ### アプリケーションの動作確認
@@ -55,22 +94,6 @@ docker compose -f docker-compose.prod.yml ps
 - バックエンドAPI: `http://<ラズパイのIPアドレス>:8000/docs`
 
 ## サービスの管理
-
-### Webhookサーバーの管理
-
-```bash
-# サービスの状態確認
-sudo systemctl status stock-deploy-webhook
-
-# サービスの再起動
-sudo systemctl restart stock-deploy-webhook
-
-# サービスの停止
-sudo systemctl stop stock-deploy-webhook
-
-# サービスの開始
-sudo systemctl start stock-deploy-webhook
-```
 
 ### アプリケーションコンテナの管理
 
@@ -93,57 +116,65 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ## トラブルシューティング
 
-### Webhookが届かない
-
-1. **Raspberry Piのファイアウォール設定を確認**
-   ```bash
-   sudo ufw status
-   ```
-
-2. **ルーターのポートフォワーディング設定を確認**
-   - 9000番ポートが開放されているか確認
-
-3. **GitHubのWebhook設定ページで配信履歴を確認**
-   - Settings → Webhooks → Recent Deliveries
-
 ### デプロイが失敗する
 
-**ログを確認して原因を特定：**
+**タグが見つからない場合:**
 
 ```bash
-sudo journalctl -u stock-deploy-webhook -n 200
+# リモートのタグを確認
+git fetch --tags
+git tag -l
+
+# 特定のタグが存在するか確認
+git rev-parse v1.0.0
 ```
 
-**よくある原因：**
-
-- **Dockerコマンドの実行失敗**
-  ```bash
-  docker --version
-  docker compose version
-  ```
-
-- **Gitコマンドの実行失敗**
-  ```bash
-  cd ~/stock_analyzer
-  git status
-  git remote -v
-  ```
-
-- **環境変数の設定ミス**
-  ```bash
-  cat ~/stock_analyzer/.env
-  ```
-
-### サービスが起動しない
+**Gitコマンドの実行失敗:**
 
 ```bash
-# 詳細なログを確認
-sudo journalctl -u stock-deploy-webhook -xe
+cd ~/stock_analyzer
+git status
+git remote -v
 
-# 手動でスクリプトを実行してエラーを確認
-cd ~/stock_analyzer/setup
-export WEBHOOK_SECRET='your-secret'
-python3 webhook_server.py
+# リモートリポジトリから最新を取得
+git fetch --all --tags
+```
+
+**Dockerコマンドの実行失敗:**
+
+```bash
+# Dockerの状態を確認
+docker --version
+docker compose version
+
+# Dockerサービスの状態を確認
+sudo systemctl status docker
+
+# Dockerサービスを再起動
+sudo systemctl restart docker
+```
+
+**環境変数の設定ミス:**
+
+```bash
+# .envファイルを確認
+cat ~/stock_analyzer/.env
+
+# 必要に応じて再作成
+cd ~/stock_analyzer
+nano .env
+```
+
+### コンテナが起動しない
+
+```bash
+# コンテナのログを確認
+docker compose -f docker-compose.prod.yml logs
+
+# 詳細なエラー情報を確認
+docker compose -f docker-compose.prod.yml ps -a
+docker compose -f docker-compose.prod.yml logs backend
+docker compose -f docker-compose.prod.yml logs frontend
 ```
 
 ### ディスク容量不足
@@ -162,26 +193,67 @@ docker system df
 docker system prune -a
 ```
 
+### ポート競合
+
+```bash
+# ポート8000と4173が使用されているか確認
+sudo lsof -i :8000
+sudo lsof -i :4173
+
+# 必要に応じてプロセスを停止
+sudo kill <PID>
+```
+
+## ロールバック
+
+問題が発生した場合、以前のバージョンに戻すことができます：
+
+```bash
+# 以前のタグにロールバック
+./deploy.sh v0.9.0
+```
+
+## データベース管理
+
+### 本番環境から開発環境へのDB同期
+
+```bash
+# 開発機で実行
+PROD_RASPI_IP=<ラズパイのIPアドレス> \
+PROD_RASPI_USER=rp-tahy \
+./scripts/sync-db-from-prod.sh
+```
+
+### データベースのバックアップ
+
+```bash
+# Raspberry Piで実行
+cd ~/stock_analyzer
+cp data/stock_data.db data/stock_data.db.backup.$(date +%Y%m%d_%H%M%S)
+```
+
 ## セキュリティ
 
-### Webhook Secret
+### SSHアクセス
 
-- 絶対に公開しないでください
-- 定期的に変更することを推奨
+- SSH鍵認証を使用してください
+- パスワード認証は無効化することを推奨
 
 ### ファイアウォール設定
 
-9000番ポートへのアクセスをGitHubのIPアドレス範囲のみに制限することを推奨：
+必要なポートのみ開放してください：
 
 ```bash
-# 例: 特定のIPアドレスからのみ許可
-sudo ufw allow from <GitHub IP範囲> to any port 9000
+# SSH（22番ポート）
+sudo ufw allow 22/tcp
+
+# アプリケーション（ローカルネットワークのみ）
+sudo ufw allow from 192.168.0.0/24 to any port 8000
+sudo ufw allow from 192.168.0.0/24 to any port 4173
+
+# ファイアウォールを有効化
 sudo ufw enable
 ```
-
-### HTTPS通信
-
-可能であればリバースプロキシ（nginx等）を使用してHTTPSで通信することを推奨します。
 
 ## 関連ドキュメント
 
