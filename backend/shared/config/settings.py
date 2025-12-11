@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -14,8 +15,9 @@ MIN_REVENUE = 10_000_000_000
 DATA_DAYS = 252
 BATCH_SIZE = 50
 
-DATABASE_PATH = PROJECT_ROOT / "data" / "stock_data.db"  # プロジェクトルートのdataディレクトリに統一
-DATA_DIR = PROJECT_ROOT / "data"  # プロジェクトルートのdataディレクトリ
+# 環境変数でDATABASE_PATHを上書き可能に（Docker対応）
+DATABASE_PATH = Path(os.environ.get("DATABASE_PATH", PROJECT_ROOT / "data" / "stock_data.db"))
+DATA_DIR = DATABASE_PATH.parent  # データベースと同じディレクトリ
 
 JPX_URL = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
 JPX_FILE_NAME = "data_j.xls"
