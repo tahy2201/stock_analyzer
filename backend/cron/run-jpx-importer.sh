@@ -5,7 +5,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"  # backend/cron -> backend -> stock_analyzer
 LOG_FILE="$HOME/logs/jpx-importer.log"
 
 # ログディレクトリを作成
