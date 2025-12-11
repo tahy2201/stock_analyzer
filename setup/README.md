@@ -78,6 +78,59 @@ PROD_RASPI_USER=rp-tahy \
 ./setup/migrate-db-to-prod.sh
 ```
 
+## Cron設定（定期バッチ処理）
+
+定期的にデータを更新するため、cronを設定します。
+
+### 1. ログディレクトリの作成
+
+```bash
+mkdir -p ~/logs
+```
+
+### 2. Crontabの編集
+
+```bash
+crontab -e
+```
+
+以下の内容を追加：
+
+```cron
+# Stock Analyzer バッチ処理
+
+# 株価データ更新: 毎日12:00と24:00
+0 12 * * * /home/rp-tahy/work/tahy/stock_analyzer/backend/cron/run-stock-updater.sh
+0 0 * * * /home/rp-tahy/work/tahy/stock_analyzer/backend/cron/run-stock-updater.sh
+
+# JPX企業リスト更新: 毎月15日 9:30
+30 9 15 * * /home/rp-tahy/work/tahy/stock_analyzer/backend/cron/run-jpx-importer.sh
+```
+
+**重要**: パスは実際のRaspberry Piの環境に合わせて変更してください。
+
+### 3. Cron設定の確認
+
+```bash
+crontab -l
+```
+
+### 4. 手動テスト実行
+
+cron設定前に、手動でバッチを実行してテストしてください：
+
+```bash
+cd ~/work/tahy/stock_analyzer
+
+# 株価データ更新
+./backend/cron/run-stock-updater.sh
+
+# JPX企業リストインポート
+./backend/cron/run-jpx-importer.sh
+```
+
+ログファイルが `~/logs/` に作成され、正常に実行されることを確認してください。
+
 ## ファイル構成
 
 ```
@@ -91,6 +144,7 @@ setup/
 初回セットアップが完了したら、以下のドキュメントを参照してください：
 
 - [DEPLOYMENT.md](../DEPLOYMENT.md) - デプロイ方法と運用ガイド
+- [Cron運用ガイド](../backend/cron/README.md) - バッチ処理の運用方法
 - [scripts/](../scripts/) - 開発用補助スクリプト
 
 ## トラブルシューティング
