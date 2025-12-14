@@ -24,6 +24,8 @@ dependencies = [
     "pydantic>=2.0.0",
     "click>=8.0.0",
     "click-log>=0.4.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.13.0",
 ]
 
 [project.optional-dependencies]
@@ -69,9 +71,10 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+exclude = ["alembic/"]
 
 [[tool.mypy.overrides]]
-module = ["pandas", "pandas.*", "yfinance", "yfinance.*", "fastapi.*"]
+module = ["pandas", "pandas.*", "yfinance", "yfinance.*", "fastapi.*", "alembic", "alembic.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

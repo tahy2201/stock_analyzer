@@ -1,117 +1,132 @@
-import sqlite3
+"""
+SQLAlchemy ORM models for stock analyzer database.
+"""
 
-from shared.config.settings import DATABASE_PATH
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import (
+    DECIMAL,
+    JSON,
+    BigInteger,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    """Base class for all ORM models."""
+
+    pass
+
+
+class Company(Base):
+    """企業基本情報テーブル"""
+
+    __tablename__ = "companies"
+
+    symbol: Mapped[str] = mapped_column(String(10), primary_key=True)
+    name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    sector: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    market: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    employees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    revenue: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    is_enterprise: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    dividend_yield: Mapped[Optional[float]] = mapped_column(DECIMAL(5, 2), nullable=True)
+    last_updated: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+
+class StockPrice(Base):
+    """株価データテーブル"""
+
+    __tablename__ = "stock_prices"
+
+    symbol: Mapped[str] = mapped_column(
+        String(10), ForeignKey("companies.symbol"), primary_key=True
+    )
+    date: Mapped[datetime] = mapped_column(Date, primary_key=True)
+    open: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    high: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    low: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    close: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    __table_args__ = (Index("idx_stock_prices_symbol_date", "symbol", "date"),)
+
+
+class TechnicalIndicator(Base):
+    """テクニカル指標テーブル"""
+
+    __tablename__ = "technical_indicators"
+
+    symbol: Mapped[str] = mapped_column(
+        String(10), ForeignKey("companies.symbol"), primary_key=True
+    )
+    date: Mapped[datetime] = mapped_column(Date, primary_key=True)
+    ma_25: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    divergence_rate: Mapped[Optional[float]] = mapped_column(DECIMAL(5, 2), nullable=True)
+    dividend_yield: Mapped[Optional[float]] = mapped_column(DECIMAL(5, 2), nullable=True)
+    volume_avg_20: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+
+    __table_args__ = (Index("idx_technical_indicators_symbol_date", "symbol", "date"),)
+
+
+class TickerInfo(Base):
+    """ティッカー詳細情報テーブル"""
+
+    __tablename__ = "ticker_info"
+
+    symbol: Mapped[str] = mapped_column(
+        String(10), ForeignKey("companies.symbol"), primary_key=True
+    )
+    industry: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    sector: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    full_time_employees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    market_cap: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    current_price: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    dividend_yield: Mapped[Optional[float]] = mapped_column(DECIMAL(5, 2), nullable=True)
+    dividend_rate: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    trailing_annual_dividend_rate: Mapped[Optional[float]] = mapped_column(
+        DECIMAL(10, 2), nullable=True
+    )
+    ex_dividend_date: Mapped[Optional[datetime]] = mapped_column(Date, nullable=True)
+    trailing_pe: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 4), nullable=True)
+    forward_pe: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 4), nullable=True)
+    price_to_book: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 4), nullable=True)
+    debt_to_equity: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 4), nullable=True)
+    return_on_equity: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 6), nullable=True)
+    return_on_assets: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 6), nullable=True)
+    total_revenue: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    earnings_growth: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 6), nullable=True)
+    revenue_growth: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 6), nullable=True)
+    profit_margins: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 6), nullable=True)
+    fifty_two_week_high: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    fifty_two_week_low: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    average_volume: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    corporate_actions_dividend: Mapped[Optional[str]] = mapped_column(JSON, nullable=True)
+    last_updated: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("idx_ticker_info_symbol", "symbol"),
+        Index("idx_ticker_info_last_updated", "last_updated"),
+    )
 
 
 def create_tables() -> None:
-    conn = sqlite3.connect(DATABASE_PATH)
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS companies (
-            symbol VARCHAR(10) PRIMARY KEY,
-            name VARCHAR(255),
-            sector VARCHAR(100),
-            market VARCHAR(50),
-            employees INTEGER,
-            revenue BIGINT,
-            is_enterprise BOOLEAN,
-            dividend_yield DECIMAL(5,2),
-            last_updated DATETIME
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS stock_prices (
-            symbol VARCHAR(10),
-            date DATE,
-            open DECIMAL(10,2),
-            high DECIMAL(10,2),
-            low DECIMAL(10,2),
-            close DECIMAL(10,2),
-            volume BIGINT,
-            PRIMARY KEY (symbol, date),
-            FOREIGN KEY (symbol) REFERENCES companies(symbol)
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS technical_indicators (
-            symbol VARCHAR(10),
-            date DATE,
-            ma_25 DECIMAL(10,2),
-            divergence_rate DECIMAL(5,2),
-            dividend_yield DECIMAL(5,2),
-            volume_avg_20 BIGINT,
-            PRIMARY KEY (symbol, date),
-            FOREIGN KEY (symbol) REFERENCES companies(symbol)
-        )
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_stock_prices_symbol_date
-        ON stock_prices(symbol, date)
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_technical_indicators_symbol_date
-        ON technical_indicators(symbol, date)
-    """)
-
-    # ticker_info テーブルの作成
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS ticker_info (
-            symbol VARCHAR(10) PRIMARY KEY,
-            industry VARCHAR(100),
-            sector VARCHAR(100),
-            full_time_employees INTEGER,
-            market_cap BIGINT,
-            current_price DECIMAL(10,2),
-            dividend_yield DECIMAL(5,2),
-            dividend_rate DECIMAL(10,2),
-            trailing_annual_dividend_rate DECIMAL(10,2),
-            ex_dividend_date DATE,
-            trailing_pe DECIMAL(10,4),
-            forward_pe DECIMAL(10,4),
-            price_to_book DECIMAL(10,4),
-            debt_to_equity DECIMAL(10,4),
-            return_on_equity DECIMAL(10,6),
-            return_on_assets DECIMAL(10,6),
-            total_revenue BIGINT,
-            earnings_growth DECIMAL(10,6),
-            revenue_growth DECIMAL(10,6),
-            profit_margins DECIMAL(10,6),
-            fifty_two_week_high DECIMAL(10,2),
-            fifty_two_week_low DECIMAL(10,2),
-            average_volume BIGINT,
-            corporate_actions_dividend JSON,
-            last_updated DATETIME,
-            FOREIGN KEY (symbol) REFERENCES companies(symbol)
-        )
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_ticker_info_symbol
-        ON ticker_info(symbol)
-    """)
-
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_ticker_info_last_updated
-        ON ticker_info(last_updated)
-    """)
-
-    # 既存のcompaniesテーブルにdividend_yield列を追加（存在しない場合）
-    try:
-        cursor.execute("ALTER TABLE companies ADD COLUMN dividend_yield DECIMAL(5,2)")
-    except sqlite3.OperationalError:
-        # 列が既に存在する場合はスキップ
-        pass
-
-    conn.commit()
-    conn.close()
+    """
+    Compatibility function for legacy code.
+    This function is kept for backward compatibility but does nothing.
+    Database migrations should be managed by Alembic instead.
+    """
+    pass
 
 
 if __name__ == "__main__":
-    DATABASE_PATH.parent.mkdir(exist_ok=True)
-    create_tables()
-    print(f"Database tables created successfully at {DATABASE_PATH}")
+    print("Database migrations should be managed by Alembic.")
+    print("Please use: alembic upgrade head")
