@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "Initializing database schema..."
-if ! python -m shared.database.models; then
-    echo "Failed to initialize database schema" >&2
+echo "Running database migrations..."
+if ! python -m alembic upgrade head; then
+    echo "Failed to run database migrations" >&2
     exit 1
 fi
 

@@ -16,9 +16,12 @@ class DatabaseManager:
         self.ensure_database_exists()
 
     def ensure_database_exists(self) -> None:
-        from shared.database.models import create_tables
-
-        create_tables()
+        """
+        データベースの存在を確認
+        注意: データベーススキーマはAlembicマイグレーションで管理されるようになりました。
+        このメソッドは互換性のために残されていますが、何も実行しません。
+        """
+        pass
 
     def get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
