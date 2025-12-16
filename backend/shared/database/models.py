@@ -12,6 +12,7 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    Enum,
     ForeignKey,
     Index,
     Integer,
@@ -24,6 +25,55 @@ class Base(DeclarativeBase):
     """Base class for all ORM models."""
 
     pass
+
+
+class User(Base):
+    """アカウント情報"""
+
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    login_id: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    display_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    role: Mapped[str] = mapped_column(
+        Enum("admin", "user", name="user_role", native_enum=False, validate_strings=True),
+        nullable=False,
+        server_default="user",
+    )
+    status: Mapped[str] = mapped_column(
+        Enum("pending", "active", "disabled", name="user_status", native_enum=False, validate_strings=True),
+        nullable=False,
+        server_default="pending",
+    )
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+
+class Invite(Base):
+    """ユーザー招待トークン"""
+
+    __tablename__ = "invites"
+
+    token: Mapped[str] = mapped_column(String(64), primary_key=True)
+    role: Mapped[str] = mapped_column(
+        Enum("admin", "user", name="invite_role", native_enum=False, validate_strings=True),
+        nullable=False,
+    )
+    issued_by: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    provisional_user_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=True
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
 
 class Company(Base):
