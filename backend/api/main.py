@@ -2,8 +2,9 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
-from api.routers import analysis, candidates, companies, stocks
+from api.routers import analysis, candidates, companies, stocks, auth, admin, users
 from shared.config.logging_config import setup_api_logging
 
 # ログ設定
@@ -25,11 +26,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# セッション（サイン済みCookie）設定
+session_secret = os.getenv("SESSION_SECRET_KEY", "change-me-in-production")
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=session_secret,
+    same_site="lax",
+    session_cookie="sa_session",
+)
+
 # ルーターの追加
 app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
 app.include_router(companies.router, prefix="/api/companies", tags=["companies"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(candidates.router, prefix="/api/candidates", tags=["candidates"])
+app.include_router(auth.router)
+app.include_router(users.router)
+app.include_router(admin.router)
 
 @app.get("/")
 async def root():
