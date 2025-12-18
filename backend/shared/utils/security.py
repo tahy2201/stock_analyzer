@@ -1,5 +1,4 @@
 import secrets
-from typing import Tuple
 
 import bcrypt
 
@@ -19,7 +18,7 @@ def verify_password(raw_password: str, hashed_password: str) -> bool:
         return False
 
 
-def validate_password_policy(raw_password: str) -> Tuple[bool, str]:
+def validate_password_policy(raw_password: str) -> tuple[bool, str]:
     if len(raw_password) < PASSWORD_MIN_LENGTH:
         return False, "パスワードは8文字以上にしてください。"
     if not any(c.isalpha() for c in raw_password) or not any(c.isdigit() for c in raw_password):
