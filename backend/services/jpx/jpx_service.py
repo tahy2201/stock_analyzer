@@ -1,4 +1,3 @@
-import logging
 from typing import Optional
 
 from shared.config.logging_config import get_service_logger

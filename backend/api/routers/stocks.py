@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from shared.database.database_manager import DatabaseManager
 
@@ -58,14 +58,14 @@ class StockDetail(BaseModel):
     price_change: Optional[float] = None  # 前日比（金額）
     price_change_percent: Optional[float] = None  # 前日比（%）
     dividend_yield: Optional[float] = None
-    prices: List[StockPrice] = []
-    technical_indicators: List[TechnicalIndicator] = []
+    prices: list[StockPrice] = Field(default_factory=list)
+    technical_indicators: list[TechnicalIndicator] = Field(default_factory=list)
     ticker_info: Optional[TickerInfo] = None
 
 # データベースマネージャー
 db_manager = DatabaseManager()
 
-@router.get("/", response_model=List[StockInfo])
+@router.get("/", response_model=list[StockInfo])
 async def get_stocks(limit: int = 100):
     """全株式リストを取得"""
     try:
@@ -89,7 +89,7 @@ async def get_stocks(limit: int = 100):
 
             return stocks
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/{symbol}", response_model=StockDetail)
 async def get_stock_detail(symbol: str, days: int = 365):
@@ -198,9 +198,9 @@ async def get_stock_detail(symbol: str, days: int = 365):
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-@router.get("/{symbol}/prices", response_model=List[StockPrice])
+@router.get("/{symbol}/prices", response_model=list[StockPrice])
 async def get_stock_prices(symbol: str, days: int = 100):
     """銘柄の株価データのみを取得"""
     try:
@@ -226,4 +226,4 @@ async def get_stock_prices(symbol: str, days: int = 100):
         return prices
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

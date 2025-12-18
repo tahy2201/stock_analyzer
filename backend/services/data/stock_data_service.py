@@ -128,7 +128,7 @@ class StockDataService:
 
         return results
 
-    def update_stock_data(self, symbols: list[str]) -> dict[str, dict]:
+    def update_stock_data(self, symbols: list[str]) -> dict[str, object]:
         """
         株価データとティッカー情報の差分更新
         """

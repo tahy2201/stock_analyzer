@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 
 import click
 import click_log
@@ -11,9 +11,10 @@ sys.path.append(str(Path(__file__).parent.parent))
 from services.analysis.technical_analyzer import TechnicalAnalyzer
 from services.data.stock_data_service import StockDataService
 from services.filtering.company_filter_service import CompanyFilterService
-from shared.config.models import FilterCriteria
 from shared.config.logging_config import get_click_logger
+from shared.config.models import FilterCriteria
 from shared.database.database_manager import DatabaseManager
+
 
 class BatchRunner:
     """バッチ処理の実行を管理するメインクラス"""
@@ -81,8 +82,11 @@ class BatchRunner:
         try:
             results = self.stock_data_service.update_stock_data(symbols)
 
-            price_success = sum(1 for success in results["price_updates"].values() if success)
-            ticker_success = sum(1 for success in results["ticker_updates"].values() if success)
+            price_updates = cast(dict[str, bool], results.get("price_updates", {}))
+            ticker_updates = cast(dict[str, bool], results.get("ticker_updates", {}))
+
+            price_success = sum(1 for success in price_updates.values() if success)
+            ticker_success = sum(1 for success in ticker_updates.values() if success)
 
             logger.info(f"株価データ更新完了: 価格 {price_success}件, ティッカー {ticker_success}件")
 

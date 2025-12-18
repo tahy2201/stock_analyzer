@@ -1,4 +1,5 @@
 import secrets
+from typing import cast
 
 import bcrypt
 
@@ -8,12 +9,12 @@ PASSWORD_MIN_LENGTH = 8
 def hash_password(raw_password: str) -> str:
     password_bytes = raw_password.encode("utf-8")
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
+    return cast(str, bcrypt.hashpw(password_bytes, salt).decode("utf-8"))
 
 
 def verify_password(raw_password: str, hashed_password: str) -> bool:
     try:
-        return bcrypt.checkpw(raw_password.encode("utf-8"), hashed_password.encode("utf-8"))
+        return bool(bcrypt.checkpw(raw_password.encode("utf-8"), hashed_password.encode("utf-8")))
     except ValueError:
         return False
 

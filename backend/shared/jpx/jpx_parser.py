@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 
 class JPXParser:
     def __init__(self) -> None:
-        self.data_dir = DATA_DIR
-        self.jpx_file_path = self.data_dir / JPX_FILE_NAME
+        self.data_dir: Path = DATA_DIR
+        self.jpx_file_path: Path = self.data_dir / JPX_FILE_NAME
         self.db_manager = DatabaseManager()
 
     def download_jpx_file(self, url: str = "") -> bool:
