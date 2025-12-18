@@ -4,8 +4,8 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from shared.database.session import get_db
 from shared.database import models
+from shared.database.session import get_db
 
 
 def get_current_user(
@@ -25,7 +25,7 @@ def get_current_user(
 
 
 def get_current_admin(
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user)
 ) -> models.User:
     if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="管理者権限が必要です")

@@ -1,13 +1,11 @@
-from datetime import datetime, timedelta
-from typing import List
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field, ConfigDict
 
 from api.dependencies import get_current_admin
+from api.dependencies.db import DBSession
 from shared.database import models
-from shared.database.session import get_db
 from shared.utils.security import generate_token, hash_password, validate_password_policy
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -22,8 +20,7 @@ class UserListResponse(BaseModel):
     created_at: datetime
     last_login_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InviteCreateRequest(BaseModel):
@@ -41,16 +38,21 @@ class PasswordResetRequest(BaseModel):
     new_password: str
 
 
-@router.get("/users", response_model=List[UserListResponse])
+@router.get("/users", response_model=list[UserListResponse])
 def list_users(
-    db: Session = Depends(get_db), current_admin=Depends(get_current_admin)
+    db: DBSession,
+    current_admin=Depends(get_current_admin),
 ):
     users = db.query(models.User).order_by(models.User.id.asc()).all()
     return users
 
 
 @router.delete("/users/{user_id}")
-def delete_user(user_id: int, db: Session = Depends(get_db), current_admin=Depends(get_current_admin)):
+def delete_user(
+    user_id: int,
+    db: DBSession,
+    current_admin=Depends(get_current_admin),
+):
     user = db.get(models.User, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ユーザーが存在しません")
@@ -65,7 +67,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current_admin=Depen
 def reset_password(
     user_id: int,
     payload: PasswordResetRequest,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin=Depends(get_current_admin),
 ):
     is_valid, msg = validate_password_policy(payload.new_password)
@@ -84,7 +86,7 @@ def reset_password(
 @router.post("/invites", response_model=InviteResponse)
 def create_invite(
     payload: InviteCreateRequest,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin=Depends(get_current_admin),
 ):
     token = generate_token(32)
@@ -105,7 +107,7 @@ def create_invite(
         role=payload.role,
         issued_by=current_admin.id,
         provisional_user_id=provisional_user.id,
-        expires_at=datetime.utcnow() + timedelta(hours=24),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
     )
     db.add(invite)
     db.commit()
@@ -116,7 +118,7 @@ def create_invite(
 @router.post("/invites/{token}/reissue", response_model=InviteResponse)
 def reissue_invite(
     token: str,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin=Depends(get_current_admin),
 ):
     invite = db.get(models.Invite, token)
@@ -127,7 +129,7 @@ def reissue_invite(
 
     new_token = generate_token(32)
     invite.token = new_token
-    invite.expires_at = datetime.utcnow() + timedelta(hours=24)
+    invite.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
     invite.revoked_at = None
     db.add(invite)
     db.commit()
@@ -138,7 +140,7 @@ def reissue_invite(
 @router.post("/invites/{token}/revoke")
 def revoke_invite(
     token: str,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_admin=Depends(get_current_admin),
 ):
     invite = db.get(models.Invite, token)
@@ -146,7 +148,7 @@ def revoke_invite(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="招待が見つかりません")
     if invite.used_at:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="使用済みの招待は失効できません")
-    invite.revoked_at = datetime.utcnow()
+    invite.revoked_at = datetime.now(timezone.utc)
     db.add(invite)
     db.commit()
     return {"message": "revoked"}

@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field, ConfigDict
 
 from api.dependencies import get_current_user
+from api.dependencies.db import DBSession
 from shared.database import models
-from shared.database.session import get_db
 from shared.utils.security import hash_password, validate_password_policy
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -26,14 +25,13 @@ class UserResponse(BaseModel):
     role: str
     status: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 @router.put("/me", response_model=UserResponse)
 def update_profile(
     payload: ProfileUpdateRequest,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_user: models.User = Depends(get_current_user),
 ):
     current_user.display_name = payload.display_name
@@ -46,7 +44,7 @@ def update_profile(
 @router.post("/me/password")
 def change_password(
     payload: PasswordUpdateRequest,
-    db: Session = Depends(get_db),
+    db: DBSession,
     current_user: models.User = Depends(get_current_user),
 ):
     is_valid, msg = validate_password_policy(payload.new_password)

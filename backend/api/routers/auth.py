@@ -1,13 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
+from pydantic import BaseModel, Field, ConfigDict
 
 from api.dependencies import get_current_user
+from api.dependencies.db import DBSession
 from shared.database import models
-from shared.database.session import get_db
 from shared.utils.security import (
     generate_token,
     hash_password,
@@ -31,8 +30,7 @@ class UserResponse(BaseModel):
     status: str
     last_login_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RegisterFromInviteRequest(BaseModel):
@@ -43,7 +41,7 @@ class RegisterFromInviteRequest(BaseModel):
 
 
 @router.post("/login", response_model=UserResponse)
-def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)):
+def login(request: Request, payload: LoginRequest, db: DBSession):
     user = db.query(models.User).filter(models.User.login_id == payload.login_id).first()
     if not user or not verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="IDまたはパスワードが不正です")
@@ -51,7 +49,7 @@ def login(request: Request, payload: LoginRequest, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="アカウントが有効ではありません")
 
     request.session["user_id"] = user.id
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = datetime.now(timezone.utc)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -73,7 +71,7 @@ def me(current_user: models.User = Depends(get_current_user)):
 def register_from_invite(
     request: Request,
     payload: RegisterFromInviteRequest,
-    db: Session = Depends(get_db),
+    db: DBSession,
 ):
     is_valid, msg = validate_password_policy(payload.password)
     if not is_valid:
@@ -91,7 +89,7 @@ def register_from_invite(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="招待は既に使用されています")
     if invite.revoked_at is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="招待は失効しています")
-    if invite.expires_at < datetime.utcnow():
+    if invite.expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="招待の有効期限が切れています")
 
     # login_idユニークチェック（既存ユーザーと衝突しないこと）
@@ -122,7 +120,7 @@ def register_from_invite(
     user.password_hash = hash_password(payload.password)
     user.status = "active"
     user.role = invite.role
-    invite.used_at = datetime.utcnow()
+    invite.used_at = datetime.now(timezone.utc)
     db.add_all([user, invite])
     db.commit()
     db.refresh(user)
