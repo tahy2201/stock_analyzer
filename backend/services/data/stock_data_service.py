@@ -56,8 +56,9 @@ class StockDataService:
                     continue
 
                 # データベース形式に変換
+                index_dates = [ts.date() for ts in pd.to_datetime(hist.index).to_pydatetime()]
                 price_data = pd.DataFrame({
-                    'date': hist.index.date,
+                    'date': index_dates,
                     'open': hist['Open'],
                     'high': hist['High'],
                     'low': hist['Low'],
@@ -145,8 +146,12 @@ class StockDataService:
             latest_price_data = self.db_manager.get_latest_stock_price_date(symbol)
             if latest_price_data is None:
                 price_symbols_to_update.append(symbol)
-            elif latest_price_data.date() < yesterday:
-                price_symbols_to_update.append(symbol)
+            elif isinstance(latest_price_data, pd.Timestamp):
+                if latest_price_data.date() < yesterday:
+                    price_symbols_to_update.append(symbol)
+            elif hasattr(latest_price_data, "date"):
+                if latest_price_data.date() < yesterday:
+                    price_symbols_to_update.append(symbol)
 
             # ティッカー情報の更新判定（分散間隔）
             interval_days = self.get_ticker_info_update_interval_days(symbol)

@@ -98,9 +98,11 @@ def register_from_invite(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="このIDは既に使用されています")
 
     # 仮ユーザーが無い場合は作成（保険）
+    user: models.User | None = None
     if invite.provisional_user_id:
         user = db.get(models.User, invite.provisional_user_id)
-    else:
+
+    if user is None:
         provisional_login = f"invite_{generate_token(4)}"
         user = models.User(
             login_id=provisional_login,

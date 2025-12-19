@@ -1,4 +1,7 @@
-from typing import Optional
+import datetime
+from typing import Any, Optional, cast
+
+import pandas as pd
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -128,8 +131,12 @@ async def get_stock_detail(symbol: str, days: int = 365):
                 price_change_percent = (price_change / previous_price) * 100
 
             for date, row in recent_data.iterrows():
+                if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
+                    date_ts = date
+                else:
+                    date_ts = pd.to_datetime(str(date))
                 prices.append(StockPrice(
-                    date=date.strftime("%Y-%m-%d"),
+                    date=date_ts.strftime("%Y-%m-%d"),
                     open=float(row["open"]),
                     high=float(row["high"]),
                     low=float(row["low"]),
@@ -144,8 +151,12 @@ async def get_stock_detail(symbol: str, days: int = 365):
         if not technical_data.empty:
             recent_technical = technical_data.tail(days)
             for date, row in recent_technical.iterrows():
+                if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
+                    date_ts = date
+                else:
+                    date_ts = pd.to_datetime(str(date))
                 technical_indicators.append(TechnicalIndicator(
-                    date=date.strftime("%Y-%m-%d"),
+                    date=date_ts.strftime("%Y-%m-%d"),
                     ma_25=float(row["ma_25"]) if row["ma_25"] is not None else None,
                     divergence_rate=float(row["divergence_rate"]) if row["divergence_rate"] is not None else None,
                     volume_avg_20=int(row["volume_avg_20"]) if row["volume_avg_20"] is not None else None
@@ -214,8 +225,12 @@ async def get_stock_prices(symbol: str, days: int = 100):
 
         prices = []
         for date, row in recent_data.iterrows():
+            if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
+                date_ts = date
+            else:
+                date_ts = pd.to_datetime(str(date))
             prices.append(StockPrice(
-                date=date.strftime("%Y-%m-%d"),
+                date=date_ts.strftime("%Y-%m-%d"),
                 open=float(row["open"]),
                 high=float(row["high"]),
                 low=float(row["low"]),

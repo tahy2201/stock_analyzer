@@ -82,9 +82,9 @@ class MarketAnalyzer:
             ma_75 = close_prices.rolling(window=75, min_periods=75).mean()
 
             # 現在値と移動平均の関係
-            current_price = close_prices.iloc[-1]
-            current_ma_25 = ma_25.iloc[-1] if not ma_25.empty else current_price
-            current_ma_75 = ma_75.iloc[-1] if not ma_75.empty else current_price
+            current_price = float(close_prices.iloc[-1])
+            current_ma_25 = float(ma_25.iloc[-1]) if not ma_25.empty else current_price
+            current_ma_75 = float(ma_75.iloc[-1]) if not ma_75.empty else current_price
 
             # トレンド判定
             trend = self._determine_trend(current_price, current_ma_25, current_ma_75)
@@ -94,30 +94,33 @@ class MarketAnalyzer:
             volatility = returns.tail(30).std() * np.sqrt(252) * 100  # 年率換算
 
             # 価格変化率
-            price_changes = {
-                "1d": ((close_prices.iloc[-1] / close_prices.iloc[-2]) - 1) * 100
+            price_changes: dict[str, float] = {
+                "1d": float(((close_prices.iloc[-1] / close_prices.iloc[-2]) - 1) * 100)
                 if len(close_prices) > 1
-                else 0,
-                "5d": ((close_prices.iloc[-1] / close_prices.iloc[-6]) - 1) * 100
+                else 0.0,
+                "5d": float(((close_prices.iloc[-1] / close_prices.iloc[-6]) - 1) * 100)
                 if len(close_prices) > 5
-                else 0,
-                "1m": ((close_prices.iloc[-1] / close_prices.iloc[-21]) - 1) * 100
+                else 0.0,
+                "1m": float(((close_prices.iloc[-1] / close_prices.iloc[-21]) - 1) * 100)
                 if len(close_prices) > 21
-                else 0,
-                "3m": ((close_prices.iloc[-1] / close_prices.iloc[-63]) - 1) * 100
+                else 0.0,
+                "3m": float(((close_prices.iloc[-1] / close_prices.iloc[-63]) - 1) * 100)
                 if len(close_prices) > 63
-                else 0,
+                else 0.0,
             }
 
-            return {
-                "current_price": current_price,
-                "ma_25": current_ma_25,
-                "ma_75": current_ma_75,
-                "trend": trend,
-                "volatility": volatility,
-                "price_changes": price_changes,
-                "last_updated": index_data.index[-1],
-            }
+            return cast(
+                TrendAnalysis,
+                {
+                    "current_price": current_price,
+                    "ma_25": current_ma_25,
+                    "ma_75": current_ma_75,
+                    "trend": trend,
+                    "volatility": float(volatility),
+                    "price_changes": price_changes,
+                    "last_updated": index_data.index[-1],
+                },
+            )
 
         except Exception as e:
             logger.error(f"市場トレンド分析エラー: {e}")
