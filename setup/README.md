@@ -146,6 +146,8 @@ setup/
 - [DEPLOYMENT.md](../DEPLOYMENT.md) - デプロイ方法と運用ガイド
 - [Cron運用ガイド](../backend/cron/README.md) - バッチ処理の運用方法
 - [scripts/](../scripts/) - 開発用補助スクリプト
+- 管理者ユーザー挿入: `cd backend && uv run python ../scripts/seed_admin.py --login admin --password YOUR_PASSWORD --display 管理者 --role admin`  
+  - 既存の同一IDがある場合はスキップされます。上書きしたい場合は `--force` を付与してください。
 
 ## トラブルシューティング
 
