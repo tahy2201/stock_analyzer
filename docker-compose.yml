@@ -3,17 +3,32 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    volumes:
-      - ./data:/data
     environment:
       - ALLOWED_ORIGINS=http://localhost:4173
+      - DATABASE_PATH=/app/data/stock_data.db
+      - UVICORN_RELOAD=1
+    volumes:
+      - ./data:/app/data
     ports:
       - "8000:8000"
+    develop:
+      watch:
+        - path: ./backend
+          target: /app
+          action: sync
+          ignore:
+            - __pycache__/
+            - .venv/
+        - path: ./backend/pyproject.toml
+          action: rebuild
+        - path: ./backend/uv.lock
+          action: rebuild
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: dev
       args:
         VITE_API_BASE_URL: http://localhost:8000/api
     environment:
@@ -22,3 +37,15 @@ services:
       - "4173:4173"
     depends_on:
       - backend
+    develop:
+      watch:
+        - path: ./frontend
+          target: /app
+          action: sync
+          ignore:
+            - node_modules/
+            - dist/
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/bun.lock
+          action: rebuild
