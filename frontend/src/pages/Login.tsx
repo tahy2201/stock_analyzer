@@ -9,7 +9,7 @@ interface LoginFormData {
 }
 
 const Login = () => {
-  const { message } = App.useApp()
+  const { notification } = App.useApp()
   const { isAuthenticated, isLoading, login } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const location = useLocation()
@@ -19,7 +19,11 @@ const Login = () => {
     setSubmitting(true)
     try {
       await login(values.login_id, values.password)
-      message.success('ログインしました')
+      notification.success({
+        message: 'ログイン成功',
+        description: 'ログインしました',
+        placement: 'topRight',
+      })
     } catch (error: any) {
       // Axiosエラーレスポンスから詳細メッセージを取得
       const errorMessage =
@@ -27,7 +31,12 @@ const Login = () => {
         error?.message ||
         'ログインに失敗しました。IDまたはパスワードを確認してください。'
 
-      message.error(errorMessage, 5) // 5秒間表示
+      notification.error({
+        message: 'ログイン失敗',
+        description: errorMessage,
+        placement: 'topRight',
+        duration: 5,
+      })
     } finally {
       setSubmitting(false)
     }
