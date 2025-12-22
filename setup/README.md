@@ -146,8 +146,27 @@ setup/
 - [DEPLOYMENT.md](../DEPLOYMENT.md) - デプロイ方法と運用ガイド
 - [Cron運用ガイド](../backend/cron/README.md) - バッチ処理の運用方法
 - [scripts/](../scripts/) - 開発用補助スクリプト
-- 管理者ユーザー挿入: `cd backend && uv run python ../scripts/seed_admin.py --login admin --password YOUR_PASSWORD --display 管理者 --role admin`  
-  - 既存の同一IDがある場合はスキップされます。上書きしたい場合は `--force` を付与してください。
+
+### テストユーザー作成
+
+開発・テスト用のユーザーを作成するスクリプトを用意しています：
+
+```bash
+cd backend
+
+# デフォルト（管理者 + 一般ユーザーの両方を作成）
+uv run python ../scripts/seed_user.py
+
+# カスタムユーザー作成
+uv run python ../scripts/seed_user.py --login john --password YOUR_PASSWORD --display "John Doe" --role user
+
+# 既存ユーザーの上書き更新
+uv run python ../scripts/seed_user.py --login admin --password YOUR_PASSWORD --force
+```
+
+デフォルト実行で作成されるユーザー：
+- **admin** / YOUR_PASSWORD (role: admin)
+- **testuser** / YOUR_PASSWORD (role: user)
 
 ## トラブルシューティング
 
