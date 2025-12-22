@@ -1,8 +1,7 @@
 import datetime
-from typing import Any, Optional, cast
+from typing import Optional
 
 import pandas as pd
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
