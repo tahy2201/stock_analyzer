@@ -3,26 +3,27 @@
 
 使い方:
     # デフォルト（管理者と一般ユーザーの両方を作成）
-    uv run python scripts/seed_user.py
+    uv run python backend/scripts/seed_user.py
 
     # 任意のユーザーを作成
-    uv run python scripts/seed_user.py --login john --password YOUR_PASSWORD --display "John Doe" --role user
+    uv run python backend/scripts/seed_user.py --login john --password YOUR_PASSWORD --display "John Doe" --role user
 
     # 既存ユーザーの上書き更新
-    uv run python scripts/seed_user.py --login admin --password YOUR_PASSWORD --force
+    uv run python backend/scripts/seed_user.py --login admin --password YOUR_PASSWORD --force
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
 
 def setup_import_path() -> None:
     """backend モジュールをインポートできるように sys.path を調整する。"""
-    repo_root = Path(__file__).resolve().parents[1]
-    backend_path = repo_root / "backend"
+    # backend/scripts/ から backend/ へ (親の親)
+    backend_path = Path(__file__).resolve().parent.parent
     sys.path.insert(0, str(backend_path))
 
 
@@ -92,6 +93,12 @@ def create_user(db, models, hash_password, login_id: str, password: str, display
 def main() -> None:
     setup_import_path()
 
+    # Load environment variables from .env.local
+    from dotenv import load_dotenv
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    env_file = repo_root / ".env.local"
+    load_dotenv(dotenv_path=env_file)
+
     from shared.database.session import SessionLocal  # type: ignore  # noqa: WPS433
     from shared.database import models  # type: ignore  # noqa: WPS433
     from shared.utils.security import hash_password  # type: ignore  # noqa: WPS433
@@ -115,11 +122,23 @@ def main() -> None:
         # 引数なしの場合はデフォルトユーザー2つを作成
         else:
             print("Creating default users (admin + testuser)...")
-            create_user(db, models, hash_password, "admin", "YOUR_PASSWORD", "Admin", "admin", args.force)
-            create_user(db, models, hash_password, "testuser", "YOUR_PASSWORD", "Test User", "user", args.force)
+
+            # 環境変数からパスワードを取得
+            admin_password = os.getenv("SEED_ADMIN_PASSWORD")
+            test_password = os.getenv("SEED_TEST_PASSWORD")
+
+            if not admin_password or not test_password:
+                print("Error: SEED_ADMIN_PASSWORD and SEED_TEST_PASSWORD must be set in .env.local")
+                print("Please add the following to .env.local:")
+                print("  SEED_ADMIN_PASSWORD=your_admin_password")
+                print("  SEED_TEST_PASSWORD=your_test_password")
+                sys.exit(1)
+
+            create_user(db, models, hash_password, "admin", admin_password, "Admin", "admin", args.force)
+            create_user(db, models, hash_password, "testuser", test_password, "Test User", "user", args.force)
             print("\nDefault users created successfully!")
-            print("  admin: YOUR_PASSWORD (role: admin)")
-            print("  testuser: YOUR_PASSWORD (role: user)")
+            print("  admin: ***** (role: admin)")
+            print("  testuser: ***** (role: user)")
 
     finally:
         db.close()
