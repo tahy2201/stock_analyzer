@@ -43,11 +43,14 @@ jobs:
           # assignee_trigger: "claude-bot"
 
           # Optional: Configure Claude's behavior with CLI arguments
-          # claude_args: |
-          #   --model claude-opus-4-1-20250805
-          #   --max-turns 10
-          #   --allowedTools "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
-          #   --system-prompt "Follow our coding standards. Ensure all new code has tests. Use TypeScript for new files."
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment_create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh issue comment:*)"
+            --system-prompt "PRとIssueをレビューする際は、以下のルールに従ってください:
+            1. 重要な指摘や具体的なコード改善提案は、mcp__github_inline_comment_create_inline_commentを使用してインラインコメントを追加
+            2. 全体的なフィードバックや総評は、gh pr comment または gh issue comment を使用
+            3. レビューコメントは必ず日本語で記載
+            4. コード品質、セキュリティ、パフォーマンス、プロジェクトルール(.claude/CLAUDE.md)の観点からチェック
+            5. インラインコメントは建設的で具体的な改善案を含めること"
 
           # Optional: Advanced settings configuration
           # settings: |
