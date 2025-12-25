@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, cast
 
 from fastapi import Depends, HTTPException, Request, status
@@ -33,6 +33,6 @@ def get_current_admin(
 
 
 def touch_last_login(user: models.User, db: Session) -> None:
-    user.last_login_at = datetime.utcnow()
+    user.last_login_at = datetime.now(timezone.utc)
     db.add(user)
     db.commit()
