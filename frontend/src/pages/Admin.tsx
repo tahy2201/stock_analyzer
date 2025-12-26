@@ -1,4 +1,4 @@
-import { Button, Card, Input, message, Modal, Popconfirm, Select, Space, Table, Tabs, Typography } from 'antd'
+import { App, Button, Card, Input, Modal, Popconfirm, Select, Space, Table, Tabs, Typography } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
@@ -9,6 +9,7 @@ import type { Invite, User } from '../types/auth'
 const { Text, Paragraph } = Typography
 
 const Admin = () => {
+  const { notification } = App.useApp()
   const { user, isLoading } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(true)
@@ -25,7 +26,7 @@ const Admin = () => {
       const data = await adminApi.listUsers()
       setUsers(data)
     } catch {
-      message.error('Failed to fetch users')
+      notification.error({ message: 'Failed to fetch users' })
     } finally {
       setLoadingUsers(false)
     }
@@ -49,20 +50,20 @@ const Admin = () => {
     try {
       const invite = await adminApi.createInvite({ role: inviteRole })
       setCreatedInvite(invite)
-      message.success('Invite created')
+      notification.success({ message: 'Invite created' })
       fetchUsers() // 仮ユーザーが作成されるのでリフレッシュ
     } catch {
-      message.error('Failed to create invite')
+      notification.error({ message: 'Failed to create invite' })
     }
   }
 
   const handleDeleteUser = async (userId: number) => {
     try {
       await adminApi.deleteUser(userId)
-      message.success('User deleted')
+      notification.success({ message: 'User deleted' })
       fetchUsers()
     } catch {
-      message.error('Failed to delete user')
+      notification.error({ message: 'Failed to delete user' })
     }
   }
 
@@ -70,12 +71,12 @@ const Admin = () => {
     if (!selectedUserId || !newPassword) return
     try {
       await adminApi.resetPassword(selectedUserId, newPassword)
-      message.success('Password reset')
+      notification.success({ message: 'Password reset' })
       setResetPasswordModalOpen(false)
       setSelectedUserId(null)
       setNewPassword('')
     } catch {
-      message.error('Failed to reset password')
+      notification.error({ message: 'Failed to reset password' })
     }
   }
 
