@@ -7,6 +7,7 @@ services:
       - ALLOWED_ORIGINS=http://localhost:4173
       - DATABASE_PATH=/app/data/stock_data.db
       - UVICORN_RELOAD=1
+      - ENVIRONMENT=development
     volumes:
       - ./data:/app/data
     ports:

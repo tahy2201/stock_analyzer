@@ -28,10 +28,13 @@ app.add_middleware(
 
 # セッション（サイン済みCookie）設定
 session_secret = os.getenv("SESSION_SECRET_KEY", "change-me-in-production")
+# 開発環境かどうかを判定（デフォルトは本番環境として安全側に倒す）
+is_development = os.getenv("ENVIRONMENT", "production") == "development"
 app.add_middleware(
     SessionMiddleware,
     secret_key=session_secret,
     same_site="lax",
+    https_only=not is_development,  # 開発環境ではFalse、本番環境ではTrue
     session_cookie="sa_session",
 )
 
