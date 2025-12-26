@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -39,6 +40,13 @@ async def get_technical_analysis(symbol: str):
         if not summary:
             raise HTTPException(status_code=404, detail="技術分析データが見つかりません")
 
+        last_updated_raw = summary.get("last_updated")
+        last_updated = (
+            last_updated_raw.strftime("%Y-%m-%d")
+            if isinstance(last_updated_raw, datetime)
+            else None
+        )
+
         return TechnicalAnalysis(
             symbol=summary["symbol"],
             current_price=summary.get("current_price"),
@@ -48,11 +56,11 @@ async def get_technical_analysis(symbol: str):
             volume_avg_20=summary.get("volume_avg_20"),
             ma_trend=summary.get("ma_trend"),
             price_trend=summary.get("price_trend"),
-            last_updated=summary.get("last_updated").strftime("%Y-%m-%d") if summary.get("last_updated") else None
+            last_updated=last_updated
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/stats/system", response_model=SystemStats)
 async def get_system_stats():
@@ -70,7 +78,7 @@ async def get_system_stats():
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/run/{symbol}")
 async def run_analysis(symbol: str):
@@ -90,4 +98,4 @@ async def run_analysis(symbol: str):
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

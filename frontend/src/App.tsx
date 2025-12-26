@@ -1,11 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider } from 'antd'
+import { App as AntdApp, ConfigProvider, Spin, theme } from 'antd'
 import jaJP from 'antd/locale/ja_JP'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Layout from './components/Layout'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
+import Admin from './pages/Admin'
 import Analysis from './pages/Analysis'
 import Candidates from './pages/Candidates'
 import Dashboard from './pages/Dashboard'
+import Login from './pages/Login'
+import MyPage from './pages/MyPage'
+import Register from './pages/Register'
 import StockDetail from './pages/StockDetail'
 import StockList from './pages/StockList'
 
@@ -19,11 +24,37 @@ const queryClient = new QueryClient({
   },
 })
 
-function App() {
+// 認証が必要なルートをガードするコンポーネント
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth()
+  const location = useLocation()
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />
+  }
+
+  return <>{children}</>
+}
+
+function AppRoutes() {
   return (
-    <ConfigProvider locale={jaJP}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+    <Routes>
+      {/* 公開ルート（ログイン・登録画面） */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* 公開ルート（既存機能はログイン不要） */}
+      <Route
+        path="/*"
+        element={
           <Layout>
             <Routes>
               <Route path="/" element={<Dashboard />} />
@@ -32,10 +63,48 @@ function App() {
               <Route path="/candidates" element={<Candidates />} />
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/analysis/:symbol" element={<Analysis />} />
+              {/* 認証必須ページ */}
+              <Route
+                path="/mypage"
+                element={
+                  <RequireAuth>
+                    <MyPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/admin"
+                element={
+                  <RequireAuth>
+                    <Admin />
+                  </RequireAuth>
+                }
+              />
             </Routes>
           </Layout>
-        </BrowserRouter>
-      </QueryClientProvider>
+        }
+      />
+    </Routes>
+  )
+}
+
+function App() {
+  return (
+    <ConfigProvider
+      locale={jaJP}
+      theme={{
+        algorithm: theme.darkAlgorithm,
+      }}
+    >
+      <AntdApp>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </AntdApp>
     </ConfigProvider>
   )
 }

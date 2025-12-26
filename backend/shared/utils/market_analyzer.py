@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Optional, TypedDict, cast
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,30 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+
+class TrendAnalysis(TypedDict, total=False):
+    current_price: float
+    ma_25: float
+    ma_75: float
+    trend: str
+    volatility: float
+    price_changes: dict[str, float]
+    last_updated: datetime
+
+
+class MarketSummary(TypedDict, total=False):
+    analysis_date: str
+    indices_analysis: dict[str, TrendAnalysis]
+    overall_sentiment: str
+    investment_timing: str
+    average_trend_score: float
+    overheated_analysis: dict[str, object]
+
+
+class SectorPerformance(TypedDict):
+    count: int
+    symbols: list[str]
 
 
 class MarketAnalyzer:
@@ -43,13 +67,13 @@ class MarketAnalyzer:
             logger.error(f"市場指数データ取得エラー {index_name}: {e}")
             return None
 
-    def calculate_market_trend(self, index_data: pd.DataFrame) -> Dict:
+    def calculate_market_trend(self, index_data: pd.DataFrame) -> TrendAnalysis:
         """
         市場トレンドを分析
         """
         try:
             if index_data.empty:
-                return {}
+                return cast(TrendAnalysis, {})
 
             close_prices = index_data["close"]
 
@@ -58,9 +82,9 @@ class MarketAnalyzer:
             ma_75 = close_prices.rolling(window=75, min_periods=75).mean()
 
             # 現在値と移動平均の関係
-            current_price = close_prices.iloc[-1]
-            current_ma_25 = ma_25.iloc[-1] if not ma_25.empty else current_price
-            current_ma_75 = ma_75.iloc[-1] if not ma_75.empty else current_price
+            current_price = float(close_prices.iloc[-1])
+            current_ma_25 = float(ma_25.iloc[-1]) if not ma_25.empty else current_price
+            current_ma_75 = float(ma_75.iloc[-1]) if not ma_75.empty else current_price
 
             # トレンド判定
             trend = self._determine_trend(current_price, current_ma_25, current_ma_75)
@@ -70,30 +94,33 @@ class MarketAnalyzer:
             volatility = returns.tail(30).std() * np.sqrt(252) * 100  # 年率換算
 
             # 価格変化率
-            price_changes = {
-                "1d": ((close_prices.iloc[-1] / close_prices.iloc[-2]) - 1) * 100
+            price_changes: dict[str, float] = {
+                "1d": float(((close_prices.iloc[-1] / close_prices.iloc[-2]) - 1) * 100)
                 if len(close_prices) > 1
-                else 0,
-                "5d": ((close_prices.iloc[-1] / close_prices.iloc[-6]) - 1) * 100
+                else 0.0,
+                "5d": float(((close_prices.iloc[-1] / close_prices.iloc[-6]) - 1) * 100)
                 if len(close_prices) > 5
-                else 0,
-                "1m": ((close_prices.iloc[-1] / close_prices.iloc[-21]) - 1) * 100
+                else 0.0,
+                "1m": float(((close_prices.iloc[-1] / close_prices.iloc[-21]) - 1) * 100)
                 if len(close_prices) > 21
-                else 0,
-                "3m": ((close_prices.iloc[-1] / close_prices.iloc[-63]) - 1) * 100
+                else 0.0,
+                "3m": float(((close_prices.iloc[-1] / close_prices.iloc[-63]) - 1) * 100)
                 if len(close_prices) > 63
-                else 0,
+                else 0.0,
             }
 
-            return {
-                "current_price": current_price,
-                "ma_25": current_ma_25,
-                "ma_75": current_ma_75,
-                "trend": trend,
-                "volatility": volatility,
-                "price_changes": price_changes,
-                "last_updated": index_data.index[-1],
-            }
+            return cast(
+                TrendAnalysis,
+                {
+                    "current_price": current_price,
+                    "ma_25": current_ma_25,
+                    "ma_75": current_ma_75,
+                    "trend": trend,
+                    "volatility": float(volatility),
+                    "price_changes": price_changes,
+                    "last_updated": index_data.index[-1],
+                },
+            )
 
         except Exception as e:
             logger.error(f"市場トレンド分析エラー: {e}")
@@ -114,7 +141,6 @@ class MarketAnalyzer:
 
             # 移動平均からの乖離率
             divergence_25 = ((current_price - ma_25) / ma_25) * 100
-            divergence_75 = ((current_price - ma_75) / ma_75) * 100
 
             # トレンド判定ロジック
             if above_ma25 and above_ma75 and ma25_above_ma75:
@@ -140,12 +166,11 @@ class MarketAnalyzer:
 
     def is_market_overheated(
         self, threshold_days: int = 30, threshold_percentage: float = 15.0
-    ) -> Dict:
+    ) -> dict[str, object]:
         """
         市場が高騰状態かどうかを判定
         """
-        market_status = {}
-        overall_overheated = False
+        market_status: dict[str, dict[str, object]] = {}
         overheated_count = 0
 
         for index_name in self.market_indices.keys():
@@ -217,18 +242,20 @@ class MarketAnalyzer:
             "analysis_date": datetime.now().isoformat(),
         }
 
-    def get_market_summary(self) -> Dict:
+    def get_market_summary(self) -> MarketSummary:
         """
         市場全体のサマリーを取得
         """
-        summary = {
+        summary: MarketSummary = {
             "analysis_date": datetime.now().isoformat(),
             "indices_analysis": {},
             "overall_sentiment": "Unknown",
             "investment_timing": "Unknown",
         }
 
-        trend_scores = []
+        indices_analysis = cast(dict[str, TrendAnalysis], summary["indices_analysis"])
+
+        trend_scores: list[float] = []
 
         for index_name in self.market_indices.keys():
             try:
@@ -237,7 +264,7 @@ class MarketAnalyzer:
                     continue
 
                 trend_analysis = self.calculate_market_trend(index_data)
-                summary["indices_analysis"][index_name] = trend_analysis
+                indices_analysis[index_name] = trend_analysis
 
                 # トレンドスコア化
                 trend = trend_analysis.get("trend", "Unknown")
@@ -259,7 +286,7 @@ class MarketAnalyzer:
 
         # 投資タイミングの判定
         summary["investment_timing"] = self._determine_investment_timing(
-            summary["overall_sentiment"], overheated_analysis["overall_overheated"]
+            summary["overall_sentiment"], bool(overheated_analysis.get("overall_overheated"))
         )
 
         return summary
@@ -310,24 +337,25 @@ class MarketAnalyzer:
         else:
             return "Unknown"
 
-    def get_sector_rotation_analysis(self) -> Dict:
+    def get_sector_rotation_analysis(self) -> dict:
         """
         セクターローテーション分析（簡易版）
         """
         try:
             # データベースから各セクターの企業を取得
-            companies = self.db_manager.get_companies(is_enterprise_only=True)
+            companies = cast(list[dict], self.db_manager.get_companies(is_enterprise_only=True))
 
             # セクター別の集計
-            sector_performance = {}
+            sector_performance: dict[str, SectorPerformance] = {}
 
             for company in companies:
-                sector = company.get("sector", "Unknown")
+                sector = str(company.get("sector", "Unknown"))
+                symbol = str(company.get("symbol", ""))
                 if sector not in sector_performance:
                     sector_performance[sector] = {"count": 0, "symbols": []}
 
                 sector_performance[sector]["count"] += 1
-                sector_performance[sector]["symbols"].append(company["symbol"])
+                sector_performance[sector]["symbols"].append(symbol)
 
             # 上位セクターのトレンド分析（実装は簡略化）
             top_sectors = sorted(
@@ -372,7 +400,8 @@ if __name__ == "__main__":
     overheated = analyzer.is_market_overheated()
     print("\n過熱分析:")
     print(f"  過熱指数数: {overheated['overheated_indices_count']}/{overheated['total_indices']}")
-    for index_name, status in overheated["indices_status"].items():
+    indices_status = cast(dict[str, dict[str, object]], overheated["indices_status"])
+    for index_name, status in indices_status.items():
         status_text = "過熱" if status["overheated"] else "正常"
         print(f"  {index_name}: {status_text} ({status['change_percentage']}%)")
 
@@ -381,7 +410,7 @@ if __name__ == "__main__":
     print("\nセクター分析:")
     print(f"  総セクター数: {sector_analysis.get('total_sectors', 0)}")
 
-    sector_dist = sector_analysis.get("sector_distribution", {})
+    sector_dist = cast(dict[str, SectorPerformance], sector_analysis.get("sector_distribution", {}))
     print("  上位セクター:")
     for sector, data in list(sector_dist.items())[:5]:
         print(f"    {sector}: {data['count']} 社")

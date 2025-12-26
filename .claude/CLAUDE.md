@@ -27,6 +27,15 @@
 - `from backend.` プレフィックスは使用禁止
 - 例: `from shared.database.database_manager import DatabaseManager`
 
+## Git コミットルール
+- **コミットメッセージは日本語で記述すること**
+- コミット時は必ずフッターに以下を含めること:
+  ```
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+  ```
+
 ## 実行時チェック項目
 1. ファイル名が目的を明確に表しているか
 2. 適切なディレクトリに配置されているか
@@ -34,3 +43,4 @@
 4. **Pylanceエラーがないか（最重要）**
 5. mypy、ruffエラーがないか
 6. インポートパスが正しいか
+7. **コミットメッセージは日本語か**

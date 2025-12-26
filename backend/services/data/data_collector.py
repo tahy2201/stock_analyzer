@@ -5,8 +5,9 @@ import time
 from datetime import datetime, timedelta
 
 import pandas as pd
-import requests
+import requests  # type: ignore[import-untyped]
 import yfinance as yf
+
 from shared.config.settings import DATA_DAYS, MARKET_INDICES, YFINANCE_REQUEST_DELAY
 from shared.database.database_manager import DatabaseManager
 from shared.utils.jpx_parser import JPXParser

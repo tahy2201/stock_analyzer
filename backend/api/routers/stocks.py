@@ -1,7 +1,9 @@
-from typing import List, Optional
+import datetime
+from typing import Optional
 
+import pandas as pd
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from shared.database.database_manager import DatabaseManager
 
@@ -58,14 +60,14 @@ class StockDetail(BaseModel):
     price_change: Optional[float] = None  # 前日比（金額）
     price_change_percent: Optional[float] = None  # 前日比（%）
     dividend_yield: Optional[float] = None
-    prices: List[StockPrice] = []
-    technical_indicators: List[TechnicalIndicator] = []
+    prices: list[StockPrice] = Field(default_factory=list)
+    technical_indicators: list[TechnicalIndicator] = Field(default_factory=list)
     ticker_info: Optional[TickerInfo] = None
 
 # データベースマネージャー
 db_manager = DatabaseManager()
 
-@router.get("/", response_model=List[StockInfo])
+@router.get("/", response_model=list[StockInfo])
 async def get_stocks(limit: int = 100):
     """全株式リストを取得"""
     try:
@@ -89,7 +91,7 @@ async def get_stocks(limit: int = 100):
 
             return stocks
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/{symbol}", response_model=StockDetail)
 async def get_stock_detail(symbol: str, days: int = 365):
@@ -128,8 +130,12 @@ async def get_stock_detail(symbol: str, days: int = 365):
                 price_change_percent = (price_change / previous_price) * 100
 
             for date, row in recent_data.iterrows():
+                if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
+                    date_ts = date
+                else:
+                    date_ts = pd.to_datetime(str(date))
                 prices.append(StockPrice(
-                    date=date.strftime("%Y-%m-%d"),
+                    date=date_ts.strftime("%Y-%m-%d"),
                     open=float(row["open"]),
                     high=float(row["high"]),
                     low=float(row["low"]),
@@ -144,8 +150,12 @@ async def get_stock_detail(symbol: str, days: int = 365):
         if not technical_data.empty:
             recent_technical = technical_data.tail(days)
             for date, row in recent_technical.iterrows():
+                if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
+                    date_ts = date
+                else:
+                    date_ts = pd.to_datetime(str(date))
                 technical_indicators.append(TechnicalIndicator(
-                    date=date.strftime("%Y-%m-%d"),
+                    date=date_ts.strftime("%Y-%m-%d"),
                     ma_25=float(row["ma_25"]) if row["ma_25"] is not None else None,
                     divergence_rate=float(row["divergence_rate"]) if row["divergence_rate"] is not None else None,
                     volume_avg_20=int(row["volume_avg_20"]) if row["volume_avg_20"] is not None else None
@@ -198,9 +208,9 @@ async def get_stock_detail(symbol: str, days: int = 365):
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-@router.get("/{symbol}/prices", response_model=List[StockPrice])
+@router.get("/{symbol}/prices", response_model=list[StockPrice])
 async def get_stock_prices(symbol: str, days: int = 100):
     """銘柄の株価データのみを取得"""
     try:
@@ -214,8 +224,12 @@ async def get_stock_prices(symbol: str, days: int = 100):
 
         prices = []
         for date, row in recent_data.iterrows():
+            if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
+                date_ts = date
+            else:
+                date_ts = pd.to_datetime(str(date))
             prices.append(StockPrice(
-                date=date.strftime("%Y-%m-%d"),
+                date=date_ts.strftime("%Y-%m-%d"),
                 open=float(row["open"]),
                 high=float(row["high"]),
                 low=float(row["low"]),
@@ -226,4 +240,4 @@ async def get_stock_prices(symbol: str, days: int = 100):
         return prices
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

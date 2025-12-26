@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -27,7 +27,7 @@ class InvestmentCandidate(BaseModel):
     analysis_score: Optional[float] = None
     price_change_1d: Optional[float] = None
 
-@router.get("/", response_model=List[CompanyInfo])
+@router.get("/", response_model=list[CompanyInfo])
 async def get_companies(
     limit: int = Query(100, description="取得件数の上限"),
     market: Optional[str] = Query(None, description="市場区分でフィルタ"),
@@ -63,7 +63,7 @@ async def get_companies(
         return result
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/{symbol}", response_model=CompanyInfo)
 async def get_company(symbol: str):
@@ -85,9 +85,9 @@ async def get_company(symbol: str):
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-@router.get("/candidates/investment", response_model=List[InvestmentCandidate])
+@router.get("/candidates/investment", response_model=list[InvestmentCandidate])
 async def get_investment_candidates(
     divergence_threshold: float = Query(-5.0, description="乖離率の閾値"),
     dividend_min: float = Query(2.0, description="配当利回りの最小値"),
@@ -96,9 +96,9 @@ async def get_investment_candidates(
 ):
     """投資候補銘柄を取得"""
     try:
-        from services.analysis.technical_analyzer import TechnicalAnalysisService
+        from services.analysis.technical_analyzer import TechnicalAnalyzer
 
-        analyzer = TechnicalAnalysisService()
+        analyzer = TechnicalAnalyzer()
         candidates = analyzer.get_investment_candidates(
             divergence_threshold=divergence_threshold,
             dividend_min=dividend_min,
@@ -125,4 +125,4 @@ async def get_investment_candidates(
         return result
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
