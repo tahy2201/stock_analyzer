@@ -15,12 +15,6 @@ from shared.config.logging_config import get_click_logger
 from shared.config.models import FilterCriteria
 from shared.database.database_manager import DatabaseManager
 
-from services.analysis.technical_analyzer import TechnicalAnalyzer
-from services.data.stock_data_service import StockDataService
-from services.filtering.company_filter_service import CompanyFilterService
-from shared.config.models import FilterCriteria
-from shared.config.logging_config import get_click_logger
-from shared.database.database_manager import DatabaseManager
 
 class BatchRunner:
     """バッチ処理の実行を管理するメインクラス"""

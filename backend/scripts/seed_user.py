@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import argparse
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 
 
 def setup_import_path() -> None:
@@ -99,8 +99,8 @@ def main() -> None:
     env_file = repo_root / ".env"
     load_dotenv(dotenv_path=env_file)
 
-    from shared.database.session import SessionLocal  # type: ignore  # noqa: WPS433
     from shared.database import models  # type: ignore  # noqa: WPS433
+    from shared.database.session import SessionLocal  # type: ignore  # noqa: WPS433
     from shared.utils.security import hash_password  # type: ignore  # noqa: WPS433
 
     args = parse_args()
