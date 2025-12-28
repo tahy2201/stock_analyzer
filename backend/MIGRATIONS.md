@@ -100,6 +100,8 @@ git commit -m "feat: Add industry_code column to companies table"
 
 ## Docker環境でのマイグレーション
 
+### 開発環境（ローカル）
+
 Docker起動時に自動的にマイグレーションが実行されます。
 
 `backend/docker-entrypoint.sh` で以下が実行されます:
@@ -107,13 +109,95 @@ Docker起動時に自動的にマイグレーションが実行されます。
 python -m alembic upgrade head
 ```
 
+### 本番環境（Raspberry Pi）でのマイグレーション
+
+本番環境でのデプロイ時は、以下の手順でマイグレーションを適用します。
+
+#### 1. デプロイ前の確認
+
+まず、新しいバージョンに含まれるマイグレーションを確認:
+```bash
+cd /path/to/stock_analyzer
+git fetch --tags
+git show v0.2.1:backend/alembic/versions/
+```
+
+#### 2. データベースのバックアップ（必須）
+
+デプロイ前に必ずバックアップを取得:
+```bash
+# コンテナが起動している状態で実行
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend \
+  cp /app/data/stock_data.db /app/data/stock_data.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# バックアップをホストにコピー
+docker compose -f docker-compose.yml -f docker-compose.prod.yml cp \
+  backend:/app/data/stock_data.db.backup.$(date +%Y%m%d_%H%M%S) \
+  ./backup/
+```
+
+#### 3. デプロイ実行
+
+deploy.shスクリプトを実行:
+```bash
+./deploy.sh v0.2.1
+```
+
+デプロイスクリプトがコンテナを再起動すると、`docker-entrypoint.sh` が自動的に `alembic upgrade head` を実行します。
+
+#### 4. マイグレーション適用の確認
+
+コンテナ起動後、マイグレーションが正しく適用されたか確認:
+```bash
+# 現在のマイグレーションバージョンを確認
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend \
+  python -m alembic current
+
+# マイグレーション履歴を確認
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec backend \
+  python -m alembic history --verbose
+```
+
+#### 5. アプリケーション動作確認
+
+APIが正常に動作しているか確認:
+```bash
+# ヘルスチェック
+curl http://localhost:8000/health
+
+# ログを確認
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f backend
+```
+
+#### マイグレーション失敗時のロールバック手順
+
+マイグレーションが失敗した場合:
+
+1. コンテナを停止:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+```
+
+2. バックアップからDBを復元:
+```bash
+cp ./backup/stock_data.db.backup.YYYYMMDD_HHMMSS data/stock_data.db
+```
+
+3. 前のバージョンにロールバック:
+```bash
+git checkout v0.2.0  # 前のバージョンのタグ
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+4. 問題を調査してから再デプロイ
+
 ## トラブルシューティング
 
 ### マイグレーションが失敗する場合
 
 1. データベースファイルをバックアップ:
 ```bash
-cp backend/data/stock_analyzer.db backend/data/stock_analyzer.db.backup
+cp data/stock_data.db data/stock_data.db.backup
 ```
 
 2. 現在のマイグレーション状態を確認:
@@ -140,10 +224,10 @@ uv run python -m alembic revision -m "Manual migration description"
 データベースの状態をリセットして再構築:
 ```bash
 # 既存DBをバックアップ
-cp backend/data/stock_analyzer.db backend/data/stock_analyzer.db.backup
+cp data/stock_data.db data/stock_data.db.backup
 
 # DBを削除
-rm backend/data/stock_analyzer.db
+rm data/stock_data.db
 
 # マイグレーションを再実行
 uv run python -m alembic upgrade head
