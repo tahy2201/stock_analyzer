@@ -4,12 +4,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - ALLOWED_ORIGINS=http://localhost:4173
+      - ALLOWED_ORIGINS=https://localhost:4173
       - DATABASE_PATH=/app/data/stock_data.db
       - UVICORN_RELOAD=1
       - ENVIRONMENT=development
+      - UVICORN_EXTRA_ARGS=--ssl-keyfile=/app/certs/key.pem --ssl-certfile=/app/certs/cert.pem
     volumes:
       - ./data:/app/data
+      - ./certs:/app/certs:ro
     ports:
       - "8000:8000"
     develop:
@@ -31,9 +33,9 @@ services:
       dockerfile: Dockerfile
       target: dev
       args:
-        VITE_API_BASE_URL: http://localhost:8000/api
+        VITE_API_BASE_URL: https://localhost:8000/api
     environment:
-      - VITE_API_BASE_URL=http://localhost:8000/api
+      - VITE_API_BASE_URL=https://localhost:8000/api
     ports:
       - "4173:4173"
     depends_on:

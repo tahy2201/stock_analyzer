@@ -5,9 +5,11 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./data:/app/data
+      - ./certs:/app/certs:ro
     environment:
       - ALLOWED_ORIGINS=${PROD_FRONTEND_URL}
       - DATABASE_PATH=/app/data/stock_data.db
+      - UVICORN_EXTRA_ARGS=--ssl-keyfile=/app/certs/key.pem --ssl-certfile=/app/certs/cert.pem
     ports:
       - "8000:8000"
     restart: unless-stopped
