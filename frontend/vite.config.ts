@@ -20,4 +20,7 @@ export default defineConfig({
   server: {
     https: httpsConfig,
   },
+  preview: {
+    https: httpsConfig,
+  },
 })

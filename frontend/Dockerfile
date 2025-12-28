@@ -2,8 +2,8 @@ FROM oven/bun:1 AS base
 
 WORKDIR /app
 
-# ビルド/開発時に使う API エンドポイント（Vite用）
-ARG VITE_API_BASE_URL="http://localhost:8000/api"
+# ビルド時にAPIエンドポイントを指定（docker-composeから渡される）
+ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # 依存を一度だけ入れて各ステージで共有
