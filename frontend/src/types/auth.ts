@@ -30,3 +30,8 @@ export interface Invite {
   role: 'admin' | 'user'
   provisional_user_id: number
 }
+
+export interface AuthStatusResponse {
+  authenticated: boolean
+  user: User | null
+}

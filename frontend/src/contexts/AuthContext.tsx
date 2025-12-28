@@ -19,8 +19,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const userData = await authApi.me()
-      setUser(userData)
+      const authStatus = await authApi.me()
+      setUser(authStatus.authenticated ? authStatus.user : null)
     } catch {
       setUser(null)
     }
@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const userData = await authApi.me()
-        setUser(userData)
+        const authStatus = await authApi.me()
+        setUser(authStatus.authenticated ? authStatus.user : null)
       } catch {
         setUser(null)
       } finally {

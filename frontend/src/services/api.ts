@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type {
+  AuthStatusResponse,
   Invite,
   InviteCreateRequest,
   LoginRequest,
@@ -109,7 +110,7 @@ export const authApi = {
   },
 
   // 現在のユーザー取得
-  me: async (): Promise<User> => {
+  me: async (): Promise<AuthStatusResponse> => {
     const response = await api.get('/auth/me')
     return response.data
   },

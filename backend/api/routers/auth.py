@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
-from api.dependencies import get_current_user
 from api.dependencies.db import DBSession
 from shared.database import models
 from shared.utils.security import (
@@ -40,6 +39,11 @@ class RegisterFromInviteRequest(BaseModel):
     display_name: Optional[str] = None
 
 
+class AuthStatusResponse(BaseModel):
+    authenticated: bool
+    user: Optional[UserResponse] = None
+
+
 @router.post("/login", response_model=UserResponse)
 def login(request: Request, payload: LoginRequest, db: DBSession):
     user = db.query(models.User).filter(models.User.login_id == payload.login_id).first()
@@ -62,9 +66,31 @@ def logout(request: Request):
     return {"message": "logged out"}
 
 
-@router.get("/me", response_model=UserResponse)
-def me(current_user: models.User = Depends(get_current_user)):
-    return current_user
+@router.get("/me", response_model=AuthStatusResponse)
+def me(request: Request, db: DBSession):
+    """
+    認証状態を確認するエンドポイント。
+    未認証、ユーザー不在、非アクティブユーザーの場合もHTTP 200で応答します。
+    """
+    # セッションからuser_idを取得
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return AuthStatusResponse(authenticated=False, user=None)
+
+    # DBからユーザーを取得
+    user = db.get(models.User, user_id)
+    if not user:
+        # セッションにuser_idがあるが、DBにユーザーが存在しない（削除済み）
+        request.session.clear()  # 無効なセッションをクリア
+        return AuthStatusResponse(authenticated=False, user=None)
+
+    if user.status != "active":
+        # ユーザーは存在するがアクティブではない
+        return AuthStatusResponse(authenticated=False, user=None)
+
+    # 認証済み・アクティブユーザー
+    user_response = UserResponse.model_validate(user)
+    return AuthStatusResponse(authenticated=True, user=user_response)
 
 
 @router.post("/register", response_model=UserResponse)
