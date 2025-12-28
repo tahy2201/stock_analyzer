@@ -93,10 +93,10 @@ def create_user(db, models, hash_password, login_id: str, password: str, display
 def main() -> None:
     setup_import_path()
 
-    # Load environment variables from .env.local
+    # Load environment variables from .env
     from dotenv import load_dotenv
     repo_root = Path(__file__).resolve().parent.parent.parent
-    env_file = repo_root / ".env.local"
+    env_file = repo_root / ".env"
     load_dotenv(dotenv_path=env_file)
 
     from shared.database.session import SessionLocal  # type: ignore  # noqa: WPS433
@@ -128,8 +128,8 @@ def main() -> None:
             test_password = os.getenv("SEED_TEST_PASSWORD")
 
             if not admin_password or not test_password:
-                print("Error: SEED_ADMIN_PASSWORD and SEED_TEST_PASSWORD must be set in .env.local")
-                print("Please add the following to .env.local:")
+                print("Error: SEED_ADMIN_PASSWORD and SEED_TEST_PASSWORD must be set in .env")
+                print("Please add the following to .env:")
                 print("  SEED_ADMIN_PASSWORD=your_admin_password")
                 print("  SEED_TEST_PASSWORD=your_test_password")
                 sys.exit(1)

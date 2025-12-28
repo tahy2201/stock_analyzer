@@ -1,17 +1,7 @@
+# 本番環境用の追加設定
+# `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` で使用
 services:
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    volumes:
-      - ./data:/app/data
-      - ./certs:/app/certs:ro
-    environment:
-      - ALLOWED_ORIGINS=${PROD_FRONTEND_URL}
-      - DATABASE_PATH=/app/data/stock_data.db
-      - UVICORN_EXTRA_ARGS=--ssl-keyfile=/app/certs/key.pem --ssl-certfile=/app/certs/cert.pem
-    ports:
-      - "8000:8000"
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -20,19 +10,6 @@ services:
         max-file: "3"
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: ${PROD_API_BASE_URL}
-    environment:
-      - VITE_API_BASE_URL=${PROD_API_BASE_URL}
-    volumes:
-      - ./certs:/app/certs:ro
-    ports:
-      - "4173:4173"
-    depends_on:
-      - backend
     restart: unless-stopped
     logging:
       driver: "json-file"

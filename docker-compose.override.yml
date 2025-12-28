@@ -1,0 +1,35 @@
+# 開発環境用の追加設定（自動適用）
+# `docker compose up` で自動的に読み込まれます
+services:
+  backend:
+    environment:
+      - UVICORN_RELOAD=1
+      - ENVIRONMENT=development
+    develop:
+      watch:
+        - path: ./backend
+          target: /app
+          action: sync
+          ignore:
+            - __pycache__/
+            - .venv/
+        - path: ./backend/pyproject.toml
+          action: rebuild
+        - path: ./backend/uv.lock
+          action: rebuild
+
+  frontend:
+    build:
+      target: dev
+    develop:
+      watch:
+        - path: ./frontend
+          target: /app
+          action: sync
+          ignore:
+            - node_modules/
+            - dist/
+        - path: ./frontend/package.json
+          action: rebuild
+        - path: ./frontend/bun.lock
+          action: rebuild
