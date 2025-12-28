@@ -26,6 +26,7 @@ WORKDIR /app
 
 # ビルド成果物と preview に必要な最低限のファイルだけをコピー
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/vite.config.ts ./
 COPY --from=base /app/package.json /app/bun.lock ./
 RUN bun install --frozen-lockfile
 
