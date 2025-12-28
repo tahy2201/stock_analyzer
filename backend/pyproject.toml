@@ -26,6 +26,8 @@ dependencies = [
     "click-log>=0.4.0",
     "sqlalchemy>=2.0.0",
     "alembic>=1.13.0",
+    "itsdangerous>=2.1.2",
+    "bcrypt>=4.1.2",
 ]
 
 [project.optional-dependencies]
@@ -62,6 +64,11 @@ select = [
 ]
 ignore = ["E501"]  # line too long (handled by formatter)
 
+[tool.ruff.lint.per-file-ignores]
+# FastAPI の依存性注入は引数デフォルトに Depends(...) を書くのが定形のため B008 を除外
+"api/routers/*.py" = ["B008"]
+"api/dependencies/*.py" = ["B008"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
@@ -86,7 +93,12 @@ addopts = "--cov=. --cov-report=html --cov-report=term-missing"
 
 [dependency-groups]
 dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
     "pandas-stubs>=2.2.2.240807",
     "ruff>=0.13.0",
     "types-click-log>=0.4.0.20250413",
+    "httpx>=0.27.0",
+    "pytest-asyncio>=0.23.6",
+    "pyright>=1.1.389",
 ]

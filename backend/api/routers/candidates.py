@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -26,7 +26,7 @@ class InvestmentCandidate(BaseModel):
     latest_price: Optional[float] = None
     price_change_1d: Optional[float] = None
 
-@router.get("/", response_model=List[InvestmentCandidate])
+@router.get("/", response_model=list[InvestmentCandidate])
 async def get_investment_candidates(
     limit: int = 50,
     max_divergence: float = -5.0,  # 株価が移動平均線より5%以上低い（乖離率-5.0%以下）
@@ -73,7 +73,7 @@ async def get_investment_candidates(
         return result
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.get("/count")
 async def get_candidates_count():
@@ -90,4 +90,4 @@ async def get_candidates_count():
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

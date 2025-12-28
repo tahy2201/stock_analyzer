@@ -1,7 +1,8 @@
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, cast
 
 import yfinance as yf
+
 from services.data.data_collector import StockDataCollector
 from shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT, MIN_EMPLOYEES, MIN_REVENUE
 from shared.database.database_manager import DatabaseManager
@@ -15,7 +16,7 @@ class CompanyFilter:
         self.db_manager = DatabaseManager()
         self.data_collector = StockDataCollector()
 
-    def get_company_info_from_yfinance(self, symbol: str) -> Optional[Dict]:
+    def get_company_info_from_yfinance(self, symbol: str) -> Optional[dict]:
         """
         yfinanceから企業の詳細情報を取得
         """
@@ -71,7 +72,7 @@ class CompanyFilter:
             logger.warning(f"企業情報取得エラー {symbol}: {e}")
             return None
 
-    def is_enterprise_company(self, company_info: Dict) -> Tuple[bool, str]:
+    def is_enterprise_company(self, company_info: dict) -> tuple[bool, str]:
         """
         企業がエンタープライズ企業かどうかを判定
         """
@@ -157,12 +158,15 @@ class CompanyFilter:
         return is_enterprise, "; ".join(reasons)
 
     def update_company_enterprise_status(
-        self, symbols: List[str] = [], markets: List[str] = []
-    ) -> Dict[str, Dict]:
+        self, symbols: Optional[list[str]] = None, markets: Optional[list[str]] = None
+    ) -> dict[str, dict]:
         """
         企業のエンタープライズステータスを更新
         """
         results = {}
+
+        symbols = symbols or []
+        markets = markets or []
 
         if not symbols:
             # データベースから全企業を取得（市場フィルタ適用）
@@ -230,11 +234,11 @@ class CompanyFilter:
 
         return results
 
-    def get_enterprise_companies(self) -> List[Dict]:
+    def get_enterprise_companies(self) -> list[dict]:
         """
         エンタープライズ企業の一覧を取得
         """
-        companies = self.db_manager.get_companies(is_enterprise_only=True)
+        companies = cast(list[dict], self.db_manager.get_companies(is_enterprise_only=True))
 
         # 追加の統計情報を付与
         for company in companies:
@@ -250,13 +254,13 @@ class CompanyFilter:
 
         return companies
 
-    def get_filtering_stats(self) -> Dict:
+    def get_filtering_stats(self) -> dict:
         """
         フィルタリングの統計情報を取得
         """
         try:
-            all_companies = self.db_manager.get_companies()
-            enterprise_companies = self.db_manager.get_companies(is_enterprise_only=True)
+            all_companies = cast(list[dict], self.db_manager.get_companies())
+            enterprise_companies = cast(list[dict], self.db_manager.get_companies(is_enterprise_only=True))
 
             # 従業員数による分類
             employee_stats = {
@@ -298,7 +302,7 @@ class CompanyFilter:
                     revenue_stats["large"] += 1
 
             # 業種統計
-            sector_stats = {}
+            sector_stats: dict[str, int] = {}
             for company in enterprise_companies:
                 sector = company.get("sector", "Unknown")
                 sector_stats[sector] = sector_stats.get(sector, 0) + 1

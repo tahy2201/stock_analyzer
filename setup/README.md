@@ -147,6 +147,27 @@ setup/
 - [Cron運用ガイド](../backend/cron/README.md) - バッチ処理の運用方法
 - [scripts/](../scripts/) - 開発用補助スクリプト
 
+### テストユーザー作成
+
+開発・テスト用のユーザーを作成するスクリプトを用意しています：
+
+```bash
+cd backend
+
+# デフォルト（管理者 + 一般ユーザーの両方を作成）
+uv run python ../scripts/seed_user.py
+
+# カスタムユーザー作成
+uv run python ../scripts/seed_user.py --login john --password YOUR_PASSWORD --display "John Doe" --role user
+
+# 既存ユーザーの上書き更新
+uv run python ../scripts/seed_user.py --login admin --password YOUR_PASSWORD --force
+```
+
+デフォルト実行で作成されるユーザー：
+- **admin** / YOUR_PASSWORD (role: admin)
+- **testuser** / YOUR_PASSWORD (role: user)
+
 ## トラブルシューティング
 
 セットアップ中に問題が発生した場合は、[DEPLOYMENT.md](../DEPLOYMENT.md) のトラブルシューティングセクションを参照してください。

@@ -85,3 +85,5 @@ tmp
 
 # Cache
 .cache/
+# SSL certificates
+certs/*.pem

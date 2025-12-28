@@ -27,6 +27,20 @@
 - `from backend.` プレフィックスは使用禁止
 - 例: `from shared.database.database_manager import DatabaseManager`
 
+## Git コミットルール - **最重要**
+- **コミット前の手順を必ず守ること**
+  1. **動作確認**: 修正内容が正しく動作することを確認
+  2. **変更内容の提示**: `git diff` で変更内容を表示
+  3. **説明**: 変更ファイルと変更内容を説明
+  4. **承認待ち**: ユーザーの承認を得てからコミット
+- **コミットメッセージは日本語で記述すること**
+- コミット時は必ずフッターに以下を含めること:
+  ```
+  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+  Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+  ```
+
 ## 実行時チェック項目
 1. ファイル名が目的を明確に表しているか
 2. 適切なディレクトリに配置されているか
@@ -34,3 +48,4 @@
 4. **Pylanceエラーがないか（最重要）**
 5. mypy、ruffエラーがないか
 6. インポートパスが正しいか
+7. **コミットメッセージは日本語か**
