@@ -68,14 +68,14 @@ git checkout "$TAG_NAME"
 
 # 既存のコンテナを停止
 echo "🛑 既存のコンテナを停止中..."
-docker compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
 # コンテナをビルドして起動
 echo "🔨 コンテナをビルド中..."
-docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 
 echo "🚀 コンテナを起動中..."
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # 起動確認
 echo ""
@@ -85,7 +85,7 @@ sleep 5
 # コンテナの状態を確認
 echo ""
 echo "📊 コンテナの状態:"
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 
 echo ""
 echo "✅ デプロイが完了しました！"
@@ -97,4 +97,4 @@ echo "   フロントエンド: http://$(hostname -I | awk '{print $1}'):4173"
 echo "   バックエンド API: http://$(hostname -I | awk '{print $1}'):8000/docs"
 echo ""
 echo "📋 ログを確認するには:"
-echo "   docker compose -f docker-compose.prod.yml logs -f"
+echo "   docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f"
