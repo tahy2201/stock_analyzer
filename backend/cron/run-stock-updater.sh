@@ -16,7 +16,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting stock updater..." >> "$LOG_FILE"
 
 # Dockerコンテナ内でバッチを実行
 cd "$PROJECT_DIR"
-docker compose -f docker-compose.prod.yml exec -T backend python -m batch.stock_updater --markets prime >> "$LOG_FILE" 2>&1
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend python -m batch.stock_updater --markets prime >> "$LOG_FILE" 2>&1
 
 EXIT_CODE=$?
 
