@@ -65,12 +65,7 @@ class CompanyFilterService:
         企業の基本情報を取得
         """
         try:
-            # 既存のDBメソッドを使用（symbol_filterパラメータは未対応のため、別途実装が必要）
-            with self.db_manager.get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM companies WHERE symbol = ?", (symbol,))
-                result = cursor.fetchone()
-                return dict(result) if result else None
+            return self.db_manager.get_company_by_symbol(symbol)
 
         except Exception as e:
             logger.error(f"企業情報取得エラー {symbol}: {e}")

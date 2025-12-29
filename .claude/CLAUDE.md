@@ -27,6 +27,11 @@
 - `from backend.` プレフィックスは使用禁止
 - 例: `from shared.database.database_manager import DatabaseManager`
 
+## データベーススキーマルール
+- **スキーマ確認は `backend/shared/database/models.py` を参照すること**
+- 全テーブル定義とカラム情報はmodels.pyに集約されている
+- マイグレーションファイルは `backend/alembic/versions/` に配置
+
 ## Git コミットルール - **最重要**
 - **コミット前の手順を必ず守ること**
   1. **動作確認**: 修正内容が正しく動作することを確認
