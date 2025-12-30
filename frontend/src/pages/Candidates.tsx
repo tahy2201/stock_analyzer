@@ -12,8 +12,8 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { API_BASE_URL } from '../services/api'
+import { getYahooFinanceUrl } from '../utils/stockUtils'
 
 interface InvestmentCandidate {
   symbol: string
@@ -30,7 +30,6 @@ interface InvestmentCandidate {
 }
 
 const Candidates = () => {
-  const navigate = useNavigate()
   const [candidates, setCandidates] = useState<InvestmentCandidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -50,7 +49,9 @@ const Candidates = () => {
       fixed: 'left',
       render: (symbol: string) => (
         <a
-          onClick={() => navigate(`/stocks/${symbol}`)}
+          href={getYahooFinanceUrl(symbol)}
+          target="_blank"
+          rel="noopener noreferrer"
           style={{ color: '#1890ff', cursor: 'pointer' }}
         >
           {symbol}

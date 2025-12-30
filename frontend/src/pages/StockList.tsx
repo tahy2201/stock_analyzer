@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { stockApi } from '../services/api'
 import type { StockInfo } from '../types/stock'
+import { getYahooFinanceUrl } from '../utils/stockUtils'
 
 const StockList = () => {
   const [limit, setLimit] = useState(100)
@@ -113,7 +113,14 @@ const StockList = () => {
                   className="border-b border-gray-700 hover:bg-gray-750 transition-colors"
                 >
                   <td className="px-4 py-4 font-mono font-semibold text-blue-400">
-                    {stock.symbol}
+                    <a
+                      href={getYahooFinanceUrl(stock.symbol)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 hover:underline transition-colors cursor-pointer"
+                    >
+                      {stock.symbol}
+                    </a>
                   </td>
                   <td className="px-4 py-4 text-gray-100">
                     {stock.name || '-'}
@@ -133,12 +140,14 @@ const StockList = () => {
                     {stock.dividend_yield ? `${stock.dividend_yield}%` : '-'}
                   </td>
                   <td className="px-4 py-4">
-                    <Link
-                      to={`/stocks/${stock.symbol}`}
+                    <a
+                      href={getYahooFinanceUrl(stock.symbol)}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
                     >
                       詳細
-                    </Link>
+                    </a>
                   </td>
                 </tr>
               ))}

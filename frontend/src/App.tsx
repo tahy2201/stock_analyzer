@@ -11,7 +11,6 @@ import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import MyPage from './pages/MyPage'
 import Register from './pages/Register'
-import StockDetail from './pages/StockDetail'
 import StockList from './pages/StockList'
 
 // React Query設定
@@ -59,7 +58,6 @@ function AppRoutes() {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/stocks" element={<StockList />} />
-              <Route path="/stocks/:symbol" element={<StockDetail />} />
               <Route path="/candidates" element={<Candidates />} />
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/analysis/:symbol" element={<Analysis />} />
