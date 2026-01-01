@@ -17,6 +17,8 @@ def test_db_path(tmp_path_factory: TempPathFactory) -> Path:
     db_dir = tmp_path_factory.mktemp("db")
     db_path = db_dir / "test.db"
     os.environ["DATABASE_PATH"] = str(db_path)
+    # テスト環境ではHTTPセッションクッキーを許可
+    os.environ["SESSION_HTTPS_ONLY"] = "false"
     return db_path
 
 

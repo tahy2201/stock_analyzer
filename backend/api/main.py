@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-from api.routers import admin, analysis, auth, candidates, companies, stocks, users
+from api.routers import admin, analysis, auth, candidates, companies, portfolios, stocks, users
 from shared.config.logging_config import setup_api_logging
 
 # ログ設定
@@ -43,6 +43,7 @@ app.include_router(stocks.router, prefix="/api/stocks", tags=["stocks"])
 app.include_router(companies.router, prefix="/api/companies", tags=["companies"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
 app.include_router(candidates.router, prefix="/api/candidates", tags=["candidates"])
+app.include_router(portfolios.router, prefix="/api/portfolios", tags=["portfolios"])
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(admin.router)

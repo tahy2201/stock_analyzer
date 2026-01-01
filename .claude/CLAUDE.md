@@ -22,6 +22,25 @@
 - **型チェックとlintingは必須**
 - **Pylanceエラーは絶対に残してはいけない**
 
+## ドキュメント文字列（docstring）ルール
+- **docstringは日本語で記述すること**
+- このプロジェクトは公開を想定していないため、チーム内での理解を優先する
+- モジュール、クラス、関数、メソッドの先頭にdocstringを配置すること
+- Google Style docstringフォーマットを使用すること
+- 例:
+  ```python
+  def buy_stock(self, symbol: str, quantity: int):
+      """銘柄を購入する。
+
+      Args:
+          symbol: 銘柄コード
+          quantity: 購入株数
+
+      Returns:
+          取引記録
+      """
+  ```
+
 ## インポートルール
 - backendディレクトリ内では相対インポートを使用すること
 - `from backend.` プレフィックスは使用禁止
