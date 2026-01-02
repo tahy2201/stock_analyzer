@@ -32,14 +32,27 @@ async def get_companies(
     limit: int = Query(100, description="取得件数の上限"),
     market: Optional[str] = Query(None, description="市場区分でフィルタ"),
     sector: Optional[str] = Query(None, description="業種でフィルタ"),
-    is_enterprise: Optional[bool] = Query(None, description="大企業のみ")
+    is_enterprise: Optional[bool] = Query(None, description="大企業のみ"),
+    search: Optional[str] = Query(None, description="銘柄コードまたは銘柄名で検索")
 ):
     """企業リストを取得"""
     try:
         company_service = CompanyFilterService()
 
         # フィルタ条件を適用して企業を取得
-        companies = company_service.get_all_companies(limit=limit)
+        # 検索時は全件取得してから検索、通常時はlimit適用
+        companies = company_service.get_all_companies(limit=None if search else limit)
+
+        # 検索フィルタを適用（銘柄コードまたは銘柄名で部分一致）
+        if search:
+            search_lower = search.lower()
+            companies = [
+                c for c in companies
+                if (search_lower in c["symbol"].lower()) or
+                   (c.get("name") and search_lower in c.get("name", "").lower())
+            ]
+            # 検索結果を上限件数でカット
+            companies = companies[:limit]
 
         # 追加フィルタを適用
         if market:

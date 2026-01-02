@@ -76,8 +76,8 @@ class CompanyFilterService:
         全企業リストを取得
         """
         try:
-            # 既存のDBメソッドを使用してすべての企業を取得
-            companies = self.db_manager.get_filtered_companies(is_enterprise_only=False)
+            # companiesテーブルから直接全企業を取得（technical_indicatorsとJOINしない）
+            companies = self.db_manager.get_companies(is_enterprise_only=False)
 
             # limit適用
             if limit:
