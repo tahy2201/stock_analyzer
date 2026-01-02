@@ -313,7 +313,7 @@ const PortfolioDetail = () => {
               value={portfolio.total_value}
               precision={0}
               suffix="円"
-              valueStyle={{ color: '#1890ff' }}
+              styles={{ content: { color: '#1890ff' } }}
             />
           </Card>
         </Col>
@@ -324,7 +324,7 @@ const PortfolioDetail = () => {
               value={portfolio.total_profit_loss}
               precision={0}
               suffix="円"
-              valueStyle={{ color: getProfitColor(portfolio.total_profit_loss) }}
+              styles={{ content: { color: getProfitColor(portfolio.total_profit_loss) } }}
               prefix={portfolio.total_profit_loss >= 0 ? '+' : ''}
             />
           </Card>
@@ -336,7 +336,7 @@ const PortfolioDetail = () => {
               value={portfolio.total_profit_loss_rate}
               precision={2}
               suffix="%"
-              valueStyle={{ color: getProfitColor(portfolio.total_profit_loss) }}
+              styles={{ content: { color: getProfitColor(portfolio.total_profit_loss) } }}
               prefix={portfolio.total_profit_loss_rate >= 0 ? '+' : ''}
             />
           </Card>
@@ -463,7 +463,9 @@ const PortfolioDetail = () => {
               step={10000}
               precision={2}
               formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value?.replace(/¥\s?|(,*)/g, '') as any}
+              parser={(value: string | undefined): number =>
+                Number(value?.replace(/¥\s?|,/g, '') || 0)
+              }
             />
           </Form.Item>
         </Form>
@@ -501,7 +503,9 @@ const PortfolioDetail = () => {
               step={10000}
               precision={2}
               formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value?.replace(/¥\s?|(,*)/g, '') as any}
+              parser={(value: string | undefined): number =>
+                Number(value?.replace(/¥\s?|,/g, '') || 0)
+              }
             />
           </Form.Item>
 
@@ -566,7 +570,9 @@ const PortfolioDetail = () => {
               step={10000}
               precision={2}
               formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value?.replace(/¥\s?|(,*)/g, '') as any}
+              parser={(value: string | undefined): number =>
+                Number(value?.replace(/¥\s?|,/g, '') || 0)
+              }
             />
           </Form.Item>
 

@@ -151,7 +151,7 @@ const Portfolio = () => {
                     value={portfolio.total_value}
                     precision={0}
                     suffix="円"
-                    valueStyle={{ fontSize: 20 }}
+                    styles={{ content: { fontSize: 20 } }}
                   />
                   <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
@@ -253,7 +253,9 @@ const Portfolio = () => {
               min={1}
               step={100000}
               formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value?.replace(/¥\s?|(,*)/g, '') as any}
+              parser={(value: string | undefined): number =>
+                Number(value?.replace(/¥\s?|,/g, '') || 0)
+              }
             />
           </Form.Item>
         </Form>

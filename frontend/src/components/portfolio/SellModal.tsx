@@ -7,6 +7,7 @@ import {
   message,
   Modal,
   Select,
+  Space,
 } from 'antd'
 import dayjs from 'dayjs'
 import { portfolioApi } from '../../services/api'
@@ -129,16 +130,24 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
             },
           ]}
         >
-          <InputNumber
-            style={{ width: '100%' }}
-            min={1}
-            max={maxQuantity}
-            step={100}
-            disabled={!selectedSymbol}
-            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value?.replace(/,/g, '') as any}
-            addonAfter={`株 / ${maxQuantity.toLocaleString()}株`}
-          />
+          <Space.Compact style={{ width: '100%' }}>
+            <InputNumber
+              style={{ width: '100%' }}
+              min={1}
+              max={maxQuantity}
+              step={100}
+              disabled={!selectedSymbol}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value: string | undefined): number =>
+                Number(value?.replace(/,/g, '') || 0)
+              }
+            />
+            <Input
+              style={{ width: 150 }}
+              value={`株 / ${maxQuantity.toLocaleString()}株`}
+              disabled
+            />
+          </Space.Compact>
         </Form.Item>
 
         <Form.Item
@@ -152,7 +161,9 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
             step={10}
             precision={2}
             formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value?.replace(/¥\s?|(,*)/g, '') as any}
+            parser={(value: string | undefined): number =>
+              Number(value?.replace(/¥\s?|,/g, '') || 0)
+            }
           />
         </Form.Item>
 

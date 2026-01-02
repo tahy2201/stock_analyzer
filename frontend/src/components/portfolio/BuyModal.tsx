@@ -7,6 +7,7 @@ import {
   message,
   Modal,
   Select,
+  Space,
 } from 'antd'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
@@ -133,14 +134,18 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
             { type: 'number', min: 1, message: '1株以上を入力してください' },
           ]}
         >
-          <InputNumber
-            style={{ width: '100%' }}
-            min={1}
-            step={100}
-            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value?.replace(/,/g, '') as any}
-            addonAfter="株"
-          />
+          <Space.Compact style={{ width: '100%' }}>
+            <InputNumber
+              style={{ width: '100%' }}
+              min={1}
+              step={100}
+              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={(value: string | undefined): number =>
+                Number(value?.replace(/,/g, '') || 0)
+              }
+            />
+            <Input style={{ width: 50 }} value="株" disabled />
+          </Space.Compact>
         </Form.Item>
 
         <Form.Item
@@ -154,7 +159,9 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
             step={10}
             precision={2}
             formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-            parser={(value) => value?.replace(/¥\s?|(,*)/g, '') as any}
+            parser={(value: string | undefined): number =>
+              Number(value?.replace(/¥\s?|,/g, '') || 0)
+            }
           />
         </Form.Item>
 
