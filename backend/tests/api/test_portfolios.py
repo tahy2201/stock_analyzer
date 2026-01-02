@@ -414,3 +414,186 @@ async def test_get_transactions(
     # 降順（新しい順）
     assert data[0]["transaction_type"] == "sell"
     assert data[1]["transaction_type"] == "buy"
+
+
+# ========== 入金・出金操作 ==========
+
+
+@pytest.mark.asyncio
+async def test_deposit_cash_success(authenticated_client, test_user, db_session):
+    """現金入金のテスト。"""
+    # ポートフォリオ作成
+    from shared.database import models
+
+    portfolio = models.Portfolio(
+        user_id=test_user.id,
+        name="入金テスト",
+        initial_capital=Decimal("1000000.00"),
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    # 入金実行
+    res = await authenticated_client.post(
+        f"/api/portfolios/{portfolio.id}/deposit",
+        json={"amount": 100000.0, "notes": "テスト入金"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["transaction_type"] == "deposit"
+    assert data["total_amount"] == 100000.0
+    assert data["symbol"] is None
+    assert data["notes"] == "テスト入金"
+
+    # ポートフォリオ詳細を確認
+    res = await authenticated_client.get(f"/api/portfolios/{portfolio.id}")
+    assert res.status_code == 200
+    data = res.json()
+    # 現金残高 = 1,000,000 + 100,000 = 1,100,000
+    assert data["cash_balance"] == 1100000.0
+    assert data["total_value"] == 1100000.0
+
+
+@pytest.mark.asyncio
+async def test_withdraw_cash_success(authenticated_client, test_user, db_session):
+    """現金出金のテスト。"""
+    # ポートフォリオ作成
+    from shared.database import models
+
+    portfolio = models.Portfolio(
+        user_id=test_user.id,
+        name="出金テスト",
+        initial_capital=Decimal("1000000.00"),
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    # 出金実行
+    res = await authenticated_client.post(
+        f"/api/portfolios/{portfolio.id}/withdraw",
+        json={"amount": 50000.0, "notes": "テスト出金"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["transaction_type"] == "withdrawal"
+    assert data["total_amount"] == 50000.0
+    assert data["symbol"] is None
+    assert data["notes"] == "テスト出金"
+
+    # ポートフォリオ詳細を確認
+    res = await authenticated_client.get(f"/api/portfolios/{portfolio.id}")
+    assert res.status_code == 200
+    data = res.json()
+    # 現金残高 = 1,000,000 - 50,000 = 950,000
+    assert data["cash_balance"] == 950000.0
+    assert data["total_value"] == 950000.0
+
+
+@pytest.mark.asyncio
+async def test_withdraw_cash_insufficient_balance(authenticated_client, test_user, db_session):
+    """現金残高不足での出金失敗テスト。"""
+    # ポートフォリオ作成
+    from shared.database import models
+
+    portfolio = models.Portfolio(
+        user_id=test_user.id,
+        name="残高不足テスト",
+        initial_capital=Decimal("100000.00"),
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    # 残高以上の出金を試みる
+    res = await authenticated_client.post(
+        f"/api/portfolios/{portfolio.id}/withdraw",
+        json={"amount": 200000.0},
+    )
+    assert res.status_code == 400
+    data = res.json()
+    assert "現金残高が不足しています" in data["detail"]
+
+
+@pytest.mark.asyncio
+async def test_deposit_without_auth(client, test_user, db_session):
+    """認証なしでの入金失敗テスト。"""
+    from shared.database import models
+
+    portfolio = models.Portfolio(
+        user_id=test_user.id,
+        name="認証なしテスト",
+        initial_capital=Decimal("1000000.00"),
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    res = await client.post(
+        f"/api/portfolios/{portfolio.id}/deposit",
+        json={"amount": 100000.0},
+    )
+    assert res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, another_user, db_session):
+    """他人のポートフォリオへの出金失敗テスト。"""
+    from shared.database import models
+
+    # 別ユーザーのポートフォリオを作成
+    portfolio = models.Portfolio(
+        user_id=another_user.id,
+        name="他人のポートフォリオ",
+        initial_capital=Decimal("1000000.00"),
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    # 出金を試みる
+    res = await authenticated_client.post(
+        f"/api/portfolios/{portfolio.id}/withdraw",
+        json={"amount": 50000.0},
+    )
+    assert res.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_user, db_session):
+    """入金・出金が取引履歴に記録されることを確認。"""
+    from shared.database import models
+
+    portfolio = models.Portfolio(
+        user_id=test_user.id,
+        name="履歴テスト",
+        initial_capital=Decimal("1000000.00"),
+    )
+    db_session.add(portfolio)
+    db_session.commit()
+    db_session.refresh(portfolio)
+
+    # 入金
+    await authenticated_client.post(
+        f"/api/portfolios/{portfolio.id}/deposit",
+        json={"amount": 100000.0},
+    )
+
+    # 出金
+    await authenticated_client.post(
+        f"/api/portfolios/{portfolio.id}/withdraw",
+        json={"amount": 30000.0},
+    )
+
+    # 取引履歴を確認
+    res = await authenticated_client.get(f"/api/portfolios/{portfolio.id}/transactions")
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) == 2
+    
+    # 降順（新しい順）で確認
+    assert data[0]["transaction_type"] == "withdrawal"
+    assert data[0]["total_amount"] == 30000.0
+    assert data[1]["transaction_type"] == "deposit"
+    assert data[1]["total_amount"] == 100000.0
