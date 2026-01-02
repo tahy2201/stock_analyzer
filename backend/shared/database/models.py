@@ -242,13 +242,15 @@ class Transaction(Base):
     portfolio_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("portfolios.id", ondelete="CASCADE"), nullable=False
     )
-    symbol: Mapped[str] = mapped_column(String(10), ForeignKey("companies.symbol"), nullable=False)
+    symbol: Mapped[Optional[str]] = mapped_column(
+        String(10), ForeignKey("companies.symbol"), nullable=True
+    )
     transaction_type: Mapped[str] = mapped_column(
-        Enum("buy", "sell", name="transaction_type", native_enum=False, validate_strings=True),
+        Enum("buy", "sell", "deposit", "withdrawal", name="transaction_type", native_enum=False, validate_strings=True),
         nullable=False,
     )
-    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False, server_default="0.00")
     total_amount: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
     profit_loss: Mapped[Optional[float]] = mapped_column(DECIMAL(15, 2), nullable=True)
     transaction_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)

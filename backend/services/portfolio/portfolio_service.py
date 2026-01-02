@@ -186,7 +186,7 @@ class PortfolioService:
                 position_value = current_price * position.quantity
                 total_position_value += position_value
 
-        # 総購入額と総売却額を計算
+        # 総購入額、総売却額、入金額、出金額を計算
         transactions = (
             self.db.query(models.Transaction)
             .filter(models.Transaction.portfolio_id == portfolio_id)
@@ -198,9 +198,21 @@ class PortfolioService:
         total_sell_amount = sum(
             float(t.total_amount) for t in transactions if t.transaction_type == "sell"
         )
+        total_deposit = sum(
+            float(t.total_amount) for t in transactions if t.transaction_type == "deposit"
+        )
+        total_withdrawal = sum(
+            float(t.total_amount) for t in transactions if t.transaction_type == "withdrawal"
+        )
 
-        # 現金残高 = 初期資本 - 総購入額 + 総売却額
-        cash_balance = float(portfolio.initial_capital) - total_buy_amount + total_sell_amount
+        # 現金残高 = 初期資本 - 総購入額 + 総売却額 + 入金額 - 出金額
+        cash_balance = (
+            float(portfolio.initial_capital)
+            - total_buy_amount
+            + total_sell_amount
+            + total_deposit
+            - total_withdrawal
+        )
 
         # 総評価額 = 現在のポジション評価額 + 現金残高
         total_value = total_position_value + cash_balance

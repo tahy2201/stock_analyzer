@@ -122,11 +122,27 @@ class SellRequest(BaseModel):
     notes: Optional[str] = Field(None, max_length=500)
 
 
+class DepositRequest(BaseModel):
+    """入金のリクエストモデル。"""
+
+    amount: float = Field(..., gt=0)
+    transaction_date: Optional[datetime] = None
+    notes: Optional[str] = Field(None, max_length=500)
+
+
+class WithdrawalRequest(BaseModel):
+    """出金のリクエストモデル。"""
+
+    amount: float = Field(..., gt=0)
+    transaction_date: Optional[datetime] = None
+    notes: Optional[str] = Field(None, max_length=500)
+
+
 class TransactionResponse(BaseModel):
     """取引のレスポンスモデル。"""
 
     id: int
-    symbol: str
+    symbol: Optional[str]
     company_name: Optional[str]
     transaction_type: str
     quantity: int
@@ -390,6 +406,97 @@ def sell_stock(portfolio_id: int, payload: SellRequest, db: DBSession, current_u
         price=float(transaction.price),
         total_amount=float(transaction.total_amount),
         profit_loss=float(transaction.profit_loss) if transaction.profit_loss else None,
+        transaction_date=transaction.transaction_date,
+        created_at=transaction.created_at,
+        notes=transaction.notes,
+    )
+
+
+@router.post("/{portfolio_id}/deposit", response_model=TransactionResponse)
+def deposit_cash(
+    portfolio_id: int, payload: DepositRequest, db: DBSession, current_user: CurrentUser
+):
+    """現金を入金する。"""
+    # 所有者チェック
+    verify_portfolio_ownership(portfolio_id, current_user.id, db)
+
+    from datetime import datetime, timezone
+
+    # 入金トランザクション作成
+    transaction = models.Transaction(
+        portfolio_id=portfolio_id,
+        symbol=None,
+        transaction_type="deposit",
+        quantity=0,
+        price=0.0,
+        total_amount=payload.amount,
+        profit_loss=None,
+        transaction_date=payload.transaction_date or datetime.now(timezone.utc),
+        notes=payload.notes,
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    return TransactionResponse(
+        id=transaction.id,
+        symbol=None,
+        company_name=None,
+        transaction_type=transaction.transaction_type,
+        quantity=transaction.quantity,
+        price=float(transaction.price),
+        total_amount=float(transaction.total_amount),
+        profit_loss=None,
+        transaction_date=transaction.transaction_date,
+        created_at=transaction.created_at,
+        notes=transaction.notes,
+    )
+
+
+@router.post("/{portfolio_id}/withdraw", response_model=TransactionResponse)
+def withdraw_cash(
+    portfolio_id: int, payload: WithdrawalRequest, db: DBSession, current_user: CurrentUser
+):
+    """現金を出金する。"""
+    # 所有者チェック
+    verify_portfolio_ownership(portfolio_id, current_user.id, db)
+
+    from datetime import datetime, timezone
+
+    # 現金残高チェック
+    service = PortfolioService(db)
+    calc = service.calculate_portfolio_value(portfolio_id)
+    if calc["cash_balance"] < payload.amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"現金残高が不足しています（残高: ¥{calc['cash_balance']:,.0f}）",
+        )
+
+    # 出金トランザクション作成
+    transaction = models.Transaction(
+        portfolio_id=portfolio_id,
+        symbol=None,
+        transaction_type="withdrawal",
+        quantity=0,
+        price=0.0,
+        total_amount=payload.amount,
+        profit_loss=None,
+        transaction_date=payload.transaction_date or datetime.now(timezone.utc),
+        notes=payload.notes,
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    return TransactionResponse(
+        id=transaction.id,
+        symbol=None,
+        company_name=None,
+        transaction_type=transaction.transaction_type,
+        quantity=transaction.quantity,
+        price=float(transaction.price),
+        total_amount=float(transaction.total_amount),
+        profit_loss=None,
         transaction_date=transaction.transaction_date,
         created_at=transaction.created_at,
         notes=transaction.notes,
