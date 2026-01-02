@@ -71,25 +71,19 @@ db_manager = DatabaseManager()
 async def get_stocks(limit: int = 100):
     """全株式リストを取得"""
     try:
-        with db_manager.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT DISTINCT c.symbol, c.name, c.sector, c.market
-                FROM companies c
-                ORDER BY c.symbol
-                LIMIT ?
-            """, (limit,))
+        companies = db_manager.get_companies()
 
-            stocks = []
-            for row in cursor.fetchall():
-                stocks.append(StockInfo(
-                    symbol=row["symbol"],
-                    name=row["name"],
-                    sector=row["sector"],
-                    market=row["market"]
-                ))
+        # limit適用とStockInfoへの変換
+        stocks = []
+        for company in companies[:limit]:
+            stocks.append(StockInfo(
+                symbol=company["symbol"],
+                name=company["name"],
+                sector=company["sector"],
+                market=company["market"]
+            ))
 
-            return stocks
+        return stocks
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -97,18 +91,9 @@ async def get_stocks(limit: int = 100):
 async def get_stock_detail(symbol: str, days: int = 365):
     """個別銘柄の詳細情報を取得"""
     try:
-        # 企業情報取得
-        with db_manager.get_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT symbol, name, sector, market, dividend_yield
-                FROM companies
-                WHERE symbol = ?
-            """, (symbol,))
-
-            company = cursor.fetchone()
-            if not company:
-                raise HTTPException(status_code=404, detail="銘柄が見つかりません")
+        company = db_manager.get_company_by_symbol(symbol)
+        if not company:
+            raise HTTPException(status_code=404, detail="銘柄が見つかりません")
 
         # 株価データ取得
         price_data = db_manager.get_stock_prices(symbol)

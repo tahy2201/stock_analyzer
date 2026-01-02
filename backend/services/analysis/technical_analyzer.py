@@ -50,49 +50,37 @@ class TechnicalAnalyzer:
         配当利回りを計算（ticker_infoの年間配当金と現在の株価から計算）
         """
         try:
-            with self.db_manager.get_connection() as conn:
-                cursor = conn.cursor()
+            ticker_info = self.db_manager.get_ticker_info(symbol)
 
-                # ticker_infoテーブルから年間配当金を取得
-                cursor.execute(
-                    """
-                    SELECT trailing_annual_dividend_rate, current_price as ticker_price
-                    FROM ticker_info
-                    WHERE symbol = ?
-                    ORDER BY last_updated DESC LIMIT 1
-                    """,
-                    (symbol,),
-                )
-                ticker_result = cursor.fetchone()
+            if not ticker_info:
+                logger.debug(f"ticker_infoデータなし: {symbol}")
+                return 0.0
 
-                if not ticker_result:
-                    logger.debug(f"ticker_infoデータなし: {symbol}")
-                    return 0.0
+            annual_dividend = ticker_info.get("trailing_annual_dividend_rate")
+            if annual_dividend is None or annual_dividend <= 0:
+                logger.debug(f"年間配当金データなし: {symbol}")
+                return 0.0
 
-                annual_dividend = ticker_result["trailing_annual_dividend_rate"]
-                if annual_dividend is None or annual_dividend <= 0:
-                    logger.debug(f"年間配当金データなし: {symbol}")
-                    return 0.0
+            # 現在の株価を取得（引数で指定されていない場合は最新の株価データを使用）
+            if current_price is None:
+                price_data = self.db_manager.get_stock_prices(symbol)
+                if price_data.empty:
+                    # 株価データがない場合はticker_infoの株価を使用
+                    ticker_price = ticker_info.get("current_price")
+                    if ticker_price is None or ticker_price <= 0:
+                        logger.debug(f"株価データなし: {symbol}")
+                        return 0.0
+                    current_price = ticker_price
+                else:
+                    current_price = float(price_data["close"].iloc[-1])
 
-                # 現在の株価を取得（引数で指定されていない場合は最新の株価データを使用）
-                if current_price is None:
-                    price_data = self.db_manager.get_stock_prices(symbol)
-                    if price_data.empty:
-                        # 株価データがない場合はticker_infoの株価を使用
-                        current_price = ticker_result["ticker_price"]
-                        if current_price is None or current_price <= 0:
-                            logger.debug(f"株価データなし: {symbol}")
-                            return 0.0
-                    else:
-                        current_price = float(price_data["close"].iloc[-1])
+            if current_price is None or current_price <= 0:
+                logger.warning(f"無効な株価: {symbol}, price: {current_price}")
+                return 0.0
 
-                if current_price <= 0:
-                    logger.warning(f"無効な株価: {symbol}, price: {current_price}")
-                    return 0.0
-
-                # 配当利回り計算：(年間配当金 / 現在株価) * 100
-                dividend_yield = (float(annual_dividend) / current_price) * 100
-                return round(dividend_yield, 2)
+            # 配当利回り計算：(年間配当金 / 現在株価) * 100
+            dividend_yield = (float(annual_dividend) / current_price) * 100
+            return round(dividend_yield, 2)
 
         except Exception as e:
             logger.warning(f"配当利回り計算エラー {symbol}: {e}")

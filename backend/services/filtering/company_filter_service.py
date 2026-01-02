@@ -4,6 +4,8 @@ from typing import Optional
 from shared.config.models import FilterCriteria
 from shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
 from shared.database.database_manager import DatabaseManager
+from shared.database.models import Company
+from shared.database.session import get_db
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
@@ -65,12 +67,7 @@ class CompanyFilterService:
         企業の基本情報を取得
         """
         try:
-            # 既存のDBメソッドを使用（symbol_filterパラメータは未対応のため、別途実装が必要）
-            with self.db_manager.get_connection() as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM companies WHERE symbol = ?", (symbol,))
-                result = cursor.fetchone()
-                return dict(result) if result else None
+            return self.db_manager.get_company_by_symbol(symbol)
 
         except Exception as e:
             logger.error(f"企業情報取得エラー {symbol}: {e}")
@@ -81,8 +78,8 @@ class CompanyFilterService:
         全企業リストを取得
         """
         try:
-            # 既存のDBメソッドを使用してすべての企業を取得
-            companies = self.db_manager.get_filtered_companies(is_enterprise_only=False)
+            # companiesテーブルから直接全企業を取得（technical_indicatorsとJOINしない）
+            companies = self.db_manager.get_companies(is_enterprise_only=False)
 
             # limit適用
             if limit:
@@ -93,4 +90,68 @@ class CompanyFilterService:
 
         except Exception as e:
             logger.error(f"企業リスト取得エラー: {e}")
+            return []
+
+    def search_companies(
+        self,
+        search: str,
+        limit: int = 100,
+        market: Optional[str] = None,
+        sector: Optional[str] = None,
+        is_enterprise: Optional[bool] = None,
+    ) -> list[dict]:
+        """
+        銘柄コードまたは銘柄名で企業を検索する（データベースレベル）。
+
+        Args:
+            search: 検索文字列（銘柄コードまたは銘柄名の部分一致）
+            limit: 取得件数の上限
+            market: 市場区分でフィルタ（オプション）
+            sector: 業種でフィルタ（オプション）
+            is_enterprise: 大企業のみ（オプション）
+
+        Returns:
+            検索結果の企業リスト
+        """
+        try:
+            db = next(get_db())
+            try:
+                # 検索条件を構築（銘柄コードまたは銘柄名で部分一致）
+                search_pattern = f"%{search}%"
+                query = db.query(Company).filter(
+                    (Company.symbol.ilike(search_pattern))
+                    | (Company.name.ilike(search_pattern))
+                )
+
+                # 追加フィルタ適用
+                if market:
+                    query = query.filter(Company.market == market)
+                if sector:
+                    query = query.filter(Company.sector == sector)
+                if is_enterprise is not None:
+                    query = query.filter(Company.is_enterprise.is_(is_enterprise))
+
+                # limit適用
+                companies = query.limit(limit).all()
+
+                # 辞書形式に変換
+                result = [
+                    {
+                        "symbol": c.symbol,
+                        "name": c.name,
+                        "sector": c.sector,
+                        "market": c.market,
+                        "market_cap": float(c.revenue) if c.revenue else None,
+                        "is_enterprise": c.is_enterprise,
+                    }
+                    for c in companies
+                ]
+
+                logger.info(f"検索完了: '{search}' で {len(result)} 件")
+                return result
+            finally:
+                db.close()
+
+        except Exception as e:
+            logger.error(f"企業検索エラー: {e}")
             return []

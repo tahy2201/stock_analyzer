@@ -15,6 +15,17 @@ import type {
   SystemStats,
   TechnicalAnalysis,
 } from '../types/stock'
+import type {
+  BuyRequest,
+  DepositRequest,
+  PortfolioCreateRequest,
+  PortfolioDetail,
+  PortfolioSummary,
+  PortfolioUpdateRequest,
+  SellRequest,
+  TransactionResponse,
+  WithdrawalRequest,
+} from '../types/portfolio'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 
@@ -169,6 +180,96 @@ export const adminApi = {
   // 招待失効
   revokeInvite: async (token: string): Promise<void> => {
     await api.post(`/admin/invites/${token}/revoke`)
+  },
+}
+
+// ポートフォリオAPI
+export const portfolioApi = {
+  // ポートフォリオ一覧取得
+  getPortfolios: async (): Promise<PortfolioSummary[]> => {
+    const response = await api.get('/portfolios/')
+    return response.data
+  },
+
+  // ポートフォリオ詳細取得
+  getPortfolioDetail: async (portfolioId: number): Promise<PortfolioDetail> => {
+    const response = await api.get(`/portfolios/${portfolioId}`)
+    return response.data
+  },
+
+  // ポートフォリオ作成
+  createPortfolio: async (data: PortfolioCreateRequest): Promise<PortfolioDetail> => {
+    const response = await api.post('/portfolios/', data)
+    return response.data
+  },
+
+  // ポートフォリオ更新
+  updatePortfolio: async (
+    portfolioId: number,
+    data: PortfolioUpdateRequest,
+  ): Promise<PortfolioDetail> => {
+    const response = await api.put(`/portfolios/${portfolioId}`, data)
+    return response.data
+  },
+
+  // ポートフォリオ削除
+  deletePortfolio: async (portfolioId: number): Promise<void> => {
+    await api.delete(`/portfolios/${portfolioId}`)
+  },
+
+  // 銘柄購入
+  buyStock: async (portfolioId: number, data: BuyRequest): Promise<TransactionResponse> => {
+    const response = await api.post(`/portfolios/${portfolioId}/positions/buy`, data)
+    return response.data
+  },
+
+  // 銘柄売却
+  sellStock: async (portfolioId: number, data: SellRequest): Promise<TransactionResponse> => {
+    const response = await api.post(`/portfolios/${portfolioId}/positions/sell`, data)
+    return response.data
+  },
+
+  // 入金
+  depositCash: async (portfolioId: number, data: DepositRequest): Promise<TransactionResponse> => {
+    const response = await api.post(`/portfolios/${portfolioId}/deposit`, data)
+    return response.data
+  },
+
+  // 出金
+  withdrawCash: async (portfolioId: number, data: WithdrawalRequest): Promise<TransactionResponse> => {
+    const response = await api.post(`/portfolios/${portfolioId}/withdraw`, data)
+    return response.data
+  },
+
+  // 取引履歴取得
+  getTransactions: async (
+    portfolioId: number,
+    params?: {
+      start_date?: string
+      end_date?: string
+      symbol?: string
+      transaction_type?: string
+      limit?: number
+    },
+  ): Promise<TransactionResponse[]> => {
+    const response = await api.get(`/portfolios/${portfolioId}/transactions`, { params })
+    return response.data
+  },
+}
+
+// Companies API
+export const companiesApi = {
+  // 銘柄検索
+  searchCompanies: async (search: string, limit: number = 50): Promise<Array<{
+    symbol: string
+    name: string | null
+    sector: string | null
+    market: string | null
+  }>> => {
+    const response = await api.get('/companies/', {
+      params: { search, limit }
+    })
+    return response.data
   },
 }
 

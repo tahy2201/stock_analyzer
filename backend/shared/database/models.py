@@ -17,6 +17,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -175,6 +176,94 @@ class TickerInfo(Base):
     __table_args__ = (
         Index("idx_ticker_info_symbol", "symbol"),
         Index("idx_ticker_info_last_updated", "last_updated"),
+    )
+
+
+class Portfolio(Base):
+    """ポートフォリオ情報テーブル"""
+
+    __tablename__ = "portfolios"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    initial_capital: Mapped[float] = mapped_column(
+        DECIMAL(15, 2), nullable=False, server_default="1000000.00"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    __table_args__ = (Index("idx_portfolios_user_id", "user_id"),)
+
+
+class Position(Base):
+    """保有ポジション情報テーブル"""
+
+    __tablename__ = "positions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("portfolios.id", ondelete="CASCADE"), nullable=False
+    )
+    symbol: Mapped[str] = mapped_column(String(10), ForeignKey("companies.symbol"), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    average_price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        Index("idx_positions_portfolio_id", "portfolio_id"),
+        Index("idx_positions_symbol", "symbol"),
+        UniqueConstraint("portfolio_id", "symbol", name="uq_positions_portfolio_symbol"),
+    )
+
+
+class Transaction(Base):
+    """取引履歴テーブル"""
+
+    __tablename__ = "transactions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    portfolio_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("portfolios.id", ondelete="CASCADE"), nullable=False
+    )
+    symbol: Mapped[Optional[str]] = mapped_column(
+        String(10), ForeignKey("companies.symbol"), nullable=True
+    )
+    transaction_type: Mapped[str] = mapped_column(
+        Enum("buy", "sell", "deposit", "withdrawal", name="transaction_type", native_enum=False, validate_strings=True),
+        nullable=False,
+    )
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    price: Mapped[float] = mapped_column(DECIMAL(10, 2), nullable=False, server_default="0.00")
+    total_amount: Mapped[float] = mapped_column(DECIMAL(15, 2), nullable=False)
+    profit_loss: Mapped[Optional[float]] = mapped_column(DECIMAL(15, 2), nullable=True)
+    transaction_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    notes: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    __table_args__ = (
+        Index("idx_transactions_portfolio_id", "portfolio_id"),
+        Index("idx_transactions_symbol", "symbol"),
+        Index("idx_transactions_date", "transaction_date"),
+        Index("idx_transactions_portfolio_date", "portfolio_id", "transaction_date"),
     )
 
 

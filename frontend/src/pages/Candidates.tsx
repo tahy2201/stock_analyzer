@@ -1,9 +1,12 @@
-import { ReloadOutlined } from '@ant-design/icons'
+import { ReloadOutlined, ShoppingOutlined } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import {
   Button,
   Card,
   Col,
   Form,
+  message,
+  Modal,
   Row,
   Select,
   Slider,
@@ -13,7 +16,11 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { API_BASE_URL } from '../services/api'
+import BuyModal from '../components/portfolio/BuyModal'
+import { useAuth } from '../contexts/AuthContext'
+import { API_BASE_URL, portfolioApi } from '../services/api'
+import type { PortfolioSummary } from '../types/portfolio'
+import { getYahooFinanceUrl } from '../utils/stockUtils'
 
 interface InvestmentCandidate {
   symbol: string
@@ -29,8 +36,10 @@ interface InvestmentCandidate {
   price_change_1d: number | null
 }
 
+// 投資候補ページ
 const Candidates = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [candidates, setCandidates] = useState<InvestmentCandidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -41,6 +50,64 @@ const Candidates = () => {
   const [marketFilter, setMarketFilter] = useState<string>('prime')
   const [form] = Form.useForm()
 
+  // ポートフォリオ選択モーダル用の状態
+  const [portfolioSelectVisible, setPortfolioSelectVisible] = useState(false)
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(null)
+  const [buyModalVisible, setBuyModalVisible] = useState(false)
+
+  // ポートフォリオ一覧取得
+  const { data: portfolios } = useQuery<PortfolioSummary[]>({
+    queryKey: ['portfolios'],
+    queryFn: portfolioApi.getPortfolios,
+    enabled: !!user,
+  })
+
+  // 購入ボタンハンドラ
+  const handleBuy = (symbol: string) => {
+    if (!user) {
+      Modal.info({
+        title: 'ログインが必要です',
+        content: 'ポートフォリオ機能を使用するにはログインしてください。',
+        onOk: () => navigate('/login'),
+      })
+      return
+    }
+
+    setSelectedSymbol(symbol)
+
+    // ポートフォリオが1つもない場合
+    if (!portfolios || portfolios.length === 0) {
+      Modal.info({
+        title: 'ポートフォリオがありません',
+        content: 'まずポートフォリオを作成してください。',
+        onOk: () => navigate('/portfolio'),
+      })
+      return
+    }
+
+    // ポートフォリオが1つだけの場合は直接購入モーダルを表示
+    if (portfolios.length === 1) {
+      setSelectedPortfolioId(portfolios[0].id)
+      setBuyModalVisible(true)
+      return
+    }
+
+    // 複数ある場合は選択モーダルを表示
+    setSelectedPortfolioId(null) // 初期化
+    setPortfolioSelectVisible(true)
+  }
+
+  // ポートフォリオ選択確定ハンドラ
+  const handlePortfolioSelectOk = () => {
+    if (!selectedPortfolioId) {
+      message.warning('ポートフォリオを選択してください')
+      return
+    }
+    setPortfolioSelectVisible(false)
+    setBuyModalVisible(true)
+  }
+
   const columns: ColumnsType<InvestmentCandidate> = [
     {
       title: '銘柄コード',
@@ -50,7 +117,9 @@ const Candidates = () => {
       fixed: 'left',
       render: (symbol: string) => (
         <a
-          onClick={() => navigate(`/stocks/${symbol}`)}
+          href={getYahooFinanceUrl(symbol)}
+          target="_blank"
+          rel="noopener noreferrer"
           style={{ color: '#1890ff', cursor: 'pointer' }}
         >
           {symbol}
@@ -118,21 +187,27 @@ const Candidates = () => {
         return <Tag color={color}>{yield_val.toFixed(2)}%</Tag>
       },
     },
-    {
-      title: 'スコア',
-      dataIndex: 'analysis_score',
-      key: 'analysis_score',
-      width: 100,
-      align: 'right',
-      sorter: (a, b) => (a.analysis_score || 0) - (b.analysis_score || 0),
-      defaultSortOrder: 'descend',
-      render: (score: number | null) => {
-        if (score === null) return '0.0'
-        const color = score >= 7 ? 'green' : score >= 5 ? 'blue' : 'default'
-        return <Tag color={color}>{score.toFixed(1)}</Tag>
-      },
-    },
   ]
+
+  // ログイン時のみアクションカラムを追加
+  if (user) {
+    columns.push({
+      title: 'アクション',
+      key: 'action',
+      width: 100,
+      fixed: 'right',
+      render: (_, record) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<ShoppingOutlined />}
+          onClick={() => handleBuy(record.symbol)}
+        >
+          購入
+        </Button>
+      ),
+    })
+  }
 
   // 投資候補データ取得
   const fetchCandidates = async () => {
@@ -278,6 +353,41 @@ const Candidates = () => {
         }}
         scroll={{ x: 1200 }}
       />
+
+      {/* ポートフォリオ選択モーダル */}
+      <Modal
+        title="ポートフォリオを選択"
+        open={portfolioSelectVisible}
+        onOk={handlePortfolioSelectOk}
+        onCancel={() => setPortfolioSelectVisible(false)}
+        okText="選択"
+        cancelText="キャンセル"
+      >
+        <Select
+          style={{ width: '100%' }}
+          placeholder="ポートフォリオを選択してください"
+          value={selectedPortfolioId}
+          onChange={(value) => setSelectedPortfolioId(value)}
+          options={portfolios?.map((portfolio) => ({
+            value: portfolio.id,
+            label: `${portfolio.name} (評価額: ¥${portfolio.total_value.toLocaleString()})`,
+          }))}
+        />
+      </Modal>
+
+      {/* 購入モーダル */}
+      {selectedPortfolioId && selectedSymbol && (
+        <BuyModal
+          visible={buyModalVisible}
+          portfolioId={selectedPortfolioId}
+          onCancel={() => {
+            setBuyModalVisible(false)
+            setSelectedSymbol(null)
+            setSelectedPortfolioId(null)
+          }}
+          initialSymbol={selectedSymbol}
+        />
+      )}
     </div>
   )
 }

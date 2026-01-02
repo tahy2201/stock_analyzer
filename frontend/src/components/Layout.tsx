@@ -19,6 +19,11 @@ const Layout = ({ children }: LayoutProps) => {
     { path: '/analysis', label: '📈 分析' },
   ]
 
+  // ログイン済みの場合はポートフォリオメニューを表示
+  if (user) {
+    navItems.push({ path: '/portfolio', label: '💼 ポートフォリオ' })
+  }
+
   // 管理者の場合のみ管理メニューを表示
   if (user?.role === 'admin') {
     navItems.push({ path: '/admin', label: '⚙️ 管理' })
