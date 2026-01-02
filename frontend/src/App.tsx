@@ -10,6 +10,8 @@ import Candidates from './pages/Candidates'
 import Dashboard from './pages/Dashboard'
 import Login from './pages/Login'
 import MyPage from './pages/MyPage'
+import Portfolio from './pages/Portfolio'
+import PortfolioDetail from './pages/PortfolioDetail'
 import Register from './pages/Register'
 import StockList from './pages/StockList'
 
@@ -67,6 +69,22 @@ function AppRoutes() {
                 element={
                   <RequireAuth>
                     <MyPage />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/portfolio"
+                element={
+                  <RequireAuth>
+                    <Portfolio />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/portfolio/:id"
+                element={
+                  <RequireAuth>
+                    <PortfolioDetail />
                   </RequireAuth>
                 }
               />

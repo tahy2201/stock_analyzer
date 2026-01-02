@@ -73,9 +73,21 @@ export interface SellRequest {
   notes?: string | null
 }
 
+export interface DepositRequest {
+  amount: number
+  transaction_date?: string | null
+  notes?: string | null
+}
+
+export interface WithdrawalRequest {
+  amount: number
+  transaction_date?: string | null
+  notes?: string | null
+}
+
 export interface TransactionResponse {
   id: number
-  symbol: string
+  symbol: string | null
   company_name: string | null
   transaction_type: string
   quantity: number
