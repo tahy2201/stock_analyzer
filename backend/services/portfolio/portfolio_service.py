@@ -3,9 +3,12 @@
 from typing import Optional
 
 from fastapi import HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from shared.database import models
+
+MAX_PORTFOLIOS_PER_USER = 10
 
 
 class PortfolioService:
@@ -34,18 +37,18 @@ class PortfolioService:
             作成されたポートフォリオ
 
         Raises:
-            HTTPException: ユーザーが既に10個のポートフォリオを持っている場合
+            HTTPException: ユーザーが既に上限数のポートフォリオを持っている場合
         """
-        # ユーザーあたり最大10個チェック
+        # ユーザーあたり最大数チェック
         count = (
             self.db.query(models.Portfolio)
             .filter(models.Portfolio.user_id == user_id)
             .count()
         )
-        if count >= 10:
+        if count >= MAX_PORTFOLIOS_PER_USER:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="ポートフォリオは最大10個までです",
+                detail=f"ポートフォリオは最大{MAX_PORTFOLIOS_PER_USER}個までです",
             )
 
         # 作成処理
@@ -171,18 +174,40 @@ class PortfolioService:
             .all()
         )
 
+        # 最新株価を一括取得してN+1問題を回避
+        symbols = [position.symbol for position in positions]
+        if symbols:
+            # サブクエリで各銘柄の最新日付を取得
+            latest_dates_subquery = (
+                self.db.query(
+                    models.StockPrice.symbol, func.max(models.StockPrice.date).label("max_date")
+                )
+                .filter(models.StockPrice.symbol.in_(symbols))
+                .group_by(models.StockPrice.symbol)
+                .subquery()
+            )
+
+            # 最新株価を一括取得
+            latest_prices = (
+                self.db.query(models.StockPrice)
+                .join(
+                    latest_dates_subquery,
+                    (models.StockPrice.symbol == latest_dates_subquery.c.symbol)
+                    & (models.StockPrice.date == latest_dates_subquery.c.max_date),
+                )
+                .all()
+            )
+
+            # 銘柄コード -> 終値のマッピングを作成
+            price_map = {sp.symbol: float(sp.close) for sp in latest_prices if sp.close}
+        else:
+            price_map = {}
+
         # 各銘柄の評価額計算
         total_position_value = 0.0
         for position in positions:
-            # 最新株価取得
-            latest = (
-                self.db.query(models.StockPrice)
-                .filter(models.StockPrice.symbol == position.symbol)
-                .order_by(models.StockPrice.date.desc())
-                .first()
-            )
-            if latest and latest.close:
-                current_price = float(latest.close)
+            if position.symbol in price_map:
+                current_price = price_map[position.symbol]
                 position_value = current_price * position.quantity
                 total_position_value += position_value
 
@@ -217,14 +242,17 @@ class PortfolioService:
         # 総評価額 = 現在のポジション評価額 + 現金残高
         total_value = total_position_value + cash_balance
 
-        # 総損益 = 総評価額 - 初期資本
-        total_profit_loss = total_value - float(portfolio.initial_capital)
+        # 投資元本 = 初期資本 + 入金額 - 出金額
+        investment_base = (
+            float(portfolio.initial_capital) + total_deposit - total_withdrawal
+        )
 
-        # 損益率 = (総損益 / 初期資本) * 100
+        # 総損益 = 総評価額 - 投資元本
+        total_profit_loss = total_value - investment_base
+
+        # 損益率 = (総損益 / 投資元本) * 100
         total_profit_loss_rate = (
-            (total_profit_loss / float(portfolio.initial_capital)) * 100
-            if portfolio.initial_capital != 0
-            else 0.0
+            (total_profit_loss / investment_base) * 100 if investment_base != 0 else 0.0
         )
 
         return {

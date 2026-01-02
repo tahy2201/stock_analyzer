@@ -1,6 +1,6 @@
 """ポートフォリオ管理APIエンドポイント。"""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -420,8 +420,6 @@ def deposit_cash(
     # 所有者チェック
     verify_portfolio_ownership(portfolio_id, current_user.id, db)
 
-    from datetime import datetime, timezone
-
     # 入金トランザクション作成
     transaction = models.Transaction(
         portfolio_id=portfolio_id,
@@ -460,8 +458,6 @@ def withdraw_cash(
     """現金を出金する。"""
     # 所有者チェック
     verify_portfolio_ownership(portfolio_id, current_user.id, db)
-
-    from datetime import datetime, timezone
 
     # 現金残高チェック
     service = PortfolioService(db)

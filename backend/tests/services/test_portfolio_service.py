@@ -1,8 +1,9 @@
 """PortfolioService unit tests."""
 
-import pytest
 from datetime import datetime, timezone
 from decimal import Decimal
+
+import pytest
 
 from services.portfolio.portfolio_service import PortfolioService
 from shared.database import models
@@ -151,10 +152,11 @@ class TestCalculatePortfolioValue:
         assert result["cash_balance"] == 1100000.0
         # 総評価額 = 1,100,000
         assert result["total_value"] == 1100000.0
-        # 損益 = 1,100,000 - 1,000,000 = 100,000
-        assert result["total_profit_loss"] == 100000.0
-        # 損益率 = 100,000 / 1,000,000 * 100 = 10%
-        assert result["total_profit_loss_rate"] == 10.0
+        # 投資元本 = 1,000,000 + 100,000 = 1,100,000
+        # 損益 = 1,100,000 - 1,100,000 = 0（入金は損益に含まれない）
+        assert result["total_profit_loss"] == 0.0
+        # 損益率 = 0 / 1,100,000 * 100 = 0%
+        assert result["total_profit_loss_rate"] == 0.0
 
     def test_with_withdrawal_transaction(self, portfolio_service, db_session, test_portfolio):
         """出金取引後のポートフォリオ評価額を計算。"""
@@ -177,10 +179,11 @@ class TestCalculatePortfolioValue:
         assert result["cash_balance"] == 950000.0
         # 総評価額 = 950,000
         assert result["total_value"] == 950000.0
-        # 損益 = 950,000 - 1,000,000 = -50,000
-        assert result["total_profit_loss"] == -50000.0
-        # 損益率 = -50,000 / 1,000,000 * 100 = -5%
-        assert result["total_profit_loss_rate"] == -5.0
+        # 投資元本 = 1,000,000 - 50,000 = 950,000
+        # 損益 = 950,000 - 950,000 = 0（出金は損益に含まれない）
+        assert result["total_profit_loss"] == 0.0
+        # 損益率 = 0 / 950,000 * 100 = 0%
+        assert result["total_profit_loss_rate"] == 0.0
 
     def test_with_multiple_transactions(
         self, portfolio_service, db_session, test_portfolio, test_company, test_stock_price
@@ -239,7 +242,8 @@ class TestCalculatePortfolioValue:
         # ポジション評価額 = 100株 x 1,050円 = 105,000
         # 総評価額 = 1,050,000 + 105,000 = 1,155,000
         assert result["total_value"] == 1155000.0
-        # 損益 = 1,155,000 - 1,000,000 = 155,000
-        assert result["total_profit_loss"] == 155000.0
-        # 損益率 = 155,000 / 1,000,000 * 100 = 15.5%
-        assert result["total_profit_loss_rate"] == 15.5
+        # 投資元本 = 1,000,000 + 200,000（入金） - 50,000（出金） = 1,150,000
+        # 損益 = 1,155,000 - 1,150,000 = 5,000（株の評価益のみ）
+        assert result["total_profit_loss"] == 5000.0
+        # 損益率 = 5,000 / 1,150,000 * 100 ≈ 0.43%
+        assert abs(result["total_profit_loss_rate"] - 0.43478260869565216) < 0.0001
