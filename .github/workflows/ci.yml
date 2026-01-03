@@ -59,47 +59,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-groups
 
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: latest
+      - name: Run Ruff lint
+        run: uv run ruff check .
 
-      - name: Run Ruff lint with reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          uv run ruff check . 2>&1 | \
-          reviewdog -efm="%f:%l:%c: %m" \
-            -name="ruff" \
-            -reporter=github-pr-review \
-            -level=error \
-            -fail-level=error
+      - name: Run Mypy type check
+        run: uv run mypy .
 
-      - name: Run Mypy type check with reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          uv run mypy . 2>&1 | \
-          reviewdog -efm="%f:%l: %trror: %m" \
-            -efm="%f:%l: %tarning: %m" \
-            -efm="%f:%l:%c: %trror: %m" \
-            -efm="%f:%l:%c: %tarning: %m" \
-            -name="mypy" \
-            -reporter=github-pr-review \
-            -level=error \
-            -fail-level=error
-
-      - name: Run Pyright type check with reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          uv run pyright . 2>&1 | \
-          reviewdog -efm="%f:%l:%c - %trror: %m" \
-            -efm="%f:%l:%c - %tarning: %m" \
-            -name="pyright" \
-            -reporter=github-pr-review \
-            -level=error \
-            -fail-level=error
+      - name: Run Pyright type check
+        run: uv run pyright .
 
       - name: Run tests with pytest
         run: uv run pytest
@@ -126,31 +93,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
-        with:
-          reviewdog_version: latest
+      - name: Run TypeScript type check
+        run: bunx tsc --noEmit --project tsconfig.app.json
 
-      - name: Run TypeScript type check with reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          bunx tsc --noEmit --project tsconfig.app.json 2>&1 | \
-          reviewdog -efm="%f(%l,%c): %trror TS%n: %m" \
-            -efm="%f(%l,%c): %tarning TS%n: %m" \
-            -name="tsc" \
-            -reporter=github-pr-review \
-            -level=error \
-            -fail-level=error
-
-      - name: Run Biome lint with reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          bunx biome ci . 2>&1 | \
-          reviewdog -efm="%f:%l:%c %m" \
-            -efm="%f:%l:%c: %m" \
-            -name="biome" \
-            -reporter=github-pr-review \
-            -level=error \
-            -fail-level=error
+      - name: Run Biome lint
+        run: bun run lint
