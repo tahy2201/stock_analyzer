@@ -70,11 +70,17 @@ jobs:
         run: |
           uv run ruff check --output-format=concise . 2>&1 | reviewdog -efm="%f:%l:%c: %m" -name="ruff" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
 
-      - name: Run Mypy type check
-        run: uv run mypy .
+      - name: Run Mypy type check with reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run mypy . 2>&1 | reviewdog -efm="%f:%l: %trror: %m" -efm="%f:%l: %tarning: %m" -name="mypy" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
 
-      - name: Run Pyright type check
-        run: uv run pyright .
+      - name: Run Pyright type check with reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          uv run pyright . 2>&1 | reviewdog -efm="%f:%l:%c - %trror: %m" -efm="%f:%l:%c - %tarning: %m" -name="pyright" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
 
       - name: Run tests with pytest
         run: uv run pytest
@@ -101,8 +107,19 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run TypeScript type check
-        run: bunx tsc --noEmit --project tsconfig.app.json
+      - name: Setup reviewdog
+        uses: reviewdog/action-setup@v1
+        with:
+          reviewdog_version: latest
 
-      - name: Run Biome lint
-        run: bun run lint
+      - name: Run TypeScript type check with reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bunx tsc --noEmit --project tsconfig.app.json 2>&1 | reviewdog -efm="%f(%l,%c): %trror TS%n: %m" -efm="%f(%l,%c): %tarning TS%n: %m" -name="tsc" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
+
+      - name: Run Biome lint with reviewdog
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bun run lint 2>&1 | reviewdog -efm="%f:%l:%c %m" -name="biome" -reporter=github-pr-review -filter-mode=nofilter -fail-on-error=false
