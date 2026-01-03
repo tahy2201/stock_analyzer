@@ -93,8 +93,9 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          uv run pyright --outputjson . 2>&1 | \
-          reviewdog -f=pyright \
+          uv run pyright . 2>&1 | \
+          reviewdog -efm="%f:%l:%c - %trror: %m" \
+            -efm="%f:%l:%c - %tarning: %m" \
             -name="pyright" \
             -reporter=github-pr-review \
             -level=error \
