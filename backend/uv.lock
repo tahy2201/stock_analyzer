@@ -3872,6 +3872,7 @@ dev = [
 [package.dev-dependencies]
 dev = [
     { name = "httpx" },
+    { name = "mypy" },
     { name = "pandas-stubs", version = "2.2.2.240807", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "pandas-stubs", version = "2.3.3.251201", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
     { name = "pyright" },
@@ -3915,6 +3916,7 @@ provides-extras = ["dev"]
 [package.metadata.requires-dev]
 dev = [
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "mypy", specifier = ">=1.0.0" },
     { name = "pandas-stubs", specifier = ">=2.2.2.240807" },
     { name = "pyright", specifier = ">=1.1.389" },
     { name = "pytest", specifier = ">=7.0.0" },
