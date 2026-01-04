@@ -14,7 +14,9 @@ async def test_login_success(client, create_user):
     # セッション継続確認
     me = await client.get("/api/auth/me")
     assert me.status_code == 200
-    assert me.json()["login_id"] == "alice"
+    me_data = me.json()
+    assert me_data["authenticated"] is True
+    assert me_data["user"]["login_id"] == "alice"
 
 
 @pytest.mark.asyncio
