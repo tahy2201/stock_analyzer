@@ -1,5 +1,5 @@
-import react from '@vitejs/plugin-react'
 import fs from 'node:fs'
+import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 // SSL証明書のパス（Docker環境用）
