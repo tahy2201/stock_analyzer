@@ -262,7 +262,7 @@ const Admin = () => {
           </div>
         ) : (
           <div>
-            <label className="block mb-2">Role:</label>
+            <div className="block mb-2">Role:</div>
             <Select
               value={inviteRole}
               onChange={setInviteRole}
@@ -290,7 +290,7 @@ const Admin = () => {
         okButtonProps={{ disabled: newPassword.length < 8 }}
       >
         <div>
-          <label className="block mb-2">New Password (min 8 chars):</label>
+          <div className="block mb-2">New Password (min 8 chars):</div>
           <Input.Password
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
