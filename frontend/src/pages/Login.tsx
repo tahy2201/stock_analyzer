@@ -1,4 +1,5 @@
 import { App, Button, Form, Input } from 'antd'
+import type { AxiosError } from 'axios'
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -24,11 +25,12 @@ const Login = () => {
         description: 'ログインしました',
         placement: 'topRight',
       })
-    } catch (error: any) {
+    } catch (error) {
       // Axiosエラーレスポンスから詳細メッセージを取得
+      const axiosError = error as AxiosError<{ detail?: string }>
       const errorMessage =
-        error?.response?.data?.detail ||
-        error?.message ||
+        axiosError.response?.data?.detail ||
+        axiosError.message ||
         'ログインに失敗しました。IDまたはパスワードを確認してください。'
 
       notification.error({
@@ -60,22 +62,22 @@ const Login = () => {
         <h1 className="text-2xl font-bold text-white text-center mb-8">
           株式分析システム
         </h1>
-        <Form
-          layout="vertical"
-          onFinish={handleSubmit}
-          requiredMark={false}
-        >
+        <Form layout="vertical" onFinish={handleSubmit} requiredMark={false}>
           <Form.Item
             label={<span className="text-gray-300">ログインID</span>}
             name="login_id"
-            rules={[{ required: true, message: 'ログインIDを入力してください' }]}
+            rules={[
+              { required: true, message: 'ログインIDを入力してください' },
+            ]}
           >
             <Input size="large" placeholder="ログインID" />
           </Form.Item>
           <Form.Item
             label={<span className="text-gray-300">パスワード</span>}
             name="password"
-            rules={[{ required: true, message: 'パスワードを入力してください' }]}
+            rules={[
+              { required: true, message: 'パスワードを入力してください' },
+            ]}
           >
             <Input.Password size="large" placeholder="パスワード" />
           </Form.Item>

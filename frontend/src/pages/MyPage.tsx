@@ -1,4 +1,5 @@
-import { Button, Card, Descriptions, Form, Input, message, Modal } from 'antd'
+import { Button, Card, Descriptions, Form, Input, Modal, message } from 'antd'
+import type { AxiosError } from 'axios'
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -25,8 +26,9 @@ const MyPage = () => {
       message.success('表示名を更新しました')
       setDisplayNameModalOpen(false)
       await refreshUser()
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.detail || '更新に失敗しました'
+    } catch (error) {
+      const axiosError = error as AxiosError<{ detail?: string }>
+      const errorMessage = axiosError.response?.data?.detail || '更新に失敗しました'
       message.error(errorMessage)
     } finally {
       setSubmitting(false)
@@ -40,11 +42,16 @@ const MyPage = () => {
   }) => {
     setSubmitting(true)
     try {
-      await usersApi.changePassword(values.current_password, values.new_password)
+      await usersApi.changePassword(
+        values.current_password,
+        values.new_password,
+      )
       message.success('パスワードを変更しました')
       setPasswordModalOpen(false)
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.detail || 'パスワード変更に失敗しました'
+    } catch (error) {
+      const axiosError = error as AxiosError<{ detail?: string }>
+      const errorMessage =
+        axiosError.response?.data?.detail || 'パスワード変更に失敗しました'
       message.error(errorMessage)
     } finally {
       setSubmitting(false)
@@ -61,11 +68,16 @@ const MyPage = () => {
           column={1}
           bordered
         >
-          <Descriptions.Item label="ログインID">{user.login_id}</Descriptions.Item>
+          <Descriptions.Item label="ログインID">
+            {user.login_id}
+          </Descriptions.Item>
           <Descriptions.Item label="表示名">
             <div className="flex items-center justify-between">
               <span>{user.display_name}</span>
-              <Button size="small" onClick={() => setDisplayNameModalOpen(true)}>
+              <Button
+                size="small"
+                onClick={() => setDisplayNameModalOpen(true)}
+              >
                 変更
               </Button>
             </div>
@@ -85,7 +97,9 @@ const MyPage = () => {
             )}
           </Descriptions.Item>
           <Descriptions.Item label="最終ログイン">
-            {user.last_login_at ? new Date(user.last_login_at).toLocaleString('ja-JP') : '-'}
+            {user.last_login_at
+              ? new Date(user.last_login_at).toLocaleString('ja-JP')
+              : '-'}
           </Descriptions.Item>
         </Descriptions>
 
@@ -120,7 +134,9 @@ const MyPage = () => {
           </Form.Item>
           <Form.Item>
             <div className="flex gap-2 justify-end">
-              <Button onClick={() => setDisplayNameModalOpen(false)}>キャンセル</Button>
+              <Button onClick={() => setDisplayNameModalOpen(false)}>
+                キャンセル
+              </Button>
               <Button type="primary" htmlType="submit" loading={submitting}>
                 更新
               </Button>
@@ -140,7 +156,9 @@ const MyPage = () => {
           <Form.Item
             label="現在のパスワード"
             name="current_password"
-            rules={[{ required: true, message: '現在のパスワードを入力してください' }]}
+            rules={[
+              { required: true, message: '現在のパスワードを入力してください' },
+            ]}
           >
             <Input.Password placeholder="現在のパスワード" />
           </Form.Item>
@@ -174,7 +192,9 @@ const MyPage = () => {
           </Form.Item>
           <Form.Item>
             <div className="flex gap-2 justify-end">
-              <Button onClick={() => setPasswordModalOpen(false)}>キャンセル</Button>
+              <Button onClick={() => setPasswordModalOpen(false)}>
+                キャンセル
+              </Button>
               <Button type="primary" htmlType="submit" loading={submitting}>
                 変更
               </Button>

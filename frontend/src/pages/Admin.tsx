@@ -1,4 +1,16 @@
-import { App, Button, Card, Input, Modal, Popconfirm, Select, Space, Table, Tabs, Typography } from 'antd'
+import {
+  App,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tabs,
+  Typography,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
@@ -177,7 +189,10 @@ const Admin = () => {
             children: (
               <Card className="bg-gray-800 border-gray-700">
                 <div className="mb-4">
-                  <Button type="primary" onClick={() => setInviteModalOpen(true)}>
+                  <Button
+                    type="primary"
+                    onClick={() => setInviteModalOpen(true)}
+                  >
                     Create Invite
                   </Button>
                 </div>
@@ -220,7 +235,11 @@ const Admin = () => {
                 <Button key="cancel" onClick={() => setInviteModalOpen(false)}>
                   Cancel
                 </Button>,
-                <Button key="create" type="primary" onClick={handleCreateInvite}>
+                <Button
+                  key="create"
+                  type="primary"
+                  onClick={handleCreateInvite}
+                >
                   Create
                 </Button>,
               ]

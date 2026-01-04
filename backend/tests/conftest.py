@@ -1,5 +1,5 @@
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator, Iterator
 from pathlib import Path
 
 import pytest
@@ -42,7 +42,7 @@ def clean_db(db_engine_session):
 
 
 @pytest.fixture
-def db_session(db_engine_session) -> Session:
+def db_session(db_engine_session) -> Generator[Session, None, None]:
     """SQLAlchemyセッションを提供。"""
     _, SessionLocal = db_engine_session
     session = SessionLocal()

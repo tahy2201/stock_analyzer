@@ -1,8 +1,9 @@
 """Portfolio API endpoint tests."""
 
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from decimal import Decimal
 
 
 @pytest.fixture
@@ -48,6 +49,7 @@ def create_company(db_session):
 def create_stock_price(db_session):
     """テスト用株価データを作成するヘルパー。"""
     from datetime import datetime
+
     from shared.database import models
 
     def _create_stock_price(symbol: str, close: float, date: datetime | None = None):
@@ -591,7 +593,7 @@ async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_u
     assert res.status_code == 200
     data = res.json()
     assert len(data) == 2
-    
+
     # 降順（新しい順）で確認
     assert data[0]["transaction_type"] == "withdrawal"
     assert data[0]["total_amount"] == 30000.0

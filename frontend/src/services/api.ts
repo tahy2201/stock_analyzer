@@ -8,14 +8,6 @@ import type {
   User,
 } from '../types/auth'
 import type {
-  CandidatesCount,
-  InvestmentCandidate,
-  StockDetail,
-  StockInfo,
-  SystemStats,
-  TechnicalAnalysis,
-} from '../types/stock'
-import type {
   BuyRequest,
   DepositRequest,
   PortfolioCreateRequest,
@@ -26,8 +18,17 @@ import type {
   TransactionResponse,
   WithdrawalRequest,
 } from '../types/portfolio'
+import type {
+  CandidatesCount,
+  InvestmentCandidate,
+  StockDetail,
+  StockInfo,
+  SystemStats,
+  TechnicalAnalysis,
+} from '../types/stock'
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -142,7 +143,10 @@ export const usersApi = {
   },
 
   // パスワード変更
-  changePassword: async (current_password: string, new_password: string): Promise<void> => {
+  changePassword: async (
+    current_password: string,
+    new_password: string,
+  ): Promise<void> => {
     await api.post('/users/me/password', { current_password, new_password })
   },
 }
@@ -161,7 +165,10 @@ export const adminApi = {
   },
 
   // パスワードリセット
-  resetPassword: async (userId: number, new_password: string): Promise<void> => {
+  resetPassword: async (
+    userId: number,
+    new_password: string,
+  ): Promise<void> => {
     await api.post(`/admin/users/${userId}/reset-password`, { new_password })
   },
 
@@ -198,7 +205,9 @@ export const portfolioApi = {
   },
 
   // ポートフォリオ作成
-  createPortfolio: async (data: PortfolioCreateRequest): Promise<PortfolioDetail> => {
+  createPortfolio: async (
+    data: PortfolioCreateRequest,
+  ): Promise<PortfolioDetail> => {
     const response = await api.post('/portfolios/', data)
     return response.data
   },
@@ -218,25 +227,43 @@ export const portfolioApi = {
   },
 
   // 銘柄購入
-  buyStock: async (portfolioId: number, data: BuyRequest): Promise<TransactionResponse> => {
-    const response = await api.post(`/portfolios/${portfolioId}/positions/buy`, data)
+  buyStock: async (
+    portfolioId: number,
+    data: BuyRequest,
+  ): Promise<TransactionResponse> => {
+    const response = await api.post(
+      `/portfolios/${portfolioId}/positions/buy`,
+      data,
+    )
     return response.data
   },
 
   // 銘柄売却
-  sellStock: async (portfolioId: number, data: SellRequest): Promise<TransactionResponse> => {
-    const response = await api.post(`/portfolios/${portfolioId}/positions/sell`, data)
+  sellStock: async (
+    portfolioId: number,
+    data: SellRequest,
+  ): Promise<TransactionResponse> => {
+    const response = await api.post(
+      `/portfolios/${portfolioId}/positions/sell`,
+      data,
+    )
     return response.data
   },
 
   // 入金
-  depositCash: async (portfolioId: number, data: DepositRequest): Promise<TransactionResponse> => {
+  depositCash: async (
+    portfolioId: number,
+    data: DepositRequest,
+  ): Promise<TransactionResponse> => {
     const response = await api.post(`/portfolios/${portfolioId}/deposit`, data)
     return response.data
   },
 
   // 出金
-  withdrawCash: async (portfolioId: number, data: WithdrawalRequest): Promise<TransactionResponse> => {
+  withdrawCash: async (
+    portfolioId: number,
+    data: WithdrawalRequest,
+  ): Promise<TransactionResponse> => {
     const response = await api.post(`/portfolios/${portfolioId}/withdraw`, data)
     return response.data
   },
@@ -252,7 +279,9 @@ export const portfolioApi = {
       limit?: number
     },
   ): Promise<TransactionResponse[]> => {
-    const response = await api.get(`/portfolios/${portfolioId}/transactions`, { params })
+    const response = await api.get(`/portfolios/${portfolioId}/transactions`, {
+      params,
+    })
     return response.data
   },
 }
@@ -260,14 +289,19 @@ export const portfolioApi = {
 // Companies API
 export const companiesApi = {
   // 銘柄検索
-  searchCompanies: async (search: string, limit: number = 50): Promise<Array<{
-    symbol: string
-    name: string | null
-    sector: string | null
-    market: string | null
-  }>> => {
+  searchCompanies: async (
+    search: string,
+    limit: number = 50,
+  ): Promise<
+    Array<{
+      symbol: string
+      name: string | null
+      sector: string | null
+      market: string | null
+    }>
+  > => {
     const response = await api.get('/companies/', {
-      params: { search, limit }
+      params: { search, limit },
     })
     return response.data
   },

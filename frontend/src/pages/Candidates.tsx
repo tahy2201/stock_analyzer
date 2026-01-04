@@ -5,8 +5,8 @@ import {
   Card,
   Col,
   Form,
-  message,
   Modal,
+  message,
   Row,
   Select,
   Slider,
@@ -53,7 +53,9 @@ const Candidates = () => {
   // ポートフォリオ選択モーダル用の状態
   const [portfolioSelectVisible, setPortfolioSelectVisible] = useState(false)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(null)
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(
+    null,
+  )
   const [buyModalVisible, setBuyModalVisible] = useState(false)
 
   // ポートフォリオ一覧取得
@@ -220,9 +222,7 @@ const Candidates = () => {
         min_dividend: minDividend.toString(),
         market_filter: marketFilter,
       })
-      const response = await fetch(
-        `${API_BASE_URL}/candidates/?${params}`,
-      )
+      const response = await fetch(`${API_BASE_URL}/candidates/?${params}`)
       if (!response.ok) {
         throw new Error('データの取得に失敗しました')
       }
@@ -284,7 +284,10 @@ const Candidates = () => {
         >
           <Row gutter={[16, 24]}>
             <Col xs={24} sm={24} md={8}>
-              <Form.Item label={`配当利回り: ${minDividend}%以上`} name="minDividend">
+              <Form.Item
+                label={`配当利回り: ${minDividend}%以上`}
+                name="minDividend"
+              >
                 <Slider
                   min={0}
                   max={10}
@@ -300,7 +303,10 @@ const Candidates = () => {
               </Form.Item>
             </Col>
             <Col xs={24} sm={24} md={8}>
-              <Form.Item label={`乖離率: ${maxDivergence}%以下`} name="maxDivergence">
+              <Form.Item
+                label={`乖離率: ${maxDivergence}%以下`}
+                name="maxDivergence"
+              >
                 <Slider
                   min={-20}
                   max={0}

@@ -7,16 +7,20 @@ import {
   Form,
   Input,
   InputNumber,
-  message,
   Modal,
+  message,
   Row,
   Statistic,
   Tag,
 } from 'antd'
+import type { AxiosError } from 'axios'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { portfolioApi } from '../services/api'
-import type { PortfolioCreateRequest, PortfolioSummary } from '../types/portfolio'
+import type {
+  PortfolioCreateRequest,
+  PortfolioSummary,
+} from '../types/portfolio'
 
 const Portfolio = () => {
   const navigate = useNavigate()
@@ -32,27 +36,33 @@ const Portfolio = () => {
 
   // ポートフォリオ作成Mutation
   const createMutation = useMutation({
-    mutationFn: (data: PortfolioCreateRequest) => portfolioApi.createPortfolio(data),
+    mutationFn: (data: PortfolioCreateRequest) =>
+      portfolioApi.createPortfolio(data),
     onSuccess: () => {
       message.success('ポートフォリオを作成しました')
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
       setCreateModalVisible(false)
       form.resetFields()
     },
-    onError: (error: any) => {
-      message.error(error.response?.data?.detail || 'ポートフォリオの作成に失敗しました')
+    onError: (error: AxiosError<{ detail?: string }>) => {
+      message.error(
+        error.response?.data?.detail || 'ポートフォリオの作成に失敗しました',
+      )
     },
   })
 
   // ポートフォリオ削除Mutation
   const deleteMutation = useMutation({
-    mutationFn: (portfolioId: number) => portfolioApi.deletePortfolio(portfolioId),
+    mutationFn: (portfolioId: number) =>
+      portfolioApi.deletePortfolio(portfolioId),
     onSuccess: () => {
       message.success('ポートフォリオを削除しました')
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
     },
-    onError: (error: any) => {
-      message.error(error.response?.data?.detail || 'ポートフォリオの削除に失敗しました')
+    onError: (error: AxiosError<{ detail?: string }>) => {
+      message.error(
+        error.response?.data?.detail || 'ポートフォリオの削除に失敗しました',
+      )
     },
   })
 
@@ -91,7 +101,14 @@ const Portfolio = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 24,
+        }}
+      >
         <div>
           <h1 style={{ marginBottom: 8 }}>💼 ポートフォリオ</h1>
           <p style={{ marginBottom: 0, color: '#8c8c8c' }}>
@@ -140,7 +157,9 @@ const Portfolio = () => {
                 <Card.Meta
                   title={<span style={{ fontSize: 16 }}>{portfolio.name}</span>}
                   description={
-                    <div style={{ fontSize: 12, color: '#8c8c8c', minHeight: 40 }}>
+                    <div
+                      style={{ fontSize: 12, color: '#8c8c8c', minHeight: 40 }}
+                    >
                       {portfolio.description || '説明なし'}
                     </div>
                   }
@@ -153,28 +172,59 @@ const Portfolio = () => {
                     suffix="円"
                     styles={{ content: { fontSize: 20 } }}
                   />
-                  <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      marginTop: 12,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <div>
                       <div style={{ fontSize: 12, color: '#8c8c8c' }}>損益</div>
-                      <div style={{ fontSize: 16, fontWeight: 500, color: getProfitColor(portfolio.total_profit_loss) }}>
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 500,
+                          color: getProfitColor(portfolio.total_profit_loss),
+                        }}
+                      >
                         {portfolio.total_profit_loss >= 0 ? '+' : ''}
                         {portfolio.total_profit_loss.toLocaleString()}円
                       </div>
                     </div>
-                    <Tag color={getProfitRateTagColor(portfolio.total_profit_loss_rate)}>
+                    <Tag
+                      color={getProfitRateTagColor(
+                        portfolio.total_profit_loss_rate,
+                      )}
+                    >
                       {portfolio.total_profit_loss_rate >= 0 ? '+' : ''}
                       {portfolio.total_profit_loss_rate.toFixed(2)}%
                     </Tag>
                   </div>
-                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #f0f0f0' }}>
+                  <div
+                    style={{
+                      marginTop: 12,
+                      paddingTop: 12,
+                      borderTop: '1px solid #f0f0f0',
+                    }}
+                  >
                     <Row gutter={8}>
                       <Col span={12}>
-                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>現金残高</div>
-                        <div style={{ fontSize: 14 }}>{portfolio.cash_balance.toLocaleString()}円</div>
+                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                          現金残高
+                        </div>
+                        <div style={{ fontSize: 14 }}>
+                          {portfolio.cash_balance.toLocaleString()}円
+                        </div>
                       </Col>
                       <Col span={12}>
-                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>保有銘柄</div>
-                        <div style={{ fontSize: 14 }}>{portfolio.positions_count}銘柄</div>
+                        <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                          保有銘柄
+                        </div>
+                        <div style={{ fontSize: 14 }}>
+                          {portfolio.positions_count}銘柄
+                        </div>
                       </Col>
                     </Row>
                   </div>
@@ -245,14 +295,20 @@ const Portfolio = () => {
             name="initial_capital"
             rules={[
               { required: true, message: '初期資本金を入力してください' },
-              { type: 'number', min: 1, message: '1円以上の金額を入力してください' },
+              {
+                type: 'number',
+                min: 1,
+                message: '1円以上の金額を入力してください',
+              },
             ]}
           >
             <InputNumber
               style={{ width: '100%' }}
               min={1}
               step={100000}
-              formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              formatter={(value) =>
+                `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
               parser={(value: string | undefined): number =>
                 Number(value?.replace(/¥\s?|,/g, '') || 0)
               }
