@@ -7,6 +7,7 @@ import type {
   RegisterRequest,
   User,
 } from '../types/auth'
+import { ApiException } from '../types/error'
 import type {
   BuyRequest,
   DepositRequest,
@@ -35,6 +36,14 @@ const api = axios.create({
   timeout: 10000,
   withCredentials: true, // セッションクッキーを送信するため
 })
+
+// エラーハンドリング interceptor
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    throw ApiException.fromAxiosError(error)
+  },
+)
 
 // 株式データAPI
 export const stockApi = {
