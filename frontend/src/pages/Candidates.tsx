@@ -14,7 +14,7 @@ import {
   Tag,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BuyModal from '../components/portfolio/BuyModal'
 import { useAuth } from '../contexts/AuthContext'
@@ -212,7 +212,7 @@ const Candidates = () => {
   }
 
   // 投資候補データ取得
-  const fetchCandidates = async () => {
+  const fetchCandidates = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -235,13 +235,12 @@ const Candidates = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [minDividend, maxDivergence, marketFilter])
 
   // フィルター値変更時に自動検索
   useEffect(() => {
     fetchCandidates()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [minDividend, maxDivergence, marketFilter])
+  }, [fetchCandidates])
 
   // リセット
   const handleReset = () => {
