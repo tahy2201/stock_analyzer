@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_login_success(client, create_user):
+async def test_login_success(client, create_user) -> None:
     create_user(login_id="alice", password="Passw0rd!", role="user", status="active")
 
     res = await client.post("/api/auth/login", json={"login_id": "alice", "password": "Passw0rd!"})
@@ -20,7 +20,7 @@ async def test_login_success(client, create_user):
 
 
 @pytest.mark.asyncio
-async def test_login_wrong_password(client, create_user):
+async def test_login_wrong_password(client, create_user) -> None:
     create_user(login_id="bob", password="Correct123", role="user", status="active")
 
     res = await client.post("/api/auth/login", json={"login_id": "bob", "password": "Wrong123"})
