@@ -12,7 +12,7 @@ import {
   Typography,
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { adminApi } from '../services/api'
@@ -32,7 +32,7 @@ const Admin = () => {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [newPassword, setNewPassword] = useState('')
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoadingUsers(true)
     try {
       const data = await adminApi.listUsers()
@@ -42,13 +42,13 @@ const Admin = () => {
     } finally {
       setLoadingUsers(false)
     }
-  }
+  }, [notification])
 
   useEffect(() => {
     if (user?.role === 'admin') {
       fetchUsers()
     }
-  }, [user])
+  }, [user, fetchUsers])
 
   if (isLoading) {
     return <div className="text-white">Loading...</div>
