@@ -124,7 +124,7 @@ class MarketAnalyzer:
 
         except Exception as e:
             logger.error(f"市場トレンド分析エラー: {e}")
-            return {}
+            return cast(TrendAnalysis, {})
 
     def _determine_trend(self, current_price: float, ma_25: float, ma_75: float) -> str:
         """
