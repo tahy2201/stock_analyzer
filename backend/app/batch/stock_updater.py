@@ -9,8 +9,9 @@ import click_log
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
-from app.services.data.stock_data_service import StockDataService
+from app.services.market_data.market_data_service import MarketDataService
 from app.services.filtering.company_filter_service import CompanyFilterService
+from app.shared.config.constants import MARKET_NAME_MAPPING
 from app.shared.config.logging_config import get_click_logger
 from app.shared.config.models import FilterCriteria
 from app.shared.database.database_manager import DatabaseManager
@@ -24,7 +25,7 @@ class BatchRunner:
 
         # サービスクラスの初期化
         self.company_filter_service = CompanyFilterService(self.db_manager)
-        self.stock_data_service = StockDataService(self.db_manager)
+        self.market_data_service = MarketDataService(self.db_manager)
         self.technical_analysis_service = TechnicalAnalyzerService()
 
     def exec(self, filter_criteria: FilterCriteria) -> None:
@@ -80,7 +81,7 @@ class BatchRunner:
         logger.info("株価データ更新開始")
 
         try:
-            results = self.stock_data_service.update_stock_data(symbols)
+            results = self.market_data_service.update_stock_data(symbols)
 
             price_updates = cast(dict[str, bool], results.get("price_updates", {}))
             ticker_updates = cast(dict[str, bool], results.get("ticker_updates", {}))
@@ -201,12 +202,7 @@ def main(markets: str | None, symbols: tuple[str, ...]) -> None:
         elif markets:
             logger.info(f"対象市場: {markets}")
             # 市場名をデータベースの表記に変換
-            market_mapping = {
-                'prime': 'プライム（内国株式）',
-                'standard': 'スタンダード（内国株式）',
-                'growth': 'グロース（内国株式）'
-            }
-            actual_market = market_mapping.get(markets, markets)
+            actual_market = MARKET_NAME_MAPPING.get(markets, markets)
             filter_criteria = FilterCriteria(markets=[actual_market] if markets != 'all' else None)
 
         if filter_criteria:

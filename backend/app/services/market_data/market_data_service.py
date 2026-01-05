@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class StockDataService:
-    """株価データ収集を担当するサービスクラス"""
+class MarketDataService:
+    """市場データ収集を担当するサービスクラス"""
 
     def __init__(self, db_manager: Optional[DatabaseManager] = None) -> None:
         self.db_manager = db_manager or DatabaseManager()
