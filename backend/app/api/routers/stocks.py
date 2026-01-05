@@ -174,8 +174,8 @@ async def get_stock_detail(symbol: str, days: int = 365):
         # 動的配当利回り計算
         dividend_yield = None
         if current_price:
-            from app.services.analysis.technical_analyzer import TechnicalAnalyzer
-            analyzer = TechnicalAnalyzer()
+            from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
+            analyzer = TechnicalAnalyzerService()
             dividend_yield = analyzer.get_dividend_yield(symbol, current_price)
 
         return StockDetail(

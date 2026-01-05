@@ -19,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class TechnicalAnalyzer:
+class TechnicalAnalyzerService:
     def __init__(self) -> None:
         self.db_manager = DatabaseManager()
 
@@ -383,7 +383,7 @@ class TechnicalAnalyzer:
 
 
 if __name__ == "__main__":
-    analyzer = TechnicalAnalyzer()
+    analyzer = TechnicalAnalyzerService()
 
     # テスト用: 特定銘柄の技術分析
     test_symbols = ["7203", "6758", "9984"]

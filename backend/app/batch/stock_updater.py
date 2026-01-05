@@ -8,7 +8,7 @@ import click_log
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.services.analysis.technical_analyzer import TechnicalAnalyzer
+from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 from app.services.data.stock_data_service import StockDataService
 from app.services.filtering.company_filter_service import CompanyFilterService
 from app.shared.config.logging_config import get_click_logger
@@ -25,7 +25,7 @@ class BatchRunner:
         # サービスクラスの初期化
         self.company_filter_service = CompanyFilterService(self.db_manager)
         self.stock_data_service = StockDataService(self.db_manager)
-        self.technical_analysis_service = TechnicalAnalyzer()
+        self.technical_analysis_service = TechnicalAnalyzerService()
 
     def exec(self, filter_criteria: FilterCriteria) -> None:
         """

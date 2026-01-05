@@ -8,7 +8,7 @@ from pydantic import BaseModel
 # プロジェクトルートをパスに追加
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from app.services.analysis.technical_analyzer import TechnicalAnalyzer
+from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 
 router = APIRouter()
 
@@ -36,7 +36,7 @@ async def get_investment_candidates(
 ):
     """投資候補銘柄を取得"""
     try:
-        analyzer = TechnicalAnalyzer()
+        analyzer = TechnicalAnalyzerService()
 
         # 投資候補を取得
         candidates = analyzer.get_investment_candidates(
@@ -79,7 +79,7 @@ async def get_investment_candidates(
 async def get_candidates_count():
     """投資候補銘柄数を取得"""
     try:
-        analyzer = TechnicalAnalyzer()
+        analyzer = TechnicalAnalyzerService()
         candidates = analyzer.get_investment_candidates()
 
         return {

@@ -122,9 +122,9 @@ async def get_investment_candidates(
 ):
     """投資候補銘柄を取得。"""
     try:
-        from app.services.analysis.technical_analyzer import TechnicalAnalyzer
+        from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 
-        analyzer = TechnicalAnalyzer()
+        analyzer = TechnicalAnalyzerService()
         candidates = analyzer.get_investment_candidates(
             divergence_threshold=divergence_threshold,
             dividend_min=dividend_min,
