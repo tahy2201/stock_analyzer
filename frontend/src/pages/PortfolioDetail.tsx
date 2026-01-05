@@ -1,14 +1,44 @@
-import { ArrowLeftOutlined, ShoppingOutlined, DollarOutlined, HistoryOutlined, EditOutlined, PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons'
+import {
+  ArrowLeftOutlined,
+  DollarOutlined,
+  EditOutlined,
+  HistoryOutlined,
+  MinusCircleOutlined,
+  PlusCircleOutlined,
+  ShoppingOutlined,
+} from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Card, Col, DatePicker, Form, Input, InputNumber, message, Modal, Row, Statistic, Table, Tag } from 'antd'
+import {
+  Button,
+  Card,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  Modal,
+  message,
+  Row,
+  Statistic,
+  Table,
+  Tag,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import type { AxiosError } from 'axios'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import BuyModal from '../components/portfolio/BuyModal'
 import SellModal from '../components/portfolio/SellModal'
+import { useModal } from '../hooks/useModal'
 import { portfolioApi } from '../services/api'
-import type { DepositRequest, PortfolioDetail as PortfolioDetailType, PortfolioUpdateRequest, PositionDetail, WithdrawalRequest } from '../types/portfolio'
+import type {
+  DepositRequest,
+  PortfolioDetail as PortfolioDetailType,
+  PortfolioUpdateRequest,
+  PositionDetail,
+  WithdrawalRequest,
+} from '../types/portfolio'
 import { getYahooFinanceUrl } from '../utils/stockUtils'
 
 const PortfolioDetail = () => {
@@ -18,11 +48,11 @@ const PortfolioDetail = () => {
   const [form] = Form.useForm()
   const [depositForm] = Form.useForm()
   const [withdrawForm] = Form.useForm()
-  const [buyModalVisible, setBuyModalVisible] = useState(false)
-  const [sellModalVisible, setSellModalVisible] = useState(false)
-  const [editModalVisible, setEditModalVisible] = useState(false)
-  const [depositModalVisible, setDepositModalVisible] = useState(false)
-  const [withdrawModalVisible, setWithdrawModalVisible] = useState(false)
+  const [buyModalOpen, openBuyModal, closeBuyModal] = useModal()
+  const [sellModalOpen, openSellModal, closeSellModal] = useModal()
+  const [editModalOpen, openEditModal, closeEditModal] = useModal()
+  const [depositModalOpen, openDepositModal, closeDepositModal] = useModal()
+  const [withdrawModalOpen, openWithdrawModal, closeWithdrawModal] = useModal()
 
   // ポートフォリオ詳細取得
   const { data: portfolio, isLoading } = useQuery<PortfolioDetailType>({
@@ -40,23 +70,25 @@ const PortfolioDetail = () => {
       message.success('ポートフォリオ情報を更新しました')
       queryClient.invalidateQueries({ queryKey: ['portfolio', id] })
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
-      setEditModalVisible(false)
+      closeEditModal()
     },
-    onError: (error: any) => {
-      message.error(error.response?.data?.detail || 'ポートフォリオの更新に失敗しました')
+    onError: (error: AxiosError<{ detail?: string }>) => {
+      message.error(
+        error.response?.data?.detail || 'ポートフォリオの更新に失敗しました',
+      )
     },
   })
 
   // 編集モーダル表示時にフォームに値をセット
   useEffect(() => {
-    if (editModalVisible && portfolio) {
+    if (editModalOpen && portfolio) {
       form.setFieldsValue({
         name: portfolio.name,
         description: portfolio.description || '',
         initial_capital: portfolio.initial_capital,
       })
     }
-  }, [editModalVisible, portfolio, form])
+  }, [editModalOpen, portfolio, form])
 
   // 編集実行
   const handleUpdate = () => {
@@ -74,9 +106,9 @@ const PortfolioDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', id] })
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
       depositForm.resetFields()
-      setDepositModalVisible(false)
+      closeDepositModal()
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ detail?: string }>) => {
       message.error(error.response?.data?.detail || '入金に失敗しました')
     },
   })
@@ -90,9 +122,9 @@ const PortfolioDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['portfolio', id] })
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
       withdrawForm.resetFields()
-      setWithdrawModalVisible(false)
+      closeWithdrawModal()
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ detail?: string }>) => {
       message.error(error.response?.data?.detail || '出金に失敗しました')
     },
   })
@@ -220,8 +252,7 @@ const PortfolioDetail = () => {
         if (profitLoss === null) return '---'
         return (
           <span style={{ color: getProfitColor(profitLoss), fontWeight: 500 }}>
-            {profitLoss >= 0 ? '+' : ''}
-            ¥{profitLoss.toLocaleString()}
+            {profitLoss >= 0 ? '+' : ''}¥{profitLoss.toLocaleString()}
           </span>
         )
       },
@@ -264,13 +295,19 @@ const PortfolioDetail = () => {
         >
           戻る
         </Button>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+          }}
+        >
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <h1 style={{ marginBottom: 8 }}>{portfolio.name}</h1>
               <Button
                 icon={<EditOutlined />}
-                onClick={() => setEditModalVisible(true)}
+                onClick={() => openEditModal()}
                 size="small"
               >
                 編集
@@ -284,14 +321,11 @@ const PortfolioDetail = () => {
             <Button
               type="primary"
               icon={<ShoppingOutlined />}
-              onClick={() => setBuyModalVisible(true)}
+              onClick={() => openBuyModal()}
             >
               購入
             </Button>
-            <Button
-              icon={<DollarOutlined />}
-              onClick={() => setSellModalVisible(true)}
-            >
+            <Button icon={<DollarOutlined />} onClick={() => openSellModal()}>
               売却
             </Button>
             <Button
@@ -324,7 +358,9 @@ const PortfolioDetail = () => {
               value={portfolio.total_profit_loss}
               precision={0}
               suffix="円"
-              styles={{ content: { color: getProfitColor(portfolio.total_profit_loss) } }}
+              styles={{
+                content: { color: getProfitColor(portfolio.total_profit_loss) },
+              }}
               prefix={portfolio.total_profit_loss >= 0 ? '+' : ''}
             />
           </Card>
@@ -336,7 +372,9 @@ const PortfolioDetail = () => {
               value={portfolio.total_profit_loss_rate}
               precision={2}
               suffix="%"
-              styles={{ content: { color: getProfitColor(portfolio.total_profit_loss) } }}
+              styles={{
+                content: { color: getProfitColor(portfolio.total_profit_loss) },
+              }}
               prefix={portfolio.total_profit_loss_rate >= 0 ? '+' : ''}
             />
           </Card>
@@ -353,14 +391,14 @@ const PortfolioDetail = () => {
               <Button
                 size="small"
                 icon={<PlusCircleOutlined />}
-                onClick={() => setDepositModalVisible(true)}
+                onClick={() => openDepositModal()}
               >
                 入金
               </Button>
               <Button
                 size="small"
                 icon={<MinusCircleOutlined />}
-                onClick={() => setWithdrawModalVisible(true)}
+                onClick={() => openWithdrawModal()}
               >
                 出金
               </Button>
@@ -391,7 +429,7 @@ const PortfolioDetail = () => {
             <Button
               type="primary"
               icon={<ShoppingOutlined />}
-              onClick={() => setBuyModalVisible(true)}
+              onClick={() => openBuyModal()}
             >
               最初の銘柄を購入
             </Button>
@@ -400,32 +438,29 @@ const PortfolioDetail = () => {
       </Card>
 
       <BuyModal
-        visible={buyModalVisible}
+        visible={buyModalOpen}
         portfolioId={Number(id)}
-        onCancel={() => setBuyModalVisible(false)}
+        onCancel={() => closeBuyModal()}
       />
       <SellModal
-        visible={sellModalVisible}
+        visible={sellModalOpen}
         portfolioId={Number(id)}
         positions={portfolio.positions}
-        onCancel={() => setSellModalVisible(false)}
+        onCancel={() => closeSellModal()}
       />
 
       {/* 編集モーダル */}
       <Modal
         title="ポートフォリオ編集"
-        open={editModalVisible}
+        open={editModalOpen}
         onOk={handleUpdate}
-        onCancel={() => setEditModalVisible(false)}
+        onCancel={() => closeEditModal()}
         okText="更新"
         cancelText="キャンセル"
         confirmLoading={updateMutation.isPending}
         width={600}
       >
-        <Form
-          form={form}
-          layout="vertical"
-        >
+        <Form form={form} layout="vertical">
           <Form.Item
             label="ポートフォリオ名"
             name="name"
@@ -453,7 +488,11 @@ const PortfolioDetail = () => {
             name="initial_capital"
             rules={[
               { required: true, message: '初期資本金を入力してください' },
-              { type: 'number', min: 0.01, message: '0より大きい値を入力してください' },
+              {
+                type: 'number',
+                min: 0.01,
+                message: '0より大きい値を入力してください',
+              },
             ]}
             help="現金残高は「初期資本金 - 総購入額 + 総売却額」で計算されます"
           >
@@ -462,7 +501,9 @@ const PortfolioDetail = () => {
               min={0.01}
               step={10000}
               precision={2}
-              formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              formatter={(value) =>
+                `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
               parser={(value: string | undefined): number =>
                 Number(value?.replace(/¥\s?|,/g, '') || 0)
               }
@@ -474,9 +515,9 @@ const PortfolioDetail = () => {
       {/* 入金モーダル */}
       <Modal
         title="現金入金"
-        open={depositModalVisible}
+        open={depositModalOpen}
         onOk={handleDeposit}
-        onCancel={() => setDepositModalVisible(false)}
+        onCancel={() => closeDepositModal()}
         okText="入金"
         cancelText="キャンセル"
         confirmLoading={depositMutation.isPending}
@@ -494,7 +535,11 @@ const PortfolioDetail = () => {
             name="amount"
             rules={[
               { required: true, message: '入金額を入力してください' },
-              { type: 'number', min: 0.01, message: '0より大きい値を入力してください' },
+              {
+                type: 'number',
+                min: 0.01,
+                message: '0より大きい値を入力してください',
+              },
             ]}
           >
             <InputNumber
@@ -502,7 +547,9 @@ const PortfolioDetail = () => {
               min={0.01}
               step={10000}
               precision={2}
-              formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              formatter={(value) =>
+                `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
               parser={(value: string | undefined): number =>
                 Number(value?.replace(/¥\s?|,/g, '') || 0)
               }
@@ -519,7 +566,9 @@ const PortfolioDetail = () => {
               style={{ width: '100%' }}
               format="YYYY-MM-DD HH:mm:ss"
               placeholder="取引日時を選択"
-              disabledDate={(current) => current && current > dayjs().endOf('day')}
+              disabledDate={(current) =>
+                current && current > dayjs().endOf('day')
+              }
             />
           </Form.Item>
 
@@ -540,9 +589,9 @@ const PortfolioDetail = () => {
       {/* 出金モーダル */}
       <Modal
         title="現金出金"
-        open={withdrawModalVisible}
+        open={withdrawModalOpen}
         onOk={handleWithdraw}
-        onCancel={() => setWithdrawModalVisible(false)}
+        onCancel={() => closeWithdrawModal()}
         okText="出金"
         cancelText="キャンセル"
         confirmLoading={withdrawMutation.isPending}
@@ -560,16 +609,26 @@ const PortfolioDetail = () => {
             name="amount"
             rules={[
               { required: true, message: '出金額を入力してください' },
-              { type: 'number', min: 0.01, message: '0より大きい値を入力してください' },
+              {
+                type: 'number',
+                min: 0.01,
+                message: '0より大きい値を入力してください',
+              },
             ]}
-            help={portfolio ? `現在の現金残高: ¥${portfolio.cash_balance.toLocaleString()}` : ''}
+            help={
+              portfolio
+                ? `現在の現金残高: ¥${portfolio.cash_balance.toLocaleString()}`
+                : ''
+            }
           >
             <InputNumber
               style={{ width: '100%' }}
               min={0.01}
               step={10000}
               precision={2}
-              formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              formatter={(value) =>
+                `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
               parser={(value: string | undefined): number =>
                 Number(value?.replace(/¥\s?|,/g, '') || 0)
               }
@@ -586,7 +645,9 @@ const PortfolioDetail = () => {
               style={{ width: '100%' }}
               format="YYYY-MM-DD HH:mm:ss"
               placeholder="取引日時を選択"
-              disabledDate={(current) => current && current > dayjs().endOf('day')}
+              disabledDate={(current) =>
+                current && current > dayjs().endOf('day')
+              }
             />
           </Form.Item>
 

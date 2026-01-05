@@ -1,6 +1,18 @@
-import { App, Button, Card, Input, Modal, Popconfirm, Select, Space, Table, Tabs, Typography } from 'antd'
+import {
+  App,
+  Button,
+  Card,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Space,
+  Table,
+  Tabs,
+  Typography,
+} from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { adminApi } from '../services/api'
@@ -20,7 +32,7 @@ const Admin = () => {
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
   const [newPassword, setNewPassword] = useState('')
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoadingUsers(true)
     try {
       const data = await adminApi.listUsers()
@@ -30,13 +42,13 @@ const Admin = () => {
     } finally {
       setLoadingUsers(false)
     }
-  }
+  }, [notification])
 
   useEffect(() => {
     if (user?.role === 'admin') {
       fetchUsers()
     }
-  }, [user])
+  }, [user, fetchUsers])
 
   if (isLoading) {
     return <div className="text-white">Loading...</div>
@@ -177,7 +189,10 @@ const Admin = () => {
             children: (
               <Card className="bg-gray-800 border-gray-700">
                 <div className="mb-4">
-                  <Button type="primary" onClick={() => setInviteModalOpen(true)}>
+                  <Button
+                    type="primary"
+                    onClick={() => setInviteModalOpen(true)}
+                  >
                     Create Invite
                   </Button>
                 </div>
@@ -220,7 +235,11 @@ const Admin = () => {
                 <Button key="cancel" onClick={() => setInviteModalOpen(false)}>
                   Cancel
                 </Button>,
-                <Button key="create" type="primary" onClick={handleCreateInvite}>
+                <Button
+                  key="create"
+                  type="primary"
+                  onClick={handleCreateInvite}
+                >
                   Create
                 </Button>,
               ]
@@ -243,7 +262,7 @@ const Admin = () => {
           </div>
         ) : (
           <div>
-            <label className="block mb-2">Role:</label>
+            <div className="block mb-2">Role:</div>
             <Select
               value={inviteRole}
               onChange={setInviteRole}
@@ -271,7 +290,7 @@ const Admin = () => {
         okButtonProps={{ disabled: newPassword.length < 8 }}
       >
         <div>
-          <label className="block mb-2">New Password (min 8 chars):</label>
+          <div className="block mb-2">New Password (min 8 chars):</div>
           <Input.Password
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}

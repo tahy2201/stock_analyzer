@@ -4,11 +4,12 @@ import {
   Form,
   Input,
   InputNumber,
-  message,
   Modal,
+  message,
   Select,
   Space,
 } from 'antd'
+import type { AxiosError } from 'axios'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { companiesApi, portfolioApi } from '../../services/api'
@@ -28,7 +29,12 @@ interface Company {
   market: string | null
 }
 
-const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalProps) => {
+const BuyModal = ({
+  visible,
+  portfolioId,
+  onCancel,
+  initialSymbol,
+}: BuyModalProps) => {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const [searchQuery, setSearchQuery] = useState('')
@@ -41,7 +47,9 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
   }, [visible, initialSymbol, form])
 
   // 銘柄一覧取得（検索用）
-  const { data: companies, isLoading: isLoadingCompanies } = useQuery<Company[]>({
+  const { data: companies, isLoading: isLoadingCompanies } = useQuery<
+    Company[]
+  >({
     queryKey: ['companies', searchQuery],
     queryFn: () => companiesApi.searchCompanies(searchQuery, 50),
     enabled: visible && searchQuery.length > 0,
@@ -52,12 +60,14 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
     mutationFn: (data: BuyRequest) => portfolioApi.buyStock(portfolioId, data),
     onSuccess: () => {
       message.success('銘柄を購入しました')
-      queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId.toString()] })
+      queryClient.invalidateQueries({
+        queryKey: ['portfolio', portfolioId.toString()],
+      })
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
       form.resetFields()
       onCancel()
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ detail?: string }>) => {
       message.error(error.response?.data?.detail || '銘柄の購入に失敗しました')
     },
   })
@@ -139,7 +149,9 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
               style={{ width: '100%' }}
               min={1}
               step={100}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              formatter={(value) =>
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
               parser={(value: string | undefined): number =>
                 Number(value?.replace(/,/g, '') || 0)
               }
@@ -158,7 +170,9 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
             min={0.01}
             step={10}
             precision={2}
-            formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+            formatter={(value) =>
+              `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            }
             parser={(value: string | undefined): number =>
               Number(value?.replace(/¥\s?|,/g, '') || 0)
             }
@@ -175,7 +189,9 @@ const BuyModal = ({ visible, portfolioId, onCancel, initialSymbol }: BuyModalPro
             style={{ width: '100%' }}
             format="YYYY-MM-DD HH:mm:ss"
             placeholder="取引日時を選択"
-            disabledDate={(current) => current && current > dayjs().endOf('day')}
+            disabledDate={(current) =>
+              current && current > dayjs().endOf('day')
+            }
           />
         </Form.Item>
 

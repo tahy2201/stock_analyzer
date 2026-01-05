@@ -1,8 +1,9 @@
 """Portfolio API endpoint tests."""
 
+from decimal import Decimal
+
 import pytest
 import pytest_asyncio
-from decimal import Decimal
 
 
 @pytest.fixture
@@ -48,6 +49,7 @@ def create_company(db_session):
 def create_stock_price(db_session):
     """テスト用株価データを作成するヘルパー。"""
     from datetime import datetime
+
     from shared.database import models
 
     def _create_stock_price(symbol: str, close: float, date: datetime | None = None):
@@ -74,7 +76,7 @@ def create_stock_price(db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_portfolio_success(authenticated_client, test_user):
+async def test_create_portfolio_success(authenticated_client, test_user) -> None:
     """ポートフォリオ作成のテスト。"""
     res = await authenticated_client.post(
         "/api/portfolios/",
@@ -93,7 +95,7 @@ async def test_create_portfolio_success(authenticated_client, test_user):
 
 
 @pytest.mark.asyncio
-async def test_create_portfolio_without_auth(client):
+async def test_create_portfolio_without_auth(client) -> None:
     """認証なしでポートフォリオ作成を試みる（失敗すべき）。"""
     res = await client.post(
         "/api/portfolios/",
@@ -106,7 +108,7 @@ async def test_create_portfolio_without_auth(client):
 
 
 @pytest.mark.asyncio
-async def test_get_portfolios_list(authenticated_client, test_user, db_session):
+async def test_get_portfolios_list(authenticated_client, test_user, db_session) -> None:
     """ポートフォリオ一覧取得のテスト。"""
     from shared.database import models
 
@@ -134,7 +136,7 @@ async def test_get_portfolios_list(authenticated_client, test_user, db_session):
 
 
 @pytest.mark.asyncio
-async def test_cannot_access_other_user_portfolio(authenticated_client, another_user, db_session):
+async def test_cannot_access_other_user_portfolio(authenticated_client, another_user, db_session) -> None:
     """他人のポートフォリオにアクセスできないことを確認。"""
     from shared.database import models
 
@@ -160,7 +162,7 @@ async def test_cannot_access_other_user_portfolio(authenticated_client, another_
 @pytest.mark.asyncio
 async def test_buy_stock_success(
     authenticated_client, test_user, db_session, create_company, create_stock_price
-):
+) -> None:
     """銘柄購入のテスト。"""
     from shared.database import models
 
@@ -209,7 +211,7 @@ async def test_buy_stock_success(
 @pytest.mark.asyncio
 async def test_buy_stock_multiple_times_weighted_average(
     authenticated_client, test_user, db_session, create_company, create_stock_price
-):
+) -> None:
     """同じ銘柄を複数回購入して加重平均を確認。"""
     from shared.database import models
 
@@ -253,7 +255,7 @@ async def test_buy_stock_multiple_times_weighted_average(
 @pytest.mark.asyncio
 async def test_sell_stock_success(
     authenticated_client, test_user, db_session, create_company, create_stock_price
-):
+) -> None:
     """銘柄売却のテスト。"""
     from shared.database import models
 
@@ -302,7 +304,7 @@ async def test_sell_stock_success(
 @pytest.mark.asyncio
 async def test_sell_stock_all_shares(
     authenticated_client, test_user, db_session, create_company, create_stock_price
-):
+) -> None:
     """全株売却でポジションが削除されることを確認。"""
     from shared.database import models
 
@@ -342,7 +344,7 @@ async def test_sell_stock_all_shares(
 @pytest.mark.asyncio
 async def test_sell_stock_insufficient_shares(
     authenticated_client, test_user, db_session, create_company, create_stock_price
-):
+) -> None:
     """保有株数不足で売却できないことを確認。"""
     from shared.database import models
 
@@ -379,7 +381,7 @@ async def test_sell_stock_insufficient_shares(
 @pytest.mark.asyncio
 async def test_get_transactions(
     authenticated_client, test_user, db_session, create_company, create_stock_price
-):
+) -> None:
     """取引履歴取得のテスト。"""
     from shared.database import models
 
@@ -420,7 +422,7 @@ async def test_get_transactions(
 
 
 @pytest.mark.asyncio
-async def test_deposit_cash_success(authenticated_client, test_user, db_session):
+async def test_deposit_cash_success(authenticated_client, test_user, db_session) -> None:
     """現金入金のテスト。"""
     # ポートフォリオ作成
     from shared.database import models
@@ -456,7 +458,7 @@ async def test_deposit_cash_success(authenticated_client, test_user, db_session)
 
 
 @pytest.mark.asyncio
-async def test_withdraw_cash_success(authenticated_client, test_user, db_session):
+async def test_withdraw_cash_success(authenticated_client, test_user, db_session) -> None:
     """現金出金のテスト。"""
     # ポートフォリオ作成
     from shared.database import models
@@ -492,7 +494,7 @@ async def test_withdraw_cash_success(authenticated_client, test_user, db_session
 
 
 @pytest.mark.asyncio
-async def test_withdraw_cash_insufficient_balance(authenticated_client, test_user, db_session):
+async def test_withdraw_cash_insufficient_balance(authenticated_client, test_user, db_session) -> None:
     """現金残高不足での出金失敗テスト。"""
     # ポートフォリオ作成
     from shared.database import models
@@ -517,7 +519,7 @@ async def test_withdraw_cash_insufficient_balance(authenticated_client, test_use
 
 
 @pytest.mark.asyncio
-async def test_deposit_without_auth(client, test_user, db_session):
+async def test_deposit_without_auth(client, test_user, db_session) -> None:
     """認証なしでの入金失敗テスト。"""
     from shared.database import models
 
@@ -538,7 +540,7 @@ async def test_deposit_without_auth(client, test_user, db_session):
 
 
 @pytest.mark.asyncio
-async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, another_user, db_session):
+async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, another_user, db_session) -> None:
     """他人のポートフォリオへの出金失敗テスト。"""
     from shared.database import models
 
@@ -561,7 +563,7 @@ async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, 
 
 
 @pytest.mark.asyncio
-async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_user, db_session):
+async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_user, db_session) -> None:
     """入金・出金が取引履歴に記録されることを確認。"""
     from shared.database import models
 
@@ -591,7 +593,7 @@ async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_u
     assert res.status_code == 200
     data = res.json()
     assert len(data) == 2
-    
+
     # 降順（新しい順）で確認
     assert data[0]["transaction_type"] == "withdrawal"
     assert data[0]["total_amount"] == 30000.0

@@ -73,11 +73,7 @@ const Register = () => {
           株式分析システム
         </h1>
         <p className="text-gray-400 text-center mb-8">新規ユーザー登録</p>
-        <Form
-          layout="vertical"
-          onFinish={handleSubmit}
-          requiredMark={false}
-        >
+        <Form layout="vertical" onFinish={handleSubmit} requiredMark={false}>
           <Form.Item
             label={<span className="text-gray-300">ログインID</span>}
             name="login_id"
@@ -94,7 +90,10 @@ const Register = () => {
             name="display_name"
             rules={[{ max: 100, message: '100文字以内で入力してください' }]}
           >
-            <Input size="large" placeholder="表示名（空欄の場合はログインIDが使用されます）" />
+            <Input
+              size="large"
+              placeholder="表示名（空欄の場合はログインIDが使用されます）"
+            />
           </Form.Item>
           <Form.Item
             label={<span className="text-gray-300">パスワード</span>}
@@ -104,7 +103,10 @@ const Register = () => {
               { min: 8, message: '8文字以上で入力してください' },
             ]}
           >
-            <Input.Password size="large" placeholder="パスワード（8文字以上）" />
+            <Input.Password
+              size="large"
+              placeholder="パスワード（8文字以上）"
+            />
           </Form.Item>
           <Form.Item
             label={<span className="text-gray-300">パスワード確認</span>}

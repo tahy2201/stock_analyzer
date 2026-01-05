@@ -5,11 +5,12 @@ Revises: 2bc56d7af600
 Create Date: 2025-12-30 11:35:12.121704
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
+from typing import Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '0793f075e201'

@@ -4,11 +4,12 @@ import {
   Form,
   Input,
   InputNumber,
-  message,
   Modal,
+  message,
   Select,
   Space,
 } from 'antd'
+import type { AxiosError } from 'axios'
 import dayjs from 'dayjs'
 import { portfolioApi } from '../../services/api'
 import type { PositionDetail, SellRequest } from '../../types/portfolio'
@@ -20,7 +21,12 @@ interface SellModalProps {
   onCancel: () => void
 }
 
-const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps) => {
+const SellModal = ({
+  visible,
+  portfolioId,
+  positions,
+  onCancel,
+}: SellModalProps) => {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const selectedSymbol = Form.useWatch('symbol', form)
@@ -31,15 +37,18 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
 
   // 売却Mutation
   const sellMutation = useMutation({
-    mutationFn: (data: SellRequest) => portfolioApi.sellStock(portfolioId, data),
+    mutationFn: (data: SellRequest) =>
+      portfolioApi.sellStock(portfolioId, data),
     onSuccess: () => {
       message.success('銘柄を売却しました')
-      queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId.toString()] })
+      queryClient.invalidateQueries({
+        queryKey: ['portfolio', portfolioId.toString()],
+      })
       queryClient.invalidateQueries({ queryKey: ['portfolios'] })
       form.resetFields()
       onCancel()
     },
-    onError: (error: any) => {
+    onError: (error: AxiosError<{ detail?: string }>) => {
       message.error(error.response?.data?.detail || '銘柄の売却に失敗しました')
     },
   })
@@ -97,14 +106,37 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
         </Form.Item>
 
         {selectedPosition && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#f5f5f5', borderRadius: 4 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div
+            style={{
+              marginBottom: 16,
+              padding: 12,
+              background: '#f5f5f5',
+              borderRadius: 4,
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
               <span style={{ color: '#8c8c8c' }}>保有株数</span>
-              <span style={{ fontWeight: 500 }}>{selectedPosition.quantity.toLocaleString()}株</span>
+              <span style={{ fontWeight: 500 }}>
+                {selectedPosition.quantity.toLocaleString()}株
+              </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+              }}
+            >
               <span style={{ color: '#8c8c8c' }}>平均取得単価</span>
-              <span style={{ fontWeight: 500 }}>¥{selectedPosition.average_price.toLocaleString()}</span>
+              <span style={{ fontWeight: 500 }}>
+                ¥{selectedPosition.average_price.toLocaleString()}
+              </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#8c8c8c' }}>現在株価</span>
@@ -137,7 +169,9 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
               max={maxQuantity}
               step={100}
               disabled={!selectedSymbol}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              formatter={(value) =>
+                `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+              }
               parser={(value: string | undefined): number =>
                 Number(value?.replace(/,/g, '') || 0)
               }
@@ -160,7 +194,9 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
             min={0.01}
             step={10}
             precision={2}
-            formatter={(value) => `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+            formatter={(value) =>
+              `¥ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+            }
             parser={(value: string | undefined): number =>
               Number(value?.replace(/¥\s?|,/g, '') || 0)
             }
@@ -177,7 +213,9 @@ const SellModal = ({ visible, portfolioId, positions, onCancel }: SellModalProps
             style={{ width: '100%' }}
             format="YYYY-MM-DD HH:mm:ss"
             placeholder="取引日時を選択"
-            disabledDate={(current) => current && current > dayjs().endOf('day')}
+            disabledDate={(current) =>
+              current && current > dayjs().endOf('day')
+            }
           />
         </Form.Item>
 

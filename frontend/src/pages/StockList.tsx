@@ -6,8 +6,8 @@ import {
   Col,
   Form,
   Input,
-  message,
   Modal,
+  message,
   Row,
   Select,
   Table,
@@ -34,7 +34,9 @@ const StockList = () => {
   // ポートフォリオ選択モーダル用の状態
   const [portfolioSelectVisible, setPortfolioSelectVisible] = useState(false)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(null)
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(
+    null,
+  )
   const [buyModalVisible, setBuyModalVisible] = useState(false)
 
   // ポートフォリオ一覧取得

@@ -1,5 +1,5 @@
-import { Button, Dropdown, message } from 'antd'
 import type { MenuProps } from 'antd'
+import { Button, Dropdown, message } from 'antd'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -60,15 +60,23 @@ const Layout = ({ children }: LayoutProps) => {
       {/* 共通ヘッダー */}
       <header className="bg-gray-800 border-b border-gray-700 shadow-lg">
         <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-semibold text-white">📈 株式分析システム</h1>
+          <h1 className="text-xl font-semibold text-white">
+            📈 株式分析システム
+          </h1>
           <div className="flex items-center gap-4">
             {user ? (
-              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                trigger={['click']}
+              >
                 <Button type="text" className="text-gray-300 hover:text-white">
                   <div className="flex items-center gap-2">
                     <span>{user.display_name}</span>
                     {user.role === 'admin' && (
-                      <span className="text-xs bg-blue-600 px-1.5 py-0.5 rounded">管理者</span>
+                      <span className="text-xs bg-blue-600 px-1.5 py-0.5 rounded">
+                        管理者
+                      </span>
                     )}
                   </div>
                 </Button>
@@ -92,7 +100,10 @@ const Layout = ({ children }: LayoutProps) => {
                   to={item.path}
                   className={`block px-6 py-4 font-medium transition-colors duration-200 ${
                     location.pathname === item.path ||
-                    (item.path !== '/' && location.pathname.startsWith(item.path))
+                    (
+                      item.path !== '/' &&
+                        location.pathname.startsWith(item.path)
+                    )
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}

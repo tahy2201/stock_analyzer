@@ -51,7 +51,7 @@ class MarketAnalyzer:
         try:
             # データベースから指数データを取得
             index_symbol = f"INDEX_{index_name}"
-            data = self.db_manager.get_stock_prices(index_symbol)
+            data: pd.DataFrame = self.db_manager.get_stock_prices(index_symbol)
 
             if data.empty:
                 logger.warning(f"市場指数データが見つかりません: {index_name}")
@@ -124,7 +124,7 @@ class MarketAnalyzer:
 
         except Exception as e:
             logger.error(f"市場トレンド分析エラー: {e}")
-            return {}
+            return cast(TrendAnalysis, {})
 
     def _determine_trend(self, current_price: float, ma_25: float, ma_75: float) -> str:
         """
