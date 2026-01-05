@@ -60,7 +60,7 @@
   ```
 
 ## インポートルール
-- backendディレクトリ内では相対インポートを使用すること
+- backend/app/ディレクトリ内では絶対インポートを使用すること
 - `from backend.` プレフィックスは使用禁止
 - app/内のモジュールは`from app.`プレフィックスでインポート
 - 例: `from app.shared.database.database_manager import DatabaseManager`
