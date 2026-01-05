@@ -1,6 +1,8 @@
 import type { MenuProps } from 'antd'
 import { Button, Dropdown, message } from 'antd'
+import { MenuOutlined, CloseOutlined } from '@ant-design/icons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 
 interface LayoutProps {
@@ -11,6 +13,7 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   const navItems = [
     { path: '/', label: '🏠 ダッシュボード' },
@@ -60,9 +63,18 @@ const Layout = ({ children }: LayoutProps) => {
       {/* 共通ヘッダー */}
       <header className="bg-gray-800 border-b border-gray-700 shadow-lg">
         <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-semibold text-white">
-            📈 株式分析システム
-          </h1>
+          <div className="flex items-center gap-4">
+            {/* ハンバーガーメニュー（モバイルのみ表示） */}
+            <Button
+              type="text"
+              icon={isSidebarOpen ? <CloseOutlined /> : <MenuOutlined />}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="md:hidden text-white text-xl"
+            />
+            <h1 className="text-xl font-semibold text-white">
+              📈 株式分析システム
+            </h1>
+          </div>
           <div className="flex items-center gap-4">
             {user ? (
               <Dropdown
@@ -90,14 +102,31 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
+        {/* オーバーレイ（モバイルでサイドバー開いている時のみ表示） */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* サイドナビゲーション */}
-        <nav className="w-64 bg-gray-900 text-white shadow-lg">
+        <nav
+          className={`
+            w-64 bg-gray-900 text-white shadow-lg
+            fixed md:static inset-y-0 left-0 z-50
+            transform transition-transform duration-300
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}
+          style={{ top: '64px' }}
+        >
           <ul className="space-y-0">
             {navItems.map((item) => (
               <li key={item.path} className="border-b border-gray-700">
                 <Link
                   to={item.path}
+                  onClick={() => setIsSidebarOpen(false)}
                   className={`block px-6 py-4 font-medium transition-colors duration-200 ${
                     location.pathname === item.path ||
                     (
@@ -116,7 +145,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* メインコンテンツ */}
-        <main className="flex-1 p-8 bg-gray-900 text-gray-100 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 bg-gray-900 text-gray-100 overflow-y-auto">
           {children}
         </main>
       </div>
