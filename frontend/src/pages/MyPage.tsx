@@ -28,7 +28,8 @@ const MyPage = () => {
       await refreshUser()
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>
-      const errorMessage = axiosError.response?.data?.detail || '更新に失敗しました'
+      const errorMessage =
+        axiosError.response?.data?.detail || '更新に失敗しました'
       message.error(errorMessage)
     } finally {
       setSubmitting(false)
