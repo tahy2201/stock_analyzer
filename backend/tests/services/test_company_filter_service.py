@@ -2,8 +2,8 @@
 
 import pytest
 
-from services.filtering.company_filter_service import CompanyFilterService
-from shared.database import models
+from app.services.filtering.company_filter_service import CompanyFilterService
+from app.shared.database import models
 
 
 @pytest.fixture

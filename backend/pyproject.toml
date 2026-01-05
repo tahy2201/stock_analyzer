@@ -39,14 +39,14 @@ dev = [
 ]
 
 [project.scripts]
-stock-analyzer = "batch.stock_analyzer_cli:main"
+stock-analyzer = "app.batch.stock_analyzer_cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["batch", "shared", "services", "api"]
+packages = ["app"]
 
 [tool.ruff]
 line-length = 100
@@ -66,8 +66,8 @@ ignore = ["E501"]  # line too long (handled by formatter)
 
 [tool.ruff.lint.per-file-ignores]
 # FastAPI の依存性注入は引数デフォルトに Depends(...) を書くのが定形のため B008 を除外
-"api/routers/*.py" = ["B008"]
-"api/dependencies/*.py" = ["B008"]
+"app/api/routers/*.py" = ["B008"]
+"app/api/dependencies/*.py" = ["B008"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -78,7 +78,7 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
-exclude = ["alembic/"]
+exclude = ["app/alembic/"]
 
 [[tool.mypy.overrides]]
 module = ["pandas", "pandas.*", "yfinance", "yfinance.*", "fastapi.*", "alembic", "alembic.*"]
