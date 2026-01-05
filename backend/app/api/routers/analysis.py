@@ -4,8 +4,8 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from app.database.database_manager import DatabaseManager
 from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
-from app.shared.database.database_manager import DatabaseManager
 
 router = APIRouter()
 

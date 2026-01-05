@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.routers import admin, analysis, auth, candidates, companies, portfolios, stocks, users
-from app.shared.config.logging_config import setup_api_logging
+from app.config.logging_config import setup_api_logging
 
 # ログ設定
 logger = setup_api_logging()

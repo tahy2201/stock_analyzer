@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.db import get_db
+from app.database import models
 from app.services.portfolio.portfolio_service import PortfolioService
 from app.services.portfolio.position_service import PositionService
-from app.shared.database import models
 
 router = APIRouter()
 

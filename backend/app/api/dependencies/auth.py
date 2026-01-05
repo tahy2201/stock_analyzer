@@ -4,8 +4,8 @@ from typing import Optional, cast
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.shared.database import models
-from app.shared.database.session import get_db
+from app.database import models
+from app.database.session import get_db
 
 
 def get_current_user(

@@ -13,9 +13,9 @@ import click_log
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
 
+from app.config.logging_config import get_click_logger
+from app.database.database_manager import DatabaseManager
 from app.services.jpx.jpx_service import JPXService
-from app.shared.config.logging_config import get_click_logger
-from app.shared.database.database_manager import DatabaseManager
 
 # ログ設定（click_log用）
 logger = get_click_logger(__name__)

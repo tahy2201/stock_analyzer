@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies.db import DBSession
-from app.shared.database import models
-from app.shared.utils.security import (
+from app.database import models
+from app.utils.security import (
     generate_token,
     hash_password,
     validate_password_policy,

@@ -3,8 +3,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies import get_current_user
 from app.api.dependencies.db import DBSession
-from app.shared.database import models
-from app.shared.utils.security import hash_password, validate_password_policy, verify_password
+from app.database import models
+from app.utils.security import hash_password, validate_password_policy, verify_password
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 

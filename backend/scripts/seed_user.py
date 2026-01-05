@@ -99,9 +99,9 @@ def main() -> None:
     env_file = repo_root / ".env"
     load_dotenv(dotenv_path=env_file)
 
-    from app.shared.database import models  # type: ignore  # noqa: WPS433
-    from app.shared.database.session import SessionLocal  # type: ignore  # noqa: WPS433
-    from app.shared.utils.security import hash_password  # type: ignore  # noqa: WPS433
+    from app.database import models  # type: ignore  # noqa: WPS433
+    from app.database.session import SessionLocal  # type: ignore  # noqa: WPS433
+    from app.utils.security import hash_password  # type: ignore  # noqa: WPS433
 
     args = parse_args()
     db = SessionLocal()

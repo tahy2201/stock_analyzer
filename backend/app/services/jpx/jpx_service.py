@@ -1,8 +1,8 @@
 from typing import Optional
 
-from app.shared.config.logging_config import get_service_logger
-from app.shared.database.database_manager import DatabaseManager
-from app.shared.utils.jpx_parser import JPXParser
+from app.config.logging_config import get_service_logger
+from app.database.database_manager import DatabaseManager
+from app.utils.jpx_parser import JPXParser
 
 logger = get_service_logger(__name__)
 

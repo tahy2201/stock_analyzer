@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.shared.database import models
+from app.database import models
 
 MAX_PORTFOLIOS_PER_USER = 10
 

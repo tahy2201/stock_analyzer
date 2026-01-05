@@ -1,4 +1,4 @@
-from app.shared.utils.security import hash_password, validate_password_policy, verify_password
+from app.utils.security import hash_password, validate_password_policy, verify_password
 
 
 def test_hash_and_verify_password():

@@ -5,8 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies import get_current_admin
 from app.api.dependencies.db import DBSession
-from app.shared.database import models
-from app.shared.utils.security import generate_token, hash_password, validate_password_policy
+from app.database import models
+from app.utils.security import generate_token, hash_password, validate_password_policy
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 

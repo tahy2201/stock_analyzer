@@ -5,10 +5,10 @@ import pandas as pd
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from app.shared.config.logging_config import get_service_logger
-from app.shared.config.settings import DATABASE_PATH
-from app.shared.database.models import Company, StockPrice, TechnicalIndicator, TickerInfo
-from app.shared.database.session import SessionLocal, engine
+from app.config.logging_config import get_service_logger
+from app.config.settings import DATABASE_PATH
+from app.database.models import Company, StockPrice, TechnicalIndicator, TickerInfo
+from app.database.session import SessionLocal, engine
 
 logger = get_service_logger(__name__)
 

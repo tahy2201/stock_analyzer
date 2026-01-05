@@ -9,6 +9,7 @@ from pydantic import BaseModel
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
+from app.utils.numeric_utils import safe_float
 
 router = APIRouter()
 
@@ -47,15 +48,8 @@ async def get_investment_candidates(
         )
 
         # レスポンス形式に変換（NaN値を除外）
-        import math
         result = []
         for candidate in candidates[:limit]:
-            # NaN値やNoneをチェックしてJSONシリアライゼーション可能な値のみ使用
-            def safe_float(value):
-                if value is None or (isinstance(value, float) and (math.isnan(value) or math.isinf(value))):
-                    return None
-                return value
-
             result.append(InvestmentCandidate(
                 symbol=candidate.get("symbol") or "",
                 name=candidate.get("name"),

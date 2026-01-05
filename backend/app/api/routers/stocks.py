@@ -5,7 +5,8 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.shared.database.database_manager import DatabaseManager
+from app.database.database_manager import DatabaseManager
+from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 
 router = APIRouter()
 
@@ -112,7 +113,11 @@ async def get_stock_detail(symbol: str, days: int = 365):
             if len(recent_data) >= 2:
                 previous_price = float(recent_data["close"].iloc[-2])
                 price_change = current_price - previous_price
-                price_change_percent = (price_change / previous_price) * 100
+                # TechnicalAnalyzerServiceを使用して価格変化率を計算
+                analyzer = TechnicalAnalyzerService()
+                price_change_percent = analyzer.calculate_price_change_percent(
+                    current_price, previous_price
+                )
 
             for date, row in recent_data.iterrows():
                 if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
@@ -174,7 +179,6 @@ async def get_stock_detail(symbol: str, days: int = 365):
         # 動的配当利回り計算
         dividend_yield = None
         if current_price:
-            from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
             analyzer = TechnicalAnalyzerService()
             dividend_yield = analyzer.get_dividend_yield(symbol, current_price)
 

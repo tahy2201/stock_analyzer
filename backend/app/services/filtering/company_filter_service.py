@@ -1,11 +1,11 @@
 import logging
 from typing import Optional
 
-from app.shared.config.models import FilterCriteria
-from app.shared.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
-from app.shared.database.database_manager import DatabaseManager
-from app.shared.database.models import Company
-from app.shared.database.session import get_db
+from app.config.models import FilterCriteria
+from app.config.settings import LOG_DATE_FORMAT, LOG_FORMAT
+from app.database.database_manager import DatabaseManager
+from app.database.models import Company
+from app.database.session import get_db
 
 logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
 logger = logging.getLogger(__name__)
