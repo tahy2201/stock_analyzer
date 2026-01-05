@@ -5,8 +5,8 @@ from decimal import Decimal
 
 import pytest
 
-from services.portfolio.portfolio_service import PortfolioService
-from shared.database import models
+from app.services.portfolio.portfolio_service import PortfolioService
+from app.shared.database import models
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def portfolio_service(db_session):
 @pytest.fixture
 def test_user(db_session):
     """テスト用ユーザーを作成。"""
-    from shared.utils.security import hash_password
+    from app.shared.utils.security import hash_password
 
     user = models.User(
         login_id="testuser",

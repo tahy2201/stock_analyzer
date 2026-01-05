@@ -2,7 +2,7 @@
 
 ## ファイル配置ルール
 - stock_analyzer直下にpythonファイルを置かないこと
-- バッチ処理に必要なものはすべてbackend/batchフォルダに収めること
+- バッチ処理に必要なものはすべてbackend/app/batchフォルダに収めること
 - 各ファイルは目的が明確に分かる名前を付けること
 
 ## バッチ実行ルール
@@ -12,7 +12,7 @@
 
 ## 推奨実行方法
 - uvを使用してバッチを実行すること
-- 例: `uv run python batch/stock_data_updater.py --markets prime`
+- 例: `uv run python -m app.batch.stock_updater --markets prime`
 - plain pythonではなくuvを使用する理由は依存関係管理のため
 
 ## コード品質ルール - **最重要**
@@ -62,12 +62,13 @@
 ## インポートルール
 - backendディレクトリ内では相対インポートを使用すること
 - `from backend.` プレフィックスは使用禁止
-- 例: `from shared.database.database_manager import DatabaseManager`
+- app/内のモジュールは`from app.`プレフィックスでインポート
+- 例: `from app.shared.database.database_manager import DatabaseManager`
 
 ## データベーススキーマルール
-- **スキーマ確認は `backend/shared/database/models.py` を参照すること**
+- **スキーマ確認は `backend/app/shared/database/models.py` を参照すること**
 - 全テーブル定義とカラム情報はmodels.pyに集約されている
-- マイグレーションファイルは `backend/alembic/versions/` に配置
+- マイグレーションファイルは `backend/app/alembic/versions/` に配置
 
 ## Git コミットルール - **最重要**
 - **コミット前の手順を必ず守ること**

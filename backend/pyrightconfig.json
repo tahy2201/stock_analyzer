@@ -1,10 +1,16 @@
 {
     "include": [
-        "."
+        "app",
+        "tests",
+        "scripts"
     ],
     "exclude": [
         "**/__pycache__",
-        "**/.mypy_cache"
+        "**/.mypy_cache",
+        "**/.pytest_cache",
+        "**/.ruff_cache",
+        "**/.venv",
+        "app/alembic/versions"
     ],
     "extraPaths": [
         "."

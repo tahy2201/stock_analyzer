@@ -7,8 +7,8 @@ import pytest_asyncio
 from pytest import TempPathFactory
 from sqlalchemy.orm import Session
 
-from shared.database import models
-from shared.database.session import SessionLocal, engine
+from app.shared.database import models
+from app.shared.database.session import SessionLocal, engine
 
 
 @pytest.fixture(scope="session")
@@ -34,7 +34,7 @@ def db_engine_session(test_db_path: Path) -> Iterator[tuple]:
 def clean_db(db_engine_session):
     """テストごとにクリーンなテーブル状態へリセット。"""
     engine, _ = db_engine_session
-    from shared.database import models
+    from app.shared.database import models
 
     models.Base.metadata.drop_all(bind=engine)
     models.Base.metadata.create_all(bind=engine)
@@ -55,7 +55,7 @@ def db_session(db_engine_session) -> Generator[Session, None, None]:
 @pytest.fixture
 def app(test_db_path):
     """FastAPIアプリ本体。"""
-    from api.main import app
+    from app.api.main import app
 
     return app
 
@@ -73,8 +73,8 @@ async def client(app):
 @pytest.fixture
 def create_user(db_session) -> Callable:
     """テスト用ユーザーを作成するヘルパー。"""
-    from shared.database import models
-    from shared.utils.security import hash_password
+    from app.shared.database import models
+    from app.shared.utils.security import hash_password
 
     def _create_user(
         login_id: str,
