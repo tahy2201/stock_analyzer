@@ -141,7 +141,6 @@ class CompanyFilterService:
                         "name": c.name,
                         "sector": c.sector,
                         "market": c.market,
-                        "market_cap": float(c.revenue) if c.revenue else None,
                         "is_enterprise": c.is_enterprise,
                     }
                     for c in companies
