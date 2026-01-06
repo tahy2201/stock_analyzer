@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.database.database_manager import DatabaseManager
 from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
+from app.utils.price_indicators import calculate_price_change_percent
 
 router = APIRouter()
 
@@ -123,9 +124,7 @@ async def get_stock_detail(symbol: str, days: int = 365):
             if len(recent_data) >= 2:
                 previous_price = float(recent_data["close"].iloc[-2])
                 price_change = current_price - previous_price
-                # TechnicalAnalyzerServiceを使用して価格変化率を計算
-                analyzer = TechnicalAnalyzerService()
-                price_change_percent = analyzer.calculate_price_change_percent(
+                price_change_percent = calculate_price_change_percent(
                     current_price, previous_price
                 )
 
