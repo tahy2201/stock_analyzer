@@ -2,7 +2,7 @@ from typing import Optional
 
 from app.config.logging_config import get_service_logger
 from app.database.database_manager import DatabaseManager
-from app.utils.jpx_parser import JPXParser
+from app.services.jpx.jpx_file_parse_service import JPXFileParseService
 
 logger = get_service_logger(__name__)
 
@@ -12,7 +12,7 @@ class JPXService:
 
     def __init__(self, db_manager: Optional[DatabaseManager] = None) -> None:
         self.db_manager = db_manager or DatabaseManager()
-        self.jpx_parser = JPXParser()
+        self.jpx_parser = JPXFileParseService()
 
     def update_jpx_data(self) -> bool:
         """
@@ -41,17 +41,3 @@ class JPXService:
         except Exception as e:
             logger.error(f"JPXデータ更新エラー: {e}")
             return False
-
-    def get_company_list(self, market_filter: Optional[str] = None) -> list[dict]:
-        """
-        企業リストを取得
-        """
-        try:
-            companies = self.db_manager.get_filtered_companies(
-                market_filter=market_filter
-            )
-            return companies
-
-        except Exception as e:
-            logger.error(f"企業リスト取得エラー: {e}")
-            return []
