@@ -11,7 +11,12 @@ from app.config.settings import (
     MA_PERIOD,
 )
 from app.database.database_manager import DatabaseManager
-from app.utils.numeric_utils import is_valid_number
+from app.utils.price_indicators import (
+    calculate_divergence_rate,
+    calculate_moving_average,
+    calculate_price_change_percent,
+    calculate_volume_average,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,46 +29,6 @@ logger = logging.getLogger(__name__)
 class TechnicalAnalyzerService:
     def __init__(self) -> None:
         self.db_manager = DatabaseManager()
-
-    def calculate_moving_average(self, prices: pd.Series, period: int = MA_PERIOD) -> pd.Series:
-        """
-        移動平均を計算
-        """
-        return prices.rolling(window=period, min_periods=period).mean()
-
-    def calculate_divergence_rate(self, current_price: float, ma_price: float) -> float:
-        """
-        移動平均からの乖離率を計算
-        """
-        if not is_valid_number(ma_price) or ma_price == 0:
-            return 0.0
-
-        divergence = ((current_price - ma_price) / ma_price) * 100
-        return round(divergence, 2)
-
-    def calculate_volume_average(self, volumes: pd.Series, period: int = 20) -> pd.Series:
-        """
-        出来高の移動平均を計算
-        """
-        return volumes.rolling(window=period, min_periods=period).mean()
-
-    def calculate_price_change_percent(
-        self, current_price: float, previous_price: float
-    ) -> float:
-        """
-        価格変化率を計算
-
-        Args:
-            current_price: 現在価格
-            previous_price: 前回価格
-
-        Returns:
-            変化率（%）
-        """
-        if previous_price == 0 or pd.isna(previous_price):
-            return 0.0
-
-        return round(((current_price - previous_price) / previous_price) * 100, 2)
 
     def get_dividend_yield(self, symbol: str, current_price: Optional[float] = None) -> Optional[float]:
         """
@@ -129,10 +94,10 @@ class TechnicalAnalyzerService:
             volumes = price_data["volume"]
 
             # 25日移動平均
-            ma_25 = self.calculate_moving_average(close_prices, MA_PERIOD)
+            ma_25 = calculate_moving_average(close_prices, MA_PERIOD)
 
             # 出来高移動平均
-            volume_avg_20 = self.calculate_volume_average(volumes, 20)
+            volume_avg_20 = calculate_volume_average(volumes, 20)
 
             # 最新の値を取得
             latest_date = price_data.index[-1]
@@ -148,7 +113,7 @@ class TechnicalAnalyzerService:
                 {
                     "ma_25": ma_25,
                     "divergence_rate": [
-                        self.calculate_divergence_rate(price, ma)
+                        calculate_divergence_rate(price, ma)
                         for price, ma in zip(close_prices, ma_25)
                     ],
                     "dividend_yield": dividend_yield,  # 全期間で同じ値
@@ -242,7 +207,7 @@ class TechnicalAnalyzerService:
                     if not price_data.empty:
                         latest_price = price_data["close"].iloc[-1]
                         price_change_1d = (
-                            self.calculate_price_change_percent(
+                            calculate_price_change_percent(
                                 float(price_data["close"].iloc[-1]),
                                 float(price_data["close"].iloc[-2]),
                             )
