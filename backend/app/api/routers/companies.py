@@ -9,6 +9,7 @@ from app.services.filtering.company_filter_service import CompanyFilterService
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 # レスポンスモデル
 class CompanyInfo(BaseModel):
     symbol: str
@@ -17,6 +18,7 @@ class CompanyInfo(BaseModel):
     market: Optional[str] = None
     market_cap: Optional[float] = None
     is_enterprise: Optional[bool] = None
+
 
 class InvestmentCandidate(BaseModel):
     symbol: str
@@ -29,13 +31,14 @@ class InvestmentCandidate(BaseModel):
     analysis_score: Optional[float] = None
     price_change_1d: Optional[float] = None
 
+
 @router.get("/", response_model=list[CompanyInfo])
 async def get_companies(
     limit: int = Query(100, description="取得件数の上限"),
     market: Optional[str] = Query(None, description="市場区分でフィルタ"),
     sector: Optional[str] = Query(None, description="業種でフィルタ"),
     is_enterprise: Optional[bool] = Query(None, description="大企業のみ"),
-    search: Optional[str] = Query(None, description="銘柄コードまたは銘柄名で検索")
+    search: Optional[str] = Query(None, description="銘柄コードまたは銘柄名で検索"),
 ):
     """企業リストを取得（検索とフィルタリングをサポート）。"""
     try:
@@ -87,6 +90,7 @@ async def get_companies(
         logger.error(f"Unexpected error in get_companies: {e}")
         raise HTTPException(status_code=500, detail="サーバーエラーが発生しました") from None
 
+
 @router.get("/{symbol}", response_model=CompanyInfo)
 async def get_company(symbol: str):
     """個別企業の詳細情報を取得。"""
@@ -113,6 +117,7 @@ async def get_company(symbol: str):
         logger.error(f"Unexpected error in get_company for {symbol}: {e}")
         raise HTTPException(status_code=500, detail="サーバーエラーが発生しました") from None
 
+
 @router.get("/candidates/investment", response_model=list[InvestmentCandidate])
 async def get_investment_candidates(
     divergence_threshold: float = Query(-5.0, description="乖離率の閾値"),
@@ -122,9 +127,9 @@ async def get_investment_candidates(
 ):
     """投資候補銘柄を取得。"""
     try:
-        from app.services.analysis.technical_analyzer import TechnicalAnalyzer
+        from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 
-        analyzer = TechnicalAnalyzer()
+        analyzer = TechnicalAnalyzerService()
         candidates = analyzer.get_investment_candidates(
             divergence_threshold=divergence_threshold,
             dividend_min=dividend_min,

@@ -42,7 +42,14 @@ class User(Base):
         server_default="user",
     )
     status: Mapped[str] = mapped_column(
-        Enum("pending", "active", "disabled", name="user_status", native_enum=False, validate_strings=True),
+        Enum(
+            "pending",
+            "active",
+            "disabled",
+            name="user_status",
+            native_enum=False,
+            validate_strings=True,
+        ),
         nullable=False,
         server_default="pending",
     )
@@ -246,7 +253,15 @@ class Transaction(Base):
         String(10), ForeignKey("companies.symbol"), nullable=True
     )
     transaction_type: Mapped[str] = mapped_column(
-        Enum("buy", "sell", "deposit", "withdrawal", name="transaction_type", native_enum=False, validate_strings=True),
+        Enum(
+            "buy",
+            "sell",
+            "deposit",
+            "withdrawal",
+            name="transaction_type",
+            native_enum=False,
+            validate_strings=True,
+        ),
         nullable=False,
     )
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")

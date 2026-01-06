@@ -5,8 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies import get_current_admin
 from app.api.dependencies.db import DBSession
-from app.shared.database import models
-from app.shared.utils.security import generate_token, hash_password, validate_password_policy
+from app.database import models
+from app.utils.security import generate_token, hash_password, validate_password_policy
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -57,7 +57,9 @@ def delete_user(
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="ユーザーが存在しません")
     if user.id == current_admin.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="自分自身は削除できません")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="自分自身は削除できません"
+        )
     db.delete(user)
     db.commit()
     return {"message": "deleted"}
@@ -125,7 +127,9 @@ def reissue_invite(
     if not invite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="招待が見つかりません")
     if invite.used_at:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="使用済みの招待は再発行できません")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="使用済みの招待は再発行できません"
+        )
 
     new_token = generate_token(32)
     invite.token = new_token
@@ -147,7 +151,9 @@ def revoke_invite(
     if not invite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="招待が見つかりません")
     if invite.used_at:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="使用済みの招待は失効できません")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="使用済みの招待は失効できません"
+        )
     invite.revoked_at = datetime.now(timezone.utc)
     db.add(invite)
     db.commit()

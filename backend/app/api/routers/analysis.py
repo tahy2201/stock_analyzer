@@ -4,10 +4,11 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.services.analysis.technical_analyzer import TechnicalAnalyzer
-from app.shared.database.database_manager import DatabaseManager
+from app.database.database_manager import DatabaseManager
+from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 
 router = APIRouter()
+
 
 # レスポンスモデル
 class TechnicalAnalysis(BaseModel):
@@ -21,6 +22,7 @@ class TechnicalAnalysis(BaseModel):
     price_trend: Optional[str] = None
     last_updated: Optional[str] = None
 
+
 class SystemStats(BaseModel):
     companies_count: int
     symbols_with_prices: int
@@ -28,11 +30,12 @@ class SystemStats(BaseModel):
     latest_price_date: Optional[str] = None
     latest_analysis_date: Optional[str] = None
 
+
 @router.get("/{symbol}", response_model=TechnicalAnalysis)
 async def get_technical_analysis(symbol: str):
     """個別銘柄の技術分析を取得"""
     try:
-        analyzer = TechnicalAnalyzer()
+        analyzer = TechnicalAnalyzerService()
 
         # 技術分析サマリーを取得
         summary = analyzer.get_technical_summary(symbol)
@@ -56,11 +59,12 @@ async def get_technical_analysis(symbol: str):
             volume_avg_20=summary.get("volume_avg_20"),
             ma_trend=summary.get("ma_trend"),
             price_trend=summary.get("price_trend"),
-            last_updated=last_updated
+            last_updated=last_updated,
         )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/stats/system", response_model=SystemStats)
 async def get_system_stats():
@@ -74,17 +78,18 @@ async def get_system_stats():
             symbols_with_prices=stats.get("symbols_with_prices", 0),
             symbols_with_technical=stats.get("symbols_with_technical", 0),
             latest_price_date=stats.get("latest_price_date"),
-            latest_analysis_date=stats.get("latest_analysis_date")
+            latest_analysis_date=stats.get("latest_analysis_date"),
         )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
+
 @router.post("/run/{symbol}")
 async def run_analysis(symbol: str):
     """個別銘柄の技術分析を実行"""
     try:
-        analyzer = TechnicalAnalyzer()
+        analyzer = TechnicalAnalyzerService()
 
         # 分析実行
         result = analyzer.analyze_single_stock(symbol)
@@ -92,10 +97,7 @@ async def run_analysis(symbol: str):
         if not result:
             raise HTTPException(status_code=400, detail="分析に失敗しました")
 
-        return {
-            "message": f"銘柄 {symbol} の分析が完了しました",
-            "result": result
-        }
+        return {"message": f"銘柄 {symbol} の分析が完了しました", "result": result}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e

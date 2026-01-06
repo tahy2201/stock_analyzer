@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.shared.database import models
+from app.database import models
 
 
 class PositionService:

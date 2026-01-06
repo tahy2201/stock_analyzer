@@ -8,12 +8,13 @@ import click_log
 # プロジェクトルートをPythonパスに追加
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.services.analysis.technical_analyzer import TechnicalAnalyzer
-from app.services.data.stock_data_service import StockDataService
+from app.config.constants import MARKET_NAME_MAPPING
+from app.config.logging_config import get_click_logger
+from app.config.models import FilterCriteria
+from app.database.database_manager import DatabaseManager
+from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
 from app.services.filtering.company_filter_service import CompanyFilterService
-from app.shared.config.logging_config import get_click_logger
-from app.shared.config.models import FilterCriteria
-from app.shared.database.database_manager import DatabaseManager
+from app.services.market_data.market_data_service import MarketDataService
 
 
 class BatchRunner:
@@ -24,8 +25,8 @@ class BatchRunner:
 
         # サービスクラスの初期化
         self.company_filter_service = CompanyFilterService(self.db_manager)
-        self.stock_data_service = StockDataService(self.db_manager)
-        self.technical_analysis_service = TechnicalAnalyzer()
+        self.market_data_service = MarketDataService(self.db_manager)
+        self.technical_analysis_service = TechnicalAnalyzerService()
 
     def exec(self, filter_criteria: FilterCriteria) -> None:
         """
@@ -57,7 +58,6 @@ class BatchRunner:
             logger.error(f"バッチ処理エラー: {e}", exc_info=True)
             raise
 
-
     def run_company_filtering(self, filter_criteria: FilterCriteria) -> list[str]:
         """
         企業フィルタリングを実行
@@ -80,7 +80,7 @@ class BatchRunner:
         logger.info("株価データ更新開始")
 
         try:
-            results = self.stock_data_service.update_stock_data(symbols)
+            results = self.market_data_service.update_stock_data(symbols)
 
             price_updates = cast(dict[str, bool], results.get("price_updates", {}))
             ticker_updates = cast(dict[str, bool], results.get("ticker_updates", {}))
@@ -88,7 +88,9 @@ class BatchRunner:
             price_success = sum(1 for success in price_updates.values() if success)
             ticker_success = sum(1 for success in ticker_updates.values() if success)
 
-            logger.info(f"株価データ更新完了: 価格 {price_success}件, ティッカー {ticker_success}件")
+            logger.info(
+                f"株価データ更新完了: 価格 {price_success}件, ティッカー {ticker_success}件"
+            )
 
             # 全ての銘柄で失敗した場合のみエラー（更新対象なしは正常）
             if len(symbols) > 0 and price_success == 0 and ticker_success == 0:
@@ -157,18 +159,13 @@ class BatchRunner:
 # グローバルloggerを作成（main関数とBatchRunnerで共有）
 logger = get_click_logger(__name__)
 
+
 @click.command()
 @click_log.simple_verbosity_option(logger)
 @click.option(
-    "--markets",
-    type=click.Choice(['prime', 'standard', 'growth', 'all']),
-    help="対象市場を指定"
+    "--markets", type=click.Choice(["prime", "standard", "growth", "all"]), help="対象市場を指定"
 )
-@click.option(
-    "--symbols",
-    multiple=True,
-    help="銘柄コードを指定（複数可）"
-)
+@click.option("--symbols", multiple=True, help="銘柄コードを指定（複数可）")
 def main(markets: str | None, symbols: tuple[str, ...]) -> None:
     """株価データ更新バッチ処理
 
@@ -201,13 +198,8 @@ def main(markets: str | None, symbols: tuple[str, ...]) -> None:
         elif markets:
             logger.info(f"対象市場: {markets}")
             # 市場名をデータベースの表記に変換
-            market_mapping = {
-                'prime': 'プライム（内国株式）',
-                'standard': 'スタンダード（内国株式）',
-                'growth': 'グロース（内国株式）'
-            }
-            actual_market = market_mapping.get(markets, markets)
-            filter_criteria = FilterCriteria(markets=[actual_market] if markets != 'all' else None)
+            actual_market = MARKET_NAME_MAPPING.get(markets, markets)
+            filter_criteria = FilterCriteria(markets=[actual_market] if markets != "all" else None)
 
         if filter_criteria:
             # バッチ処理を実行

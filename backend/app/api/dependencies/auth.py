@@ -4,13 +4,11 @@ from typing import Optional, cast
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.shared.database import models
-from app.shared.database.session import get_db
+from app.database import models
+from app.database.session import get_db
 
 
-def get_current_user(
-    request: Request, db: Session = Depends(get_db)
-) -> models.User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.User:
     user_id: Optional[int] = request.session.get("user_id")
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="ログインが必要です")
@@ -20,13 +18,13 @@ def get_current_user(
         request.session.clear()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なセッションです")
     if user.status != "active":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="アカウントが有効ではありません")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="アカウントが有効ではありません"
+        )
     return user
 
 
-def get_current_admin(
-    current_user: models.User = Depends(get_current_user)
-) -> models.User:
+def get_current_admin(current_user: models.User = Depends(get_current_user)) -> models.User:
     if current_user.role != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="管理者権限が必要です")
     return current_user

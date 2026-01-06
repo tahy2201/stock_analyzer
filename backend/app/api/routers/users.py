@@ -3,8 +3,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies import get_current_user
 from app.api.dependencies.db import DBSession
-from app.shared.database import models
-from app.shared.utils.security import hash_password, validate_password_policy, verify_password
+from app.database import models
+from app.utils.security import hash_password, validate_password_policy, verify_password
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -53,7 +53,9 @@ def change_password(
 
     # verify current password
     if not verify_password(payload.current_password, current_user.password_hash):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="現在のパスワードが違います")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="現在のパスワードが違います"
+        )
 
     current_user.password_hash = hash_password(payload.new_password)
     db.add(current_user)

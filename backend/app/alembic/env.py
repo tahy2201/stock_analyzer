@@ -4,10 +4,10 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 # DATABASE_PATHを取得するためにsettingsをインポート
-from app.shared.config.settings import DATABASE_PATH
+from app.config.settings import DATABASE_PATH
 
 # 自動生成サポートのため、全てのモデルをインポート
-from app.shared.database.models import Base
+from app.database.models import Base
 
 # Alembic Configオブジェクト（.iniファイルの値にアクセス可能）
 config = context.config
@@ -37,9 +37,7 @@ def run_migrations() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

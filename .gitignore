@@ -27,8 +27,8 @@ MANIFEST
 
 # Database files
 *.db
+*.db.backup.*
 *.sqlite3
-database/stock_data.db
 
 # Data files
 ./data
