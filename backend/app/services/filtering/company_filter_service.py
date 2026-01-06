@@ -50,7 +50,7 @@ class CompanyFilterService:
                 dividend_yield_min=filter_criteria.dividend_yield_min,
                 dividend_yield_max=filter_criteria.dividend_yield_max,
                 is_enterprise_only=filter_criteria.is_enterprise_only,
-                market_filter=market_filter
+                market_filter=market_filter,
             )
 
             symbols = [company["symbol"] for company in companies]
@@ -119,8 +119,7 @@ class CompanyFilterService:
                 # 検索条件を構築（銘柄コードまたは銘柄名で部分一致）
                 search_pattern = f"%{search}%"
                 query = db.query(Company).filter(
-                    (Company.symbol.ilike(search_pattern))
-                    | (Company.name.ilike(search_pattern))
+                    (Company.symbol.ilike(search_pattern)) | (Company.name.ilike(search_pattern))
                 )
 
                 # 追加フィルタ適用

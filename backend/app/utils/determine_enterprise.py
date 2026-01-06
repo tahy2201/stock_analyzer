@@ -1,9 +1,7 @@
 from typing import Optional
 
 
-def determine_enterprise_status(
-    name: str, sector: Optional[str], market: Optional[str]
-) -> bool:
+def determine_enterprise_status(name: str, sector: Optional[str], market: Optional[str]) -> bool:
     """
     企業がエンタープライズ企業かどうかを判定
     基本的な条件で判定（後でより詳細な条件に更新可能）
@@ -49,8 +47,7 @@ def determine_enterprise_status(
     # 市場区分による判定
     if market:
         if any(
-            premium_market in market
-            for premium_market in ["プライム", "Prime", "東証1部", "1部"]
+            premium_market in market for premium_market in ["プライム", "Prime", "東証1部", "1部"]
         ):
             return True
         elif any(

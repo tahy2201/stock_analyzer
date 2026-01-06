@@ -40,11 +40,7 @@ class PortfolioService:
             HTTPException: ユーザーが既に上限数のポートフォリオを持っている場合
         """
         # ユーザーあたり最大数チェック
-        count = (
-            self.db.query(models.Portfolio)
-            .filter(models.Portfolio.user_id == user_id)
-            .count()
-        )
+        count = self.db.query(models.Portfolio).filter(models.Portfolio.user_id == user_id).count()
         if count >= MAX_PORTFOLIOS_PER_USER:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,9 +70,7 @@ class PortfolioService:
             ポートフォリオのリスト
         """
         portfolios: list[models.Portfolio] = (
-            self.db.query(models.Portfolio)
-            .filter(models.Portfolio.user_id == user_id)
-            .all()
+            self.db.query(models.Portfolio).filter(models.Portfolio.user_id == user_id).all()
         )
         return portfolios
 
@@ -243,9 +237,7 @@ class PortfolioService:
         total_value = total_position_value + cash_balance
 
         # 投資元本 = 初期資本 + 入金額 - 出金額
-        investment_base = (
-            float(portfolio.initial_capital) + total_deposit - total_withdrawal
-        )
+        investment_base = float(portfolio.initial_capital) + total_deposit - total_withdrawal
 
         # 総損益 = 総評価額 - 投資元本
         total_profit_loss = total_value - investment_base

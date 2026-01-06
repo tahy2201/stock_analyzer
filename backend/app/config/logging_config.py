@@ -27,10 +27,10 @@ def setup_api_logging(log_dir: Optional[Path] = None) -> logging.Logger:
     # ローテーションハンドラー（週1回、8週間保持）
     rotating_handler = logging.handlers.TimedRotatingFileHandler(
         filename=str(log_file),
-        when='W0',  # 毎週月曜日
+        when="W0",  # 毎週月曜日
         interval=1,
         backupCount=8,  # 8週間分保持
-        encoding='utf-8'
+        encoding="utf-8",
     )
     rotating_handler.setFormatter(logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT))
 
@@ -68,10 +68,10 @@ def setup_batch_logging(log_dir: Optional[Path] = None) -> logging.Logger:
     # ローテーションハンドラー（週1回、8週間保持）
     rotating_handler = logging.handlers.TimedRotatingFileHandler(
         filename=str(log_file),
-        when='W0',  # 毎週月曜日
+        when="W0",  # 毎週月曜日
         interval=1,
         backupCount=8,  # 8週間分保持
-        encoding='utf-8'
+        encoding="utf-8",
     )
     rotating_handler.setFormatter(logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT))
 
@@ -109,10 +109,10 @@ def setup_jpx_logging(log_dir: Optional[Path] = None) -> logging.Logger:
     # ローテーションハンドラー（週1回、8週間保持）
     rotating_handler = logging.handlers.TimedRotatingFileHandler(
         filename=str(log_file),
-        when='W0',  # 毎週月曜日
+        when="W0",  # 毎週月曜日
         interval=1,
         backupCount=8,  # 8週間分保持
-        encoding='utf-8'
+        encoding="utf-8",
     )
     rotating_handler.setFormatter(logging.Formatter(LOG_FORMAT, LOG_DATE_FORMAT))
 

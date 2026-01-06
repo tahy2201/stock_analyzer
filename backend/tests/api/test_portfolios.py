@@ -136,7 +136,9 @@ async def test_get_portfolios_list(authenticated_client, test_user, db_session) 
 
 
 @pytest.mark.asyncio
-async def test_cannot_access_other_user_portfolio(authenticated_client, another_user, db_session) -> None:
+async def test_cannot_access_other_user_portfolio(
+    authenticated_client, another_user, db_session
+) -> None:
     """他人のポートフォリオにアクセスできないことを確認。"""
     from app.database import models
 
@@ -494,7 +496,9 @@ async def test_withdraw_cash_success(authenticated_client, test_user, db_session
 
 
 @pytest.mark.asyncio
-async def test_withdraw_cash_insufficient_balance(authenticated_client, test_user, db_session) -> None:
+async def test_withdraw_cash_insufficient_balance(
+    authenticated_client, test_user, db_session
+) -> None:
     """現金残高不足での出金失敗テスト。"""
     # ポートフォリオ作成
     from app.database import models
@@ -540,7 +544,9 @@ async def test_deposit_without_auth(client, test_user, db_session) -> None:
 
 
 @pytest.mark.asyncio
-async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, another_user, db_session) -> None:
+async def test_withdraw_unauthorized_portfolio(
+    authenticated_client, test_user, another_user, db_session
+) -> None:
     """他人のポートフォリオへの出金失敗テスト。"""
     from app.database import models
 
@@ -563,7 +569,9 @@ async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, 
 
 
 @pytest.mark.asyncio
-async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_user, db_session) -> None:
+async def test_deposit_and_withdraw_in_transactions(
+    authenticated_client, test_user, db_session
+) -> None:
     """入金・出金が取引履歴に記録されることを確認。"""
     from app.database import models
 

@@ -48,9 +48,13 @@ class AuthStatusResponse(BaseModel):
 def login(request: Request, payload: LoginRequest, db: DBSession):
     user = db.query(models.User).filter(models.User.login_id == payload.login_id).first()
     if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="IDまたはパスワードが不正です")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="IDまたはパスワードが不正です"
+        )
     if user.status != "active":
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="アカウントが有効ではありません")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="アカウントが有効ではありません"
+        )
 
     request.session["user_id"] = user.id
     user.last_login_at = datetime.now(timezone.utc)
@@ -103,25 +107,27 @@ def register_from_invite(
     if not is_valid:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg)
 
-    invite = (
-        db.query(models.Invite)
-        .filter(models.Invite.token == payload.token)
-        .first()
-    )
+    invite = db.query(models.Invite).filter(models.Invite.token == payload.token).first()
     if not invite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="招待が存在しません")
 
     if invite.used_at is not None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="招待は既に使用されています")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="招待は既に使用されています"
+        )
     if invite.revoked_at is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="招待は失効しています")
     if invite.expires_at < datetime.now(timezone.utc):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="招待の有効期限が切れています")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="招待の有効期限が切れています"
+        )
 
     # login_idユニークチェック（既存ユーザーと衝突しないこと）
     existing = db.query(models.User).filter(models.User.login_id == payload.login_id).first()
     if existing and existing.id != invite.provisional_user_id:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="このIDは既に使用されています")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="このIDは既に使用されています"
+        )
 
     # 仮ユーザーが無い場合は作成（保険）
     user: models.User | None = None

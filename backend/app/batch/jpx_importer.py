@@ -3,6 +3,7 @@
 JPXファイル取り込み専用バッチ処理
 JPXファイルは毎日更新されるものではないため、独立したバッチとして分離
 """
+
 import sys
 from pathlib import Path
 from typing import Optional

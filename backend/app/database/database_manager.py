@@ -58,8 +58,12 @@ class DatabaseManager:
                     "employees": company.employees,
                     "revenue": company.revenue,
                     "is_enterprise": company.is_enterprise,
-                    "dividend_yield": float(company.dividend_yield) if company.dividend_yield else None,
-                    "last_updated": company.last_updated.isoformat() if company.last_updated else None,
+                    "dividend_yield": float(company.dividend_yield)
+                    if company.dividend_yield
+                    else None,
+                    "last_updated": company.last_updated.isoformat()
+                    if company.last_updated
+                    else None,
                 }
             return None
         except Exception as e:
@@ -154,7 +158,9 @@ class DatabaseManager:
         try:
             for company_data in companies_data:
                 try:
-                    existing = session.query(Company).filter_by(symbol=company_data["symbol"]).first()
+                    existing = (
+                        session.query(Company).filter_by(symbol=company_data["symbol"]).first()
+                    )
 
                     if existing:
                         # UPDATE
@@ -213,22 +219,21 @@ class DatabaseManager:
             # サブクエリ: 各銘柄の最新日付
             latest_dates_subq = (
                 session.query(
-                    TechnicalIndicator.symbol,
-                    func.max(TechnicalIndicator.date).label("max_date")
+                    TechnicalIndicator.symbol, func.max(TechnicalIndicator.date).label("max_date")
                 )
                 .group_by(TechnicalIndicator.symbol)
                 .subquery()
             )
 
             # メインクエリ
-            query = session.query(
-                Company, TechnicalIndicator
-            ).join(
-                TechnicalIndicator, Company.symbol == TechnicalIndicator.symbol
-            ).join(
-                latest_dates_subq,
-                (TechnicalIndicator.symbol == latest_dates_subq.c.symbol) &
-                (TechnicalIndicator.date == latest_dates_subq.c.max_date)
+            query = (
+                session.query(Company, TechnicalIndicator)
+                .join(TechnicalIndicator, Company.symbol == TechnicalIndicator.symbol)
+                .join(
+                    latest_dates_subq,
+                    (TechnicalIndicator.symbol == latest_dates_subq.c.symbol)
+                    & (TechnicalIndicator.date == latest_dates_subq.c.max_date),
+                )
             )
 
             # フィルタ適用
@@ -244,13 +249,13 @@ class DatabaseManager:
             if dividend_yield_min is not None:
                 query = query.filter(
                     TechnicalIndicator.dividend_yield.isnot(None),
-                    TechnicalIndicator.dividend_yield >= dividend_yield_min
+                    TechnicalIndicator.dividend_yield >= dividend_yield_min,
                 )
 
             if dividend_yield_max is not None:
                 query = query.filter(
                     TechnicalIndicator.dividend_yield.isnot(None),
-                    TechnicalIndicator.dividend_yield <= dividend_yield_max
+                    TechnicalIndicator.dividend_yield <= dividend_yield_max,
                 )
 
             if market_filter is not None:
@@ -268,10 +273,18 @@ class DatabaseManager:
                     "employees": row.Company.employees,
                     "revenue": row.Company.revenue,
                     "is_enterprise": row.Company.is_enterprise,
-                    "last_updated": row.Company.last_updated.isoformat() if row.Company.last_updated else None,
-                    "divergence_rate": float(row.TechnicalIndicator.divergence_rate) if row.TechnicalIndicator.divergence_rate else None,
-                    "dividend_yield": float(row.TechnicalIndicator.dividend_yield) if row.TechnicalIndicator.dividend_yield else None,
-                    "date": row.TechnicalIndicator.date.isoformat() if row.TechnicalIndicator.date else None,
+                    "last_updated": row.Company.last_updated.isoformat()
+                    if row.Company.last_updated
+                    else None,
+                    "divergence_rate": float(row.TechnicalIndicator.divergence_rate)
+                    if row.TechnicalIndicator.divergence_rate
+                    else None,
+                    "dividend_yield": float(row.TechnicalIndicator.dividend_yield)
+                    if row.TechnicalIndicator.dividend_yield
+                    else None,
+                    "date": row.TechnicalIndicator.date.isoformat()
+                    if row.TechnicalIndicator.date
+                    else None,
                 }
                 for row in results
             ]
@@ -305,14 +318,18 @@ class DatabaseManager:
         session = self._get_session()
         latest_dates = {}
         try:
-            results = session.query(
-                StockPrice.symbol,
-                func.max(StockPrice.date).label("max_date")
-            ).filter(StockPrice.symbol.in_(symbols)).group_by(StockPrice.symbol).all()
+            results = (
+                session.query(StockPrice.symbol, func.max(StockPrice.date).label("max_date"))
+                .filter(StockPrice.symbol.in_(symbols))
+                .group_by(StockPrice.symbol)
+                .all()
+            )
 
             for row in results:
                 # Dateオブジェクトをdatetimeに変換
-                latest_dates[row.symbol] = datetime.combine(row.max_date, datetime.min.time()) if row.max_date else None
+                latest_dates[row.symbol] = (
+                    datetime.combine(row.max_date, datetime.min.time()) if row.max_date else None
+                )
 
             return latest_dates
         except Exception as e:
@@ -457,25 +474,49 @@ class DatabaseManager:
                     "full_time_employees": ticker.full_time_employees,
                     "market_cap": ticker.market_cap,
                     "current_price": float(ticker.current_price) if ticker.current_price else None,
-                    "dividend_yield": float(ticker.dividend_yield) if ticker.dividend_yield else None,
+                    "dividend_yield": float(ticker.dividend_yield)
+                    if ticker.dividend_yield
+                    else None,
                     "dividend_rate": float(ticker.dividend_rate) if ticker.dividend_rate else None,
-                    "trailing_annual_dividend_rate": float(ticker.trailing_annual_dividend_rate) if ticker.trailing_annual_dividend_rate else None,
-                    "ex_dividend_date": ticker.ex_dividend_date.isoformat() if ticker.ex_dividend_date else None,
+                    "trailing_annual_dividend_rate": float(ticker.trailing_annual_dividend_rate)
+                    if ticker.trailing_annual_dividend_rate
+                    else None,
+                    "ex_dividend_date": ticker.ex_dividend_date.isoformat()
+                    if ticker.ex_dividend_date
+                    else None,
                     "trailing_pe": float(ticker.trailing_pe) if ticker.trailing_pe else None,
                     "forward_pe": float(ticker.forward_pe) if ticker.forward_pe else None,
                     "price_to_book": float(ticker.price_to_book) if ticker.price_to_book else None,
-                    "debt_to_equity": float(ticker.debt_to_equity) if ticker.debt_to_equity else None,
-                    "return_on_equity": float(ticker.return_on_equity) if ticker.return_on_equity else None,
-                    "return_on_assets": float(ticker.return_on_assets) if ticker.return_on_assets else None,
+                    "debt_to_equity": float(ticker.debt_to_equity)
+                    if ticker.debt_to_equity
+                    else None,
+                    "return_on_equity": float(ticker.return_on_equity)
+                    if ticker.return_on_equity
+                    else None,
+                    "return_on_assets": float(ticker.return_on_assets)
+                    if ticker.return_on_assets
+                    else None,
                     "total_revenue": ticker.total_revenue,
-                    "earnings_growth": float(ticker.earnings_growth) if ticker.earnings_growth else None,
-                    "revenue_growth": float(ticker.revenue_growth) if ticker.revenue_growth else None,
-                    "profit_margins": float(ticker.profit_margins) if ticker.profit_margins else None,
-                    "fifty_two_week_high": float(ticker.fifty_two_week_high) if ticker.fifty_two_week_high else None,
-                    "fifty_two_week_low": float(ticker.fifty_two_week_low) if ticker.fifty_two_week_low else None,
+                    "earnings_growth": float(ticker.earnings_growth)
+                    if ticker.earnings_growth
+                    else None,
+                    "revenue_growth": float(ticker.revenue_growth)
+                    if ticker.revenue_growth
+                    else None,
+                    "profit_margins": float(ticker.profit_margins)
+                    if ticker.profit_margins
+                    else None,
+                    "fifty_two_week_high": float(ticker.fifty_two_week_high)
+                    if ticker.fifty_two_week_high
+                    else None,
+                    "fifty_two_week_low": float(ticker.fifty_two_week_low)
+                    if ticker.fifty_two_week_low
+                    else None,
                     "average_volume": ticker.average_volume,
                     "corporate_actions_dividend": ticker.corporate_actions_dividend,
-                    "last_updated": ticker.last_updated.isoformat() if ticker.last_updated else None,
+                    "last_updated": ticker.last_updated.isoformat()
+                    if ticker.last_updated
+                    else None,
                 }
             return None
         except Exception as e:
@@ -505,10 +546,11 @@ class DatabaseManager:
         session = self._get_session()
         latest_dates = {}
         try:
-            results = session.query(
-                TickerInfo.symbol,
-                TickerInfo.last_updated
-            ).filter(TickerInfo.symbol.in_(symbols)).all()
+            results = (
+                session.query(TickerInfo.symbol, TickerInfo.last_updated)
+                .filter(TickerInfo.symbol.in_(symbols))
+                .all()
+            )
 
             for row in results:
                 latest_dates[row.symbol] = row.last_updated
@@ -527,10 +569,10 @@ class DatabaseManager:
         try:
             # corporateActionsの配当情報を抽出
             dividend_actions = []
-            if 'corporateActions' in ticker_info:
-                for action in ticker_info['corporateActions']:
-                    if action.get('header') == 'Dividend' and 'meta' in action:
-                        dividend_actions.append(action['meta'])
+            if "corporateActions" in ticker_info:
+                for action in ticker_info["corporateActions"]:
+                    if action.get("header") == "Dividend" and "meta" in action:
+                        dividend_actions.append(action["meta"])
 
             existing = session.query(TickerInfo).filter_by(symbol=symbol).first()
 
@@ -543,8 +585,14 @@ class DatabaseManager:
                 existing.current_price = ticker_info.get("currentPrice")
                 existing.dividend_yield = ticker_info.get("dividendYield")
                 existing.dividend_rate = ticker_info.get("dividendRate")
-                existing.trailing_annual_dividend_rate = ticker_info.get("trailingAnnualDividendRate")
-                existing.ex_dividend_date = datetime.fromtimestamp(ticker_info.get("exDividendDate", 0)) if ticker_info.get("exDividendDate") else None
+                existing.trailing_annual_dividend_rate = ticker_info.get(
+                    "trailingAnnualDividendRate"
+                )
+                existing.ex_dividend_date = (
+                    datetime.fromtimestamp(ticker_info.get("exDividendDate", 0))
+                    if ticker_info.get("exDividendDate")
+                    else None
+                )
                 existing.trailing_pe = ticker_info.get("trailingPE")
                 existing.forward_pe = ticker_info.get("forwardPE")
                 existing.price_to_book = ticker_info.get("priceToBook")
@@ -558,7 +606,9 @@ class DatabaseManager:
                 existing.fifty_two_week_high = ticker_info.get("fiftyTwoWeekHigh")
                 existing.fifty_two_week_low = ticker_info.get("fiftyTwoWeekLow")
                 existing.average_volume = ticker_info.get("averageVolume")
-                existing.corporate_actions_dividend = str(dividend_actions) if dividend_actions else None
+                existing.corporate_actions_dividend = (
+                    str(dividend_actions) if dividend_actions else None
+                )
                 existing.last_updated = datetime.now()
             else:
                 # INSERT
@@ -572,7 +622,9 @@ class DatabaseManager:
                     dividend_yield=ticker_info.get("dividendYield"),
                     dividend_rate=ticker_info.get("dividendRate"),
                     trailing_annual_dividend_rate=ticker_info.get("trailingAnnualDividendRate"),
-                    ex_dividend_date=datetime.fromtimestamp(ticker_info.get("exDividendDate", 0)) if ticker_info.get("exDividendDate") else None,
+                    ex_dividend_date=datetime.fromtimestamp(ticker_info.get("exDividendDate", 0))
+                    if ticker_info.get("exDividendDate")
+                    else None,
                     trailing_pe=ticker_info.get("trailingPE"),
                     forward_pe=ticker_info.get("forwardPE"),
                     price_to_book=ticker_info.get("priceToBook"),
@@ -607,14 +659,14 @@ class DatabaseManager:
         try:
             threshold_date = datetime.now() - timedelta(days=days_old)
 
-            results = session.query(Company.symbol).outerjoin(
-                TickerInfo, Company.symbol == TickerInfo.symbol
-            ).filter(
-                or_(
-                    TickerInfo.last_updated.is_(None),
-                    TickerInfo.last_updated < threshold_date
+            results = (
+                session.query(Company.symbol)
+                .outerjoin(TickerInfo, Company.symbol == TickerInfo.symbol)
+                .filter(
+                    or_(TickerInfo.last_updated.is_(None), TickerInfo.last_updated < threshold_date)
                 )
-            ).all()
+                .all()
+            )
 
             return [row.symbol for row in results]
         except Exception as e:
@@ -634,13 +686,11 @@ class DatabaseManager:
 
             if table == "stock_prices":
                 session.query(StockPrice).filter(
-                    StockPrice.symbol == symbol,
-                    StockPrice.date < threshold_date
+                    StockPrice.symbol == symbol, StockPrice.date < threshold_date
                 ).delete()
             elif table == "technical_indicators":
                 session.query(TechnicalIndicator).filter(
-                    TechnicalIndicator.symbol == symbol,
-                    TechnicalIndicator.date < threshold_date
+                    TechnicalIndicator.symbol == symbol, TechnicalIndicator.date < threshold_date
                 ).delete()
 
             session.commit()
@@ -658,11 +708,17 @@ class DatabaseManager:
         try:
             companies_count = session.query(func.count(Company.symbol)).scalar()
 
-            symbols_with_prices = session.query(func.count(func.distinct(StockPrice.symbol))).scalar()
+            symbols_with_prices = session.query(
+                func.count(func.distinct(StockPrice.symbol))
+            ).scalar()
 
-            symbols_with_indicators = session.query(func.count(func.distinct(TechnicalIndicator.symbol))).scalar()
+            symbols_with_indicators = session.query(
+                func.count(func.distinct(TechnicalIndicator.symbol))
+            ).scalar()
 
-            symbols_with_ticker_info = session.query(func.count(func.distinct(TickerInfo.symbol))).scalar()
+            symbols_with_ticker_info = session.query(
+                func.count(func.distinct(TickerInfo.symbol))
+            ).scalar()
 
             latest_price_date = session.query(func.max(StockPrice.date)).scalar()
 
@@ -674,7 +730,9 @@ class DatabaseManager:
                 "symbols_with_indicators": symbols_with_indicators or 0,
                 "symbols_with_ticker_info": symbols_with_ticker_info or 0,
                 "latest_price_date": latest_price_date.isoformat() if latest_price_date else None,
-                "latest_ticker_update": latest_ticker_update.isoformat() if latest_ticker_update else None,
+                "latest_ticker_update": latest_ticker_update.isoformat()
+                if latest_ticker_update
+                else None,
             }
         except Exception as e:
             logger.error(f"Error getting database stats: {e}")

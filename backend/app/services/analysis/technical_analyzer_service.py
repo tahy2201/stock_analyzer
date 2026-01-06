@@ -30,7 +30,9 @@ class TechnicalAnalyzerService:
     def __init__(self) -> None:
         self.db_manager = DatabaseManager()
 
-    def get_dividend_yield(self, symbol: str, current_price: Optional[float] = None) -> Optional[float]:
+    def get_dividend_yield(
+        self, symbol: str, current_price: Optional[float] = None
+    ) -> Optional[float]:
         """
         配当利回りを計算（ticker_infoの年間配当金と現在の株価から計算）
         """

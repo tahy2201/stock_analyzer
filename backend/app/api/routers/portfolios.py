@@ -202,9 +202,7 @@ def get_portfolios(db: DBSession, current_user: CurrentUser):
 
         # ポジション数を取得
         positions_count = (
-            db.query(models.Position)
-            .filter(models.Position.portfolio_id == portfolio.id)
-            .count()
+            db.query(models.Position).filter(models.Position.portfolio_id == portfolio.id).count()
         )
 
         result.append(
@@ -250,9 +248,7 @@ def get_portfolio_detail(portfolio_id: int, db: DBSession, current_user: Current
     calc = service.calculate_portfolio_value(portfolio_id)
 
     # ポジション一覧取得
-    positions = (
-        db.query(models.Position).filter(models.Position.portfolio_id == portfolio_id).all()
-    )
+    positions = db.query(models.Position).filter(models.Position.portfolio_id == portfolio_id).all()
 
     position_details = []
     for position in positions:
@@ -534,7 +530,9 @@ def get_transactions(
     # レスポンス構築
     result = []
     for transaction in transactions:
-        company = db.query(models.Company).filter(models.Company.symbol == transaction.symbol).first()
+        company = (
+            db.query(models.Company).filter(models.Company.symbol == transaction.symbol).first()
+        )
         company_name = company.name if company else None
 
         result.append(

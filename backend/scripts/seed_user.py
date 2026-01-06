@@ -46,7 +46,9 @@ Examples:
         """,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--login", help="login_id to insert (if not specified, creates default users)")
+    parser.add_argument(
+        "--login", help="login_id to insert (if not specified, creates default users)"
+    )
     parser.add_argument("--password", help="password in plaintext")
     parser.add_argument("--display", help="display name")
     parser.add_argument(
@@ -62,14 +64,27 @@ Examples:
     return parser.parse_args()
 
 
-def create_user(db, models, hash_password, login_id: str, password: str, display_name: str, role: str, force: bool = False) -> None:
+def create_user(
+    db,
+    models,
+    hash_password,
+    login_id: str,
+    password: str,
+    display_name: str,
+    role: str,
+    force: bool = False,
+) -> None:
     """ユーザーを作成または更新する。"""
     from sqlalchemy import select
 
-    existing = db.execute(select(models.User).where(models.User.login_id == login_id)).scalar_one_or_none()
+    existing = db.execute(
+        select(models.User).where(models.User.login_id == login_id)
+    ).scalar_one_or_none()
 
     if existing and not force:
-        print(f"  exists: id={existing.id}, login_id={existing.login_id}, role={existing.role} (no changes)")
+        print(
+            f"  exists: id={existing.id}, login_id={existing.login_id}, role={existing.role} (no changes)"
+        )
         return
 
     if existing and force:
@@ -87,7 +102,9 @@ def create_user(db, models, hash_password, login_id: str, password: str, display
 
     db.commit()
     db.refresh(user)
-    print(f"  {action}: id={user.id}, login_id={user.login_id}, role={user.role}, display={user.display_name}")
+    print(
+        f"  {action}: id={user.id}, login_id={user.login_id}, role={user.role}, display={user.display_name}"
+    )
 
 
 def main() -> None:
@@ -95,6 +112,7 @@ def main() -> None:
 
     # Load environment variables from .env
     from dotenv import load_dotenv
+
     repo_root = Path(__file__).resolve().parent.parent.parent
     env_file = repo_root / ".env"
     load_dotenv(dotenv_path=env_file)
@@ -117,7 +135,9 @@ def main() -> None:
             role = args.role or "user"
 
             print(f"Creating user '{args.login}'...")
-            create_user(db, models, hash_password, args.login, args.password, display_name, role, args.force)
+            create_user(
+                db, models, hash_password, args.login, args.password, display_name, role, args.force
+            )
 
         # 引数なしの場合はデフォルトユーザー2つを作成
         else:
@@ -134,8 +154,19 @@ def main() -> None:
                 print("  SEED_TEST_PASSWORD=your_test_password")
                 sys.exit(1)
 
-            create_user(db, models, hash_password, "admin", admin_password, "Admin", "admin", args.force)
-            create_user(db, models, hash_password, "testuser", test_password, "Test User", "user", args.force)
+            create_user(
+                db, models, hash_password, "admin", admin_password, "Admin", "admin", args.force
+            )
+            create_user(
+                db,
+                models,
+                hash_password,
+                "testuser",
+                test_password,
+                "Test User",
+                "user",
+                args.force,
+            )
             print("\nDefault users created successfully!")
             print("  admin: ***** (role: admin)")
             print("  testuser: ***** (role: user)")

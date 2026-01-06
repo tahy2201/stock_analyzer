@@ -53,7 +53,9 @@ def change_password(
 
     # verify current password
     if not verify_password(payload.current_password, current_user.password_hash):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="現在のパスワードが違います")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="現在のパスワードが違います"
+        )
 
     current_user.password_hash = hash_password(payload.new_password)
     db.add(current_user)

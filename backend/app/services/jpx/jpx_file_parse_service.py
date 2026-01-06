@@ -141,4 +141,3 @@ class JPXFileParseService:
         except Exception as e:
             logger.warning(f"企業情報抽出エラー: {e}")
             return None
-

@@ -11,13 +11,13 @@ from app.config.logging_config import setup_api_logging
 logger = setup_api_logging()
 
 app = FastAPI(
-    title="株式分析システム API",
-    description="Stock Analysis System API",
-    version="1.0.0"
+    title="株式分析システム API", description="Stock Analysis System API", version="1.0.0"
 )
 
 # CORS設定 - 環境変数から許可するオリジンを取得
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173").split(
+    ","
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -48,15 +48,18 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(admin.router)
 
+
 @app.get("/")
 async def root():
     logger.info("APIルートエンドポイントへのアクセス")
     return {"message": "株式分析システム API"}
 
+
 @app.get("/api/health")
 async def health_check():
     logger.info("ヘルスチェックエンドポイントへのアクセス")
     return {"status": "healthy"}
+
 
 if __name__ == "__main__":
     import uvicorn

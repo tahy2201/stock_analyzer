@@ -10,6 +10,7 @@ def calculate_moving_average(prices: pd.Series, period: int = MA_PERIOD) -> pd.S
     """
     return prices.rolling(window=period, min_periods=period).mean()
 
+
 def calculate_divergence_rate(current_price: float, ma_price: float) -> float:
     """
     移動平均からの乖離率を計算
@@ -20,11 +21,13 @@ def calculate_divergence_rate(current_price: float, ma_price: float) -> float:
     divergence = ((current_price - ma_price) / ma_price) * 100
     return round(divergence, 2)
 
+
 def calculate_volume_average(volumes: pd.Series, period: int = 20) -> pd.Series:
     """
     出来高の移動平均を計算
     """
     return volumes.rolling(window=period, min_periods=period).mean()
+
 
 def calculate_price_change_percent(current_price: float, previous_price: float) -> float:
     """
