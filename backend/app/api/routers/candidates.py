@@ -9,7 +9,7 @@ from pydantic import BaseModel
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
-from app.utils.numeric_utils import safe_float
+from app.utils.numeric import safe_float
 
 router = APIRouter()
 

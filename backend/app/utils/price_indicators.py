@@ -1,7 +1,7 @@
 import pandas as pd
 
 from app.config.settings import MA_PERIOD
-from app.utils.numeric_utils import is_valid_number
+from app.utils.numeric import is_valid_number
 
 
 def calculate_moving_average(prices: pd.Series, period: int = MA_PERIOD) -> pd.Series:
