@@ -9,6 +9,7 @@ from app.config.logging_config import get_service_logger
 from app.config.settings import DATABASE_PATH
 from app.database.models import Company, StockPrice, TechnicalIndicator, TickerInfo
 from app.database.session import SessionLocal, engine
+from app.database.types import SymbolDateMap
 
 logger = get_service_logger(__name__)
 
@@ -213,7 +214,33 @@ class DatabaseManager:
         is_enterprise_only: bool = True,
         market_filter: Optional[str] = None,
     ) -> list[dict]:
-        """複雑なフィルタ条件で企業を検索"""
+        """複雑なフィルタ条件で企業を検索する。
+
+        技術指標（移動平均からの乖離率）と配当利回りの条件を組み合わせて、
+        条件に合致する企業を抽出します。各銘柄の最新の技術指標データを使用します。
+
+        Args:
+            divergence_min: 乖離率の最小値（%）。指定した場合、絶対値がこの値以上の銘柄のみを取得
+            divergence_max: 乖離率の最大値（%）。指定した場合、この値以下の銘柄のみを取得
+            dividend_yield_min: 配当利回りの最小値（%）。指定した場合、この値以上の銘柄のみを取得
+            dividend_yield_max: 配当利回りの最大値（%）。指定した場合、この値以下の銘柄のみを取得
+            is_enterprise_only: Trueの場合、大企業のみに絞り込む。デフォルトTrue
+            market_filter: 市場区分でフィルタ（例: "prime", "standard", "growth"）
+
+        Returns:
+            企業情報と技術指標を含む辞書のリスト。各辞書には以下のキーが含まれる:
+                - symbol: 銘柄コード
+                - name: 企業名
+                - sector: セクター
+                - market: 市場区分
+                - employees: 従業員数
+                - revenue: 売上高
+                - is_enterprise: 大企業フラグ
+                - dividend_yield: 配当利回り（%）
+                - divergence_rate: 移動平均からの乖離率（%）
+                - ma_price: 移動平均価格
+                - date: 技術指標の日付
+        """
         session = self._get_session()
         try:
             # サブクエリ: 各銘柄の最新日付
@@ -313,7 +340,7 @@ class DatabaseManager:
             if not self._external_session:
                 session.close()
 
-    def get_latest_price_dates(self, symbols: list[str]) -> dict[str, Optional[datetime]]:
+    def get_latest_price_dates(self, symbols: list[str]) -> SymbolDateMap:
         """複数銘柄の最新株価日付をまとめて取得"""
         session = self._get_session()
         latest_dates = {}
@@ -541,7 +568,7 @@ class DatabaseManager:
             if not self._external_session:
                 session.close()
 
-    def get_latest_ticker_info_dates(self, symbols: list[str]) -> dict[str, Optional[datetime]]:
+    def get_latest_ticker_info_dates(self, symbols: list[str]) -> SymbolDateMap:
         """指定された銘柄のticker_infoの最終更新日を取得"""
         session = self._get_session()
         latest_dates = {}

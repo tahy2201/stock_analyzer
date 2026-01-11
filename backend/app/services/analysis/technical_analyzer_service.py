@@ -11,6 +11,7 @@ from app.config.settings import (
     MA_PERIOD,
 )
 from app.database.database_manager import DatabaseManager
+from app.database.types import AnalysisResultMap
 from app.utils.price_indicators import (
     calculate_divergence_rate,
     calculate_moving_average,
@@ -152,7 +153,7 @@ class TechnicalAnalyzerService:
             logger.error(f"技術分析エラー {symbol}: {e}")
             return None
 
-    def analyze_batch_stocks(self, symbols: list[str]) -> dict[str, Optional[dict]]:
+    def analyze_batch_stocks(self, symbols: list[str]) -> AnalysisResultMap:
         """
         複数銘柄の技術分析をバッチ実行
         """

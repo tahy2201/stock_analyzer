@@ -66,7 +66,7 @@
 - 例: `from app.database.database_manager import DatabaseManager`
 
 ## データベーススキーマルール
-- **スキーマ確認は `backend/app/shared/database/models.py` を参照すること**
+- **スキーマ確認は `backend/app/database/models.py` を参照すること**
 - 全テーブル定義とカラム情報はmodels.pyに集約されている
 - マイグレーションファイルは `backend/app/alembic/versions/` に配置
 

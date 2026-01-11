@@ -1,5 +1,6 @@
 import pandas as pd
 
+from app.config.constants import VOLUME_MA_PERIOD
 from app.config.settings import MA_PERIOD
 from app.utils.numeric import is_valid_number
 
@@ -22,7 +23,7 @@ def calculate_divergence_rate(current_price: float, ma_price: float) -> float:
     return round(divergence, 2)
 
 
-def calculate_volume_average(volumes: pd.Series, period: int = 20) -> pd.Series:
+def calculate_volume_average(volumes: pd.Series, period: int = VOLUME_MA_PERIOD) -> pd.Series:
     """
     出来高の移動平均を計算
     """
