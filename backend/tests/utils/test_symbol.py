@@ -1,7 +1,5 @@
 """銘柄コード関連ユーティリティ関数のテスト"""
 
-import pytest
-
 from app.utils.symbol import format_symbol
 
 

@@ -3,7 +3,6 @@
 import math
 
 import pandas as pd
-import pytest
 
 from app.utils.numeric import is_valid_number, safe_float
 
