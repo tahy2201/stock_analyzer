@@ -28,7 +28,7 @@ def another_user(create_user):
 @pytest.fixture
 def create_company(db_session):
     """テスト用企業データを作成するヘルパー。"""
-    from app.shared.database import models
+    from app.database import models
 
     def _create_company(symbol: str, name: str):
         company = models.Company(
@@ -50,7 +50,7 @@ def create_stock_price(db_session):
     """テスト用株価データを作成するヘルパー。"""
     from datetime import datetime
 
-    from app.shared.database import models
+    from app.database import models
 
     def _create_stock_price(symbol: str, close: float, date: datetime | None = None):
         from datetime import datetime
@@ -110,7 +110,7 @@ async def test_create_portfolio_without_auth(client) -> None:
 @pytest.mark.asyncio
 async def test_get_portfolios_list(authenticated_client, test_user, db_session) -> None:
     """ポートフォリオ一覧取得のテスト。"""
-    from app.shared.database import models
+    from app.database import models
 
     # テストデータ作成
     portfolio1 = models.Portfolio(
@@ -136,9 +136,11 @@ async def test_get_portfolios_list(authenticated_client, test_user, db_session) 
 
 
 @pytest.mark.asyncio
-async def test_cannot_access_other_user_portfolio(authenticated_client, another_user, db_session) -> None:
+async def test_cannot_access_other_user_portfolio(
+    authenticated_client, another_user, db_session
+) -> None:
     """他人のポートフォリオにアクセスできないことを確認。"""
-    from app.shared.database import models
+    from app.database import models
 
     # 別ユーザーのポートフォリオ作成
     other_portfolio = models.Portfolio(
@@ -164,7 +166,7 @@ async def test_buy_stock_success(
     authenticated_client, test_user, db_session, create_company, create_stock_price
 ) -> None:
     """銘柄購入のテスト。"""
-    from app.shared.database import models
+    from app.database import models
 
     # テスト用企業と株価作成
     create_company(symbol="7203", name="トヨタ自動車")
@@ -213,7 +215,7 @@ async def test_buy_stock_multiple_times_weighted_average(
     authenticated_client, test_user, db_session, create_company, create_stock_price
 ) -> None:
     """同じ銘柄を複数回購入して加重平均を確認。"""
-    from app.shared.database import models
+    from app.database import models
 
     create_company(symbol="7203", name="トヨタ自動車")
     create_stock_price(symbol="7203", close=3000.0)
@@ -257,7 +259,7 @@ async def test_sell_stock_success(
     authenticated_client, test_user, db_session, create_company, create_stock_price
 ) -> None:
     """銘柄売却のテスト。"""
-    from app.shared.database import models
+    from app.database import models
 
     create_company(symbol="7203", name="トヨタ自動車")
     create_stock_price(symbol="7203", close=3000.0)
@@ -306,7 +308,7 @@ async def test_sell_stock_all_shares(
     authenticated_client, test_user, db_session, create_company, create_stock_price
 ) -> None:
     """全株売却でポジションが削除されることを確認。"""
-    from app.shared.database import models
+    from app.database import models
 
     create_company(symbol="7203", name="トヨタ自動車")
     create_stock_price(symbol="7203", close=3000.0)
@@ -346,7 +348,7 @@ async def test_sell_stock_insufficient_shares(
     authenticated_client, test_user, db_session, create_company, create_stock_price
 ) -> None:
     """保有株数不足で売却できないことを確認。"""
-    from app.shared.database import models
+    from app.database import models
 
     create_company(symbol="7203", name="トヨタ自動車")
     create_stock_price(symbol="7203", close=3000.0)
@@ -383,7 +385,7 @@ async def test_get_transactions(
     authenticated_client, test_user, db_session, create_company, create_stock_price
 ) -> None:
     """取引履歴取得のテスト。"""
-    from app.shared.database import models
+    from app.database import models
 
     create_company(symbol="7203", name="トヨタ自動車")
     create_stock_price(symbol="7203", close=3000.0)
@@ -425,7 +427,7 @@ async def test_get_transactions(
 async def test_deposit_cash_success(authenticated_client, test_user, db_session) -> None:
     """現金入金のテスト。"""
     # ポートフォリオ作成
-    from app.shared.database import models
+    from app.database import models
 
     portfolio = models.Portfolio(
         user_id=test_user.id,
@@ -461,7 +463,7 @@ async def test_deposit_cash_success(authenticated_client, test_user, db_session)
 async def test_withdraw_cash_success(authenticated_client, test_user, db_session) -> None:
     """現金出金のテスト。"""
     # ポートフォリオ作成
-    from app.shared.database import models
+    from app.database import models
 
     portfolio = models.Portfolio(
         user_id=test_user.id,
@@ -494,10 +496,12 @@ async def test_withdraw_cash_success(authenticated_client, test_user, db_session
 
 
 @pytest.mark.asyncio
-async def test_withdraw_cash_insufficient_balance(authenticated_client, test_user, db_session) -> None:
+async def test_withdraw_cash_insufficient_balance(
+    authenticated_client, test_user, db_session
+) -> None:
     """現金残高不足での出金失敗テスト。"""
     # ポートフォリオ作成
-    from app.shared.database import models
+    from app.database import models
 
     portfolio = models.Portfolio(
         user_id=test_user.id,
@@ -521,7 +525,7 @@ async def test_withdraw_cash_insufficient_balance(authenticated_client, test_use
 @pytest.mark.asyncio
 async def test_deposit_without_auth(client, test_user, db_session) -> None:
     """認証なしでの入金失敗テスト。"""
-    from app.shared.database import models
+    from app.database import models
 
     portfolio = models.Portfolio(
         user_id=test_user.id,
@@ -540,9 +544,11 @@ async def test_deposit_without_auth(client, test_user, db_session) -> None:
 
 
 @pytest.mark.asyncio
-async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, another_user, db_session) -> None:
+async def test_withdraw_unauthorized_portfolio(
+    authenticated_client, test_user, another_user, db_session
+) -> None:
     """他人のポートフォリオへの出金失敗テスト。"""
-    from app.shared.database import models
+    from app.database import models
 
     # 別ユーザーのポートフォリオを作成
     portfolio = models.Portfolio(
@@ -563,9 +569,11 @@ async def test_withdraw_unauthorized_portfolio(authenticated_client, test_user, 
 
 
 @pytest.mark.asyncio
-async def test_deposit_and_withdraw_in_transactions(authenticated_client, test_user, db_session) -> None:
+async def test_deposit_and_withdraw_in_transactions(
+    authenticated_client, test_user, db_session
+) -> None:
     """入金・出金が取引履歴に記録されることを確認。"""
-    from app.shared.database import models
+    from app.database import models
 
     portfolio = models.Portfolio(
         user_id=test_user.id,

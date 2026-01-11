@@ -6,15 +6,15 @@ from typing import Optional
 import pandas as pd
 import yfinance as yf
 
-from app.shared.config.settings import YFINANCE_REQUEST_DELAY
-from app.shared.database.database_manager import DatabaseManager
+from app.config.settings import YFINANCE_REQUEST_DELAY
+from app.database.database_manager import DatabaseManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class StockDataService:
-    """株価データ収集を担当するサービスクラス"""
+class MarketDataService:
+    """市場データ収集を担当するサービスクラス"""
 
     def __init__(self, db_manager: Optional[DatabaseManager] = None) -> None:
         self.db_manager = db_manager or DatabaseManager()
@@ -23,7 +23,7 @@ class StockDataService:
         """
         銘柄のハッシュ値に基づいて更新間隔を分散
         """
-        hash_obj = hashlib.md5(symbol.encode('utf-8'))
+        hash_obj = hashlib.md5(symbol.encode("utf-8"))
         offset = int(hash_obj.hexdigest(), 16) % 7
         return base_days + offset
 
@@ -57,14 +57,16 @@ class StockDataService:
 
                 # データベース形式に変換
                 index_dates = [ts.date() for ts in pd.to_datetime(hist.index).to_pydatetime()]
-                price_data = pd.DataFrame({
-                    'date': index_dates,
-                    'open': hist['Open'],
-                    'high': hist['High'],
-                    'low': hist['Low'],
-                    'close': hist['Close'],
-                    'volume': hist['Volume']
-                })
+                price_data = pd.DataFrame(
+                    {
+                        "date": index_dates,
+                        "open": hist["Open"],
+                        "high": hist["High"],
+                        "low": hist["Low"],
+                        "close": hist["Close"],
+                        "volume": hist["Volume"],
+                    }
+                )
 
                 # データベースに保存
                 success = self.db_manager.insert_stock_prices(symbol, price_data)
@@ -163,7 +165,9 @@ class StockDataService:
             elif latest_ticker_date.date() < threshold_date:
                 ticker_symbols_to_update.append(symbol)
 
-        logger.info(f"更新対象: 価格データ {len(price_symbols_to_update)} 銘柄, ティッカー情報 {len(ticker_symbols_to_update)} 銘柄")
+        logger.info(
+            f"更新対象: 価格データ {len(price_symbols_to_update)} 銘柄, ティッカー情報 {len(ticker_symbols_to_update)} 銘柄"
+        )
 
         # データ収集実行
         price_results = {}
@@ -181,5 +185,5 @@ class StockDataService:
             "price_symbols_checked": len(symbols),
             "ticker_symbols_checked": len(symbols),
             "price_symbols_updated": len(price_symbols_to_update),
-            "ticker_symbols_updated": len(ticker_symbols_to_update)
+            "ticker_symbols_updated": len(ticker_symbols_to_update),
         }

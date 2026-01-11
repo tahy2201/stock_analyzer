@@ -4,6 +4,13 @@ from typing import Optional, TypedDict, cast
 
 import numpy as np
 import pandas as pd
+from config.constants import (
+    DIVERGENCE_THRESHOLD_STRONG,
+    MA_WINDOW_LONG,
+    MA_WINDOW_SHORT,
+    TRADING_DAYS_PER_YEAR,
+    VOLATILITY_WINDOW,
+)
 from config.settings import MARKET_INDICES
 from database.database_manager import DatabaseManager
 
@@ -17,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 class TrendAnalysis(TypedDict, total=False):
     current_price: float
-    ma_25: float
-    ma_75: float
+    ma_25: float  # MA_WINDOW_SHORTを使用
+    ma_75: float  # MA_WINDOW_LONGを使用
     trend: str
     volatility: float
     price_changes: dict[str, float]
@@ -78,8 +85,8 @@ class MarketAnalyzer:
             close_prices = index_data["close"]
 
             # 移動平均の計算
-            ma_25 = close_prices.rolling(window=25, min_periods=25).mean()
-            ma_75 = close_prices.rolling(window=75, min_periods=75).mean()
+            ma_25 = close_prices.rolling(window=MA_WINDOW_SHORT, min_periods=MA_WINDOW_SHORT).mean()
+            ma_75 = close_prices.rolling(window=MA_WINDOW_LONG, min_periods=MA_WINDOW_LONG).mean()
 
             # 現在値と移動平均の関係
             current_price = float(close_prices.iloc[-1])
@@ -89,9 +96,9 @@ class MarketAnalyzer:
             # トレンド判定
             trend = self._determine_trend(current_price, current_ma_25, current_ma_75)
 
-            # ボラティリティ計算（過去30日）
+            # ボラティリティ計算
             returns = close_prices.pct_change().dropna()
-            volatility = returns.tail(30).std() * np.sqrt(252) * 100  # 年率換算
+            volatility = returns.tail(VOLATILITY_WINDOW).std() * np.sqrt(TRADING_DAYS_PER_YEAR) * 100  # 年率換算
 
             # 価格変化率
             price_changes: dict[str, float] = {
@@ -144,12 +151,12 @@ class MarketAnalyzer:
 
             # トレンド判定ロジック
             if above_ma25 and above_ma75 and ma25_above_ma75:
-                if divergence_25 > 5:
+                if divergence_25 > DIVERGENCE_THRESHOLD_STRONG:
                     return "Strong Uptrend"
                 else:
                     return "Uptrend"
             elif not above_ma25 and not above_ma75 and not ma25_above_ma75:
-                if divergence_25 < -5:
+                if divergence_25 < -DIVERGENCE_THRESHOLD_STRONG:
                     return "Strong Downtrend"
                 else:
                     return "Downtrend"

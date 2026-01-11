@@ -3,6 +3,8 @@ from typing import cast
 
 import bcrypt
 
+from app.config.constants import TOKEN_LENGTH
+
 PASSWORD_MIN_LENGTH = 8
 
 
@@ -27,6 +29,6 @@ def validate_password_policy(raw_password: str) -> tuple[bool, str]:
     return True, ""
 
 
-def generate_token(length: int = 32) -> str:
+def generate_token(length: int = TOKEN_LENGTH) -> str:
     # urlsafeで招待トークンを生成。長さ64文字程度になる
     return secrets.token_urlsafe(length)
