@@ -63,10 +63,10 @@
 - backend/app/ディレクトリ内では絶対インポートを使用すること
 - `from backend.` プレフィックスは使用禁止
 - app/内のモジュールは`from app.`プレフィックスでインポート
-- 例: `from app.shared.database.database_manager import DatabaseManager`
+- 例: `from app.database.database_manager import DatabaseManager`
 
 ## データベーススキーマルール
-- **スキーマ確認は `backend/app/shared/database/models.py` を参照すること**
+- **スキーマ確認は `backend/app/database/models.py` を参照すること**
 - 全テーブル定義とカラム情報はmodels.pyに集約されている
 - マイグレーションファイルは `backend/app/alembic/versions/` に配置
 

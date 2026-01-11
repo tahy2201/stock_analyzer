@@ -3,13 +3,21 @@ from typing import Optional
 
 import pandas as pd
 
-from app.shared.config.settings import (
+from app.config.constants import MARKET_NAME_MAPPING
+from app.config.settings import (
     DIVERGENCE_THRESHOLD,
     DIVIDEND_YIELD_MAX,
     DIVIDEND_YIELD_MIN,
     MA_PERIOD,
 )
-from app.shared.database.database_manager import DatabaseManager
+from app.database.database_manager import DatabaseManager
+from app.database.types import AnalysisResultMap
+from app.utils.price_indicators import (
+    calculate_divergence_rate,
+    calculate_moving_average,
+    calculate_price_change_percent,
+    calculate_volume_average,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -19,33 +27,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class TechnicalAnalyzer:
+class TechnicalAnalyzerService:
     def __init__(self) -> None:
         self.db_manager = DatabaseManager()
 
-    def calculate_moving_average(self, prices: pd.Series, period: int = MA_PERIOD) -> pd.Series:
-        """
-        移動平均を計算
-        """
-        return prices.rolling(window=period, min_periods=period).mean()
-
-    def calculate_divergence_rate(self, current_price: float, ma_price: float) -> float:
-        """
-        移動平均からの乖離率を計算
-        """
-        if ma_price == 0 or pd.isna(ma_price):
-            return 0.0
-
-        divergence = ((current_price - ma_price) / ma_price) * 100
-        return round(divergence, 2)
-
-    def calculate_volume_average(self, volumes: pd.Series, period: int = 20) -> pd.Series:
-        """
-        出来高の移動平均を計算
-        """
-        return volumes.rolling(window=period, min_periods=period).mean()
-
-    def get_dividend_yield(self, symbol: str, current_price: Optional[float] = None) -> Optional[float]:
+    def get_dividend_yield(
+        self, symbol: str, current_price: Optional[float] = None
+    ) -> Optional[float]:
         """
         配当利回りを計算（ticker_infoの年間配当金と現在の株価から計算）
         """
@@ -109,19 +97,16 @@ class TechnicalAnalyzer:
             volumes = price_data["volume"]
 
             # 25日移動平均
-            ma_25 = self.calculate_moving_average(close_prices, MA_PERIOD)
+            ma_25 = calculate_moving_average(close_prices, MA_PERIOD)
 
             # 出来高移動平均
-            volume_avg_20 = self.calculate_volume_average(volumes, 20)
+            volume_avg_20 = calculate_volume_average(volumes, 20)
 
             # 最新の値を取得
             latest_date = price_data.index[-1]
             latest_price = close_prices.iloc[-1]
             latest_ma_25 = ma_25.iloc[-1]
             latest_volume_avg = volume_avg_20.iloc[-1]
-
-            # 乖離率の計算
-            divergence_rate = self.calculate_divergence_rate(latest_price, latest_ma_25)
 
             # 配当利回りの取得（現在の株価を使用）
             dividend_yield = self.get_dividend_yield(symbol, latest_price)
@@ -131,7 +116,7 @@ class TechnicalAnalyzer:
                 {
                     "ma_25": ma_25,
                     "divergence_rate": [
-                        self.calculate_divergence_rate(price, ma)
+                        calculate_divergence_rate(price, ma)
                         for price, ma in zip(close_prices, ma_25)
                     ],
                     "dividend_yield": dividend_yield,  # 全期間で同じ値
@@ -143,6 +128,9 @@ class TechnicalAnalyzer:
             # 欠損値を除去
             indicators_df = indicators_df.dropna()
 
+            # 最新の乖離率をDataFrameから取得
+            latest_divergence_rate = float(indicators_df["divergence_rate"].iloc[-1])
+
             # データベースに保存
             success = self.db_manager.insert_technical_indicators(symbol, indicators_df)
 
@@ -152,7 +140,7 @@ class TechnicalAnalyzer:
                     "symbol": symbol,
                     "latest_price": latest_price,
                     "latest_ma_25": latest_ma_25,
-                    "divergence_rate": divergence_rate,
+                    "divergence_rate": latest_divergence_rate,
                     "dividend_yield": dividend_yield,
                     "latest_volume_avg": latest_volume_avg,
                     "analysis_date": latest_date,
@@ -165,7 +153,7 @@ class TechnicalAnalyzer:
             logger.error(f"技術分析エラー {symbol}: {e}")
             return None
 
-    def analyze_batch_stocks(self, symbols: list[str]) -> dict[str, Optional[dict]]:
+    def analyze_batch_stocks(self, symbols: list[str]) -> AnalysisResultMap:
         """
         複数銘柄の技術分析をバッチ実行
         """
@@ -199,12 +187,7 @@ class TechnicalAnalyzer:
             # 市場フィルタを日本語名に変換
             actual_market_filter = None
             if market_filter:
-                market_mapping = {
-                    'prime': 'プライム（内国株式）',
-                    'standard': 'スタンダード（内国株式）',
-                    'growth': 'グロース（内国株式）'
-                }
-                actual_market_filter = market_mapping.get(market_filter, market_filter)
+                actual_market_filter = MARKET_NAME_MAPPING.get(market_filter, market_filter)
 
             # フィルタリング条件でデータベースから抽出
             # divergence_thresholdがマイナス値の場合は、それより低い（より悪い）乖離率を指定
@@ -227,10 +210,12 @@ class TechnicalAnalyzer:
                     if not price_data.empty:
                         latest_price = price_data["close"].iloc[-1]
                         price_change_1d = (
-                            ((price_data["close"].iloc[-1] / price_data["close"].iloc[-2]) - 1)
-                            * 100
+                            calculate_price_change_percent(
+                                float(price_data["close"].iloc[-1]),
+                                float(price_data["close"].iloc[-2]),
+                            )
                             if len(price_data) > 1
-                            else 0
+                            else 0.0
                         )
 
                         candidate.update(
@@ -383,7 +368,7 @@ class TechnicalAnalyzer:
 
 
 if __name__ == "__main__":
-    analyzer = TechnicalAnalyzer()
+    analyzer = TechnicalAnalyzerService()
 
     # テスト用: 特定銘柄の技術分析
     test_symbols = ["7203", "6758", "9984"]

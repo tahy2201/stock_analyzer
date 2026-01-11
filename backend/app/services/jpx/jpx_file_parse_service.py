@@ -4,8 +4,8 @@ from typing import Optional
 
 import pandas as pd
 
-from app.shared.config.settings import DATA_DIR, JPX_FILE_NAME
-from app.shared.database.database_manager import DatabaseManager
+from app.config.settings import DATA_DIR, JPX_FILE_NAME
+from app.utils.determine_enterprise import determine_enterprise_status
 
 logging.basicConfig(
     level=logging.INFO,
@@ -15,11 +15,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class JPXParser:
+class JPXFileParseService:
     def __init__(self) -> None:
         self.data_dir = DATA_DIR
         self.jpx_file_path = self.data_dir / JPX_FILE_NAME
-        self.db_manager = DatabaseManager()
 
     def download_jpx_file(self, url: str = "") -> bool:
         """
@@ -127,7 +126,7 @@ class JPXParser:
                 return None
 
             # エンタープライズ企業の判定（基本的な条件）
-            is_enterprise = self._determine_enterprise_status(name, sector, market)
+            is_enterprise = determine_enterprise_status(name, sector, market)
 
             return {
                 "symbol": symbol,
@@ -142,153 +141,3 @@ class JPXParser:
         except Exception as e:
             logger.warning(f"企業情報抽出エラー: {e}")
             return None
-
-    def _determine_enterprise_status(
-        self, name: str, sector: Optional[str], market: Optional[str]
-    ) -> bool:
-        """
-        企業がエンタープライズ企業かどうかを判定
-        基本的な条件で判定（後でより詳細な条件に更新可能）
-        """
-        # 中小企業を除外するキーワード
-        exclude_keywords = [
-            "投資",
-            "不動産投資",
-            "REIT",
-            "リート",
-            "ファンド",
-            "投資法人",
-            "投資信託",
-            "ホールディングス",
-            "HD",
-        ]
-
-        # 小規模企業を示すキーワード
-        small_company_keywords = [
-            "地域",
-            "県内",
-            "市内",
-            "ローカル",
-        ]
-
-        # エンタープライズ企業を示すキーワード（今後の拡張用）
-        # enterprise_keywords = [
-        #     '株式会社', '(株)', 'Corp', 'Corporation',
-        #     'Ltd', 'Limited', 'Inc', 'Incorporated',
-        #     'Holdings', 'Group', 'グループ'
-        # ]
-
-        # 除外キーワードがある場合は非エンタープライズ
-        for keyword in exclude_keywords:
-            if keyword in name:
-                return False
-
-        # 小規模企業キーワードがある場合は非エンタープライズ
-        for keyword in small_company_keywords:
-            if keyword in name:
-                return False
-
-        # 市場区分による判定
-        if market:
-            if any(
-                premium_market in market
-                for premium_market in ["プライム", "Prime", "東証1部", "1部"]
-            ):
-                return True
-            elif any(
-                standard_market in market
-                for standard_market in ["スタンダード", "Standard", "東証2部", "2部"]
-            ):
-                return True
-
-        # 業種による判定
-        if sector:
-            enterprise_sectors = [
-                "製造業",
-                "情報・通信業",
-                "電気・ガス業",
-                "運輸・郵便業",
-                "卸売・小売業",
-                "金融・保険業",
-                "建設業",
-                "医薬品",
-                "化学",
-                "機械",
-                "電気機器",
-                "輸送用機器",
-                "精密機器",
-            ]
-            for enterprise_sector in enterprise_sectors:
-                if enterprise_sector in sector:
-                    return True
-
-        # デフォルトでは True（保守的な判定）
-        return True
-
-    def save_companies_to_database(self, companies: list[dict]) -> bool:
-        """
-        企業情報をデータベースに保存
-        """
-        try:
-            success_count = 0
-            for company in companies:
-                if self.db_manager.insert_company(company):
-                    success_count += 1
-
-            logger.info(f"データベースに {success_count}/{len(companies)} 社の情報を保存しました")
-            return success_count > 0
-
-        except Exception as e:
-            logger.error(f"データベース保存エラー: {e}")
-            return False
-
-    def update_jpx_data(self) -> bool:
-        """
-        JPXデータを更新（解析 → データベース保存）
-        """
-        logger.info("JPXデータの更新を開始します")
-
-        # ファイルの存在確認
-        if not self.jpx_file_path.exists():
-            logger.error(f"JPXファイルが見つかりません: {self.jpx_file_path}")
-            logger.info(
-                "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html から手動ダウンロードしてください"
-            )
-            return False
-
-        # Excelファイルの解析
-        companies = self.parse_jpx_excel()
-        if not companies:
-            logger.error("企業情報の抽出に失敗しました")
-            return False
-
-        # データベースへの保存
-        success = self.save_companies_to_database(companies)
-
-        if success:
-            logger.info("JPXデータの更新が完了しました")
-        else:
-            logger.error("JPXデータの更新に失敗しました")
-
-        return success
-
-    def get_symbols_list(self) -> list[str]:
-        """
-        データベースから全銘柄コードのリストを取得
-        """
-        companies = self.db_manager.get_companies()
-        return [company["symbol"] for company in companies if company["symbol"]]
-
-
-if __name__ == "__main__":
-    parser = JPXParser()
-
-    # データ更新の実行
-    success = parser.update_jpx_data()
-
-    if success:
-        symbols = parser.get_symbols_list()
-        print(f"登録済み銘柄数: {len(symbols)}")
-        print(f"最初の10銘柄: {symbols[:10]}")
-    else:
-        print("JPXデータの更新に失敗しました")

@@ -5,9 +5,12 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from app.shared.database.database_manager import DatabaseManager
+from app.database.database_manager import DatabaseManager
+from app.services.analysis.technical_analyzer_service import TechnicalAnalyzerService
+from app.utils.price_indicators import calculate_price_change_percent
 
 router = APIRouter()
+
 
 # レスポンスモデル
 class StockPrice(BaseModel):
@@ -18,6 +21,7 @@ class StockPrice(BaseModel):
     close: float
     volume: int
 
+
 class StockInfo(BaseModel):
     symbol: str
     name: Optional[str] = None
@@ -26,11 +30,13 @@ class StockInfo(BaseModel):
     current_price: Optional[float] = None
     dividend_yield: Optional[float] = None
 
+
 class TechnicalIndicator(BaseModel):
     date: str
     ma_25: Optional[float] = None
     divergence_rate: Optional[float] = None
     volume_avg_20: Optional[int] = None
+
 
 class TickerInfo(BaseModel):
     trailing_pe: Optional[float] = None
@@ -51,6 +57,7 @@ class TickerInfo(BaseModel):
     fifty_two_week_low: Optional[float] = None
     average_volume: Optional[int] = None
 
+
 class StockDetail(BaseModel):
     symbol: str
     name: Optional[str] = None
@@ -64,8 +71,10 @@ class StockDetail(BaseModel):
     technical_indicators: list[TechnicalIndicator] = Field(default_factory=list)
     ticker_info: Optional[TickerInfo] = None
 
+
 # データベースマネージャー
 db_manager = DatabaseManager()
+
 
 @router.get("/", response_model=list[StockInfo])
 async def get_stocks(limit: int = 100):
@@ -76,16 +85,19 @@ async def get_stocks(limit: int = 100):
         # limit適用とStockInfoへの変換
         stocks = []
         for company in companies[:limit]:
-            stocks.append(StockInfo(
-                symbol=company["symbol"],
-                name=company["name"],
-                sector=company["sector"],
-                market=company["market"]
-            ))
+            stocks.append(
+                StockInfo(
+                    symbol=company["symbol"],
+                    name=company["name"],
+                    sector=company["sector"],
+                    market=company["market"],
+                )
+            )
 
         return stocks
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/{symbol}", response_model=StockDetail)
 async def get_stock_detail(symbol: str, days: int = 365):
@@ -112,21 +124,25 @@ async def get_stock_detail(symbol: str, days: int = 365):
             if len(recent_data) >= 2:
                 previous_price = float(recent_data["close"].iloc[-2])
                 price_change = current_price - previous_price
-                price_change_percent = (price_change / previous_price) * 100
+                price_change_percent = calculate_price_change_percent(
+                    current_price, previous_price
+                )
 
             for date, row in recent_data.iterrows():
                 if isinstance(date, (pd.Timestamp, datetime.datetime, datetime.date)):
                     date_ts = date
                 else:
                     date_ts = pd.to_datetime(str(date))
-                prices.append(StockPrice(
-                    date=date_ts.strftime("%Y-%m-%d"),
-                    open=float(row["open"]),
-                    high=float(row["high"]),
-                    low=float(row["low"]),
-                    close=float(row["close"]),
-                    volume=int(row["volume"])
-                ))
+                prices.append(
+                    StockPrice(
+                        date=date_ts.strftime("%Y-%m-%d"),
+                        open=float(row["open"]),
+                        high=float(row["high"]),
+                        low=float(row["low"]),
+                        close=float(row["close"]),
+                        volume=int(row["volume"]),
+                    )
+                )
 
         # テクニカル指標取得
         technical_data = db_manager.get_technical_indicators(symbol)
@@ -139,12 +155,18 @@ async def get_stock_detail(symbol: str, days: int = 365):
                     date_ts = date
                 else:
                     date_ts = pd.to_datetime(str(date))
-                technical_indicators.append(TechnicalIndicator(
-                    date=date_ts.strftime("%Y-%m-%d"),
-                    ma_25=float(row["ma_25"]) if row["ma_25"] is not None else None,
-                    divergence_rate=float(row["divergence_rate"]) if row["divergence_rate"] is not None else None,
-                    volume_avg_20=int(row["volume_avg_20"]) if row["volume_avg_20"] is not None else None
-                ))
+                technical_indicators.append(
+                    TechnicalIndicator(
+                        date=date_ts.strftime("%Y-%m-%d"),
+                        ma_25=float(row["ma_25"]) if row["ma_25"] is not None else None,
+                        divergence_rate=float(row["divergence_rate"])
+                        if row["divergence_rate"] is not None
+                        else None,
+                        volume_avg_20=int(row["volume_avg_20"])
+                        if row["volume_avg_20"] is not None
+                        else None,
+                    )
+                )
 
         # ティッカー情報取得
         ticker_data = db_manager.get_ticker_info(symbol)
@@ -165,17 +187,18 @@ async def get_stock_detail(symbol: str, days: int = 365):
                 profit_margins=ticker_data.get("profit_margins"),
                 dividend_rate=ticker_data.get("dividend_rate"),
                 trailing_annual_dividend_rate=ticker_data.get("trailing_annual_dividend_rate"),
-                ex_dividend_date=str(ticker_data.get("ex_dividend_date")) if ticker_data.get("ex_dividend_date") else None,
+                ex_dividend_date=str(ticker_data.get("ex_dividend_date"))
+                if ticker_data.get("ex_dividend_date")
+                else None,
                 fifty_two_week_high=ticker_data.get("fifty_two_week_high"),
                 fifty_two_week_low=ticker_data.get("fifty_two_week_low"),
-                average_volume=ticker_data.get("average_volume")
+                average_volume=ticker_data.get("average_volume"),
             )
 
         # 動的配当利回り計算
         dividend_yield = None
         if current_price:
-            from app.services.analysis.technical_analyzer import TechnicalAnalyzer
-            analyzer = TechnicalAnalyzer()
+            analyzer = TechnicalAnalyzerService()
             dividend_yield = analyzer.get_dividend_yield(symbol, current_price)
 
         return StockDetail(
@@ -189,11 +212,12 @@ async def get_stock_detail(symbol: str, days: int = 365):
             dividend_yield=dividend_yield,
             prices=prices,
             technical_indicators=technical_indicators,
-            ticker_info=ticker_info
+            ticker_info=ticker_info,
         )
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
 
 @router.get("/{symbol}/prices", response_model=list[StockPrice])
 async def get_stock_prices(symbol: str, days: int = 100):
@@ -213,14 +237,16 @@ async def get_stock_prices(symbol: str, days: int = 100):
                 date_ts = date
             else:
                 date_ts = pd.to_datetime(str(date))
-            prices.append(StockPrice(
-                date=date_ts.strftime("%Y-%m-%d"),
-                open=float(row["open"]),
-                high=float(row["high"]),
-                low=float(row["low"]),
-                close=float(row["close"]),
-                volume=int(row["volume"])
-            ))
+            prices.append(
+                StockPrice(
+                    date=date_ts.strftime("%Y-%m-%d"),
+                    open=float(row["open"]),
+                    high=float(row["high"]),
+                    low=float(row["low"]),
+                    close=float(row["close"]),
+                    volume=int(row["volume"]),
+                )
+            )
 
         return prices
 
