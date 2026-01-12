@@ -1,29 +1,18 @@
-import os
 from collections.abc import Callable, Generator, Iterator
-from pathlib import Path
 
 import pytest
 import pytest_asyncio
-from pytest import TempPathFactory
 from sqlalchemy.orm import Session
 
 from app.database import models
 from app.database.session import SessionLocal, engine
 
-
-@pytest.fixture(scope="session")
-def test_db_path(tmp_path_factory: TempPathFactory) -> Path:
-    """一時SQLite DBを用意してDATABASE_PATHに差し替え。"""
-    db_dir = tmp_path_factory.mktemp("db")
-    db_path = db_dir / "test.db"
-    os.environ["DATABASE_PATH"] = str(db_path)
-    # テスト環境ではHTTPセッションクッキーを許可
-    os.environ["SESSION_HTTPS_ONLY"] = "false"
-    return db_path
+# 注意: DATABASE_PATH と SESSION_HTTPS_ONLY は pyproject.toml の
+# [tool.pytest.ini_options] env で設定されています（pytest-env）
 
 
 @pytest.fixture(scope="session")
-def db_engine_session(test_db_path: Path) -> Iterator[tuple]:
+def db_engine_session() -> Iterator[tuple]:
     """テスト用エンジン/SessionLocalを初期化し、メタデータを管理。"""
     models.Base.metadata.create_all(bind=engine)
     yield engine, SessionLocal
@@ -53,7 +42,7 @@ def db_session(db_engine_session) -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def app(test_db_path):
+def app():
     """FastAPIアプリ本体。"""
     from app.api.main import app
 

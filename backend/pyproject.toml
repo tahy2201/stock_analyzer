@@ -90,11 +90,17 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "--cov=. --cov-report=html --cov-report=term-missing"
+# pytest-env: テスト実行時の環境変数（conftest.pyのインポートより先に設定される）
+env = [
+    "DATABASE_PATH=/tmp/stock_analyzer_test.db",
+    "SESSION_HTTPS_ONLY=false",
+]
 
 [dependency-groups]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
+    "pytest-env>=1.0.0",
     "pandas-stubs>=2.2.2.240807",
     "ruff>=0.13.0",
     "mypy>=1.0.0",
