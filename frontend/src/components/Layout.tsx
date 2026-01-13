@@ -1,8 +1,8 @@
+import { CloseOutlined, MenuOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { Button, Dropdown, message } from 'antd'
-import { MenuOutlined, CloseOutlined } from '@ant-design/icons'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 interface LayoutProps {
@@ -105,9 +105,11 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="flex flex-1 relative">
         {/* オーバーレイ（モバイルでサイドバー開いている時のみ表示） */}
         {isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/30 z-40 md:hidden"
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/30 z-40 md:hidden border-none cursor-default"
             onClick={() => setIsSidebarOpen(false)}
+            aria-label="メニューを閉じる"
           />
         )}
 
