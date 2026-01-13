@@ -106,7 +106,7 @@ const Layout = ({ children }: LayoutProps) => {
         {/* オーバーレイ（モバイルでサイドバー開いている時のみ表示） */}
         {isSidebarOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+            className="fixed inset-0 bg-black/30 z-40 md:hidden"
             onClick={() => setIsSidebarOpen(false)}
           />
         )}
