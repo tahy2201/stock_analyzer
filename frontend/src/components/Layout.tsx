@@ -1,5 +1,7 @@
+import { CloseOutlined, MenuOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { Button, Dropdown, message } from 'antd'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -7,10 +9,24 @@ interface LayoutProps {
   children: React.ReactNode
 }
 
+/** ヘッダーの高さ（px） */
+const HEADER_HEIGHT = 64
+
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
+  /**
+   * ナビゲーションアイテムがアクティブかどうかを判定する
+   */
+  const isNavItemActive = (path: string): boolean => {
+    if (path === '/') {
+      return location.pathname === '/'
+    }
+    return location.pathname === path || location.pathname.startsWith(path)
+  }
 
   const navItems = [
     { path: '/', label: '🏠 ダッシュボード' },
@@ -60,9 +76,21 @@ const Layout = ({ children }: LayoutProps) => {
       {/* 共通ヘッダー */}
       <header className="bg-gray-800 border-b border-gray-700 shadow-lg">
         <div className="flex items-center justify-between px-6 py-4">
-          <h1 className="text-xl font-semibold text-white">
-            📈 株式分析システム
-          </h1>
+          <div className="flex items-center gap-4">
+            {/* ハンバーガーメニュー（モバイルのみ表示） */}
+            <Button
+              type="text"
+              icon={isSidebarOpen ? <CloseOutlined /> : <MenuOutlined />}
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="md:hidden text-white text-xl"
+              aria-label={isSidebarOpen ? 'メニューを閉じる' : 'メニューを開く'}
+              aria-expanded={isSidebarOpen}
+              aria-controls="sidebar-nav"
+            />
+            <h1 className="text-xl font-semibold text-white">
+              📈 株式分析システム
+            </h1>
+          </div>
           <div className="flex items-center gap-4">
             {user ? (
               <Dropdown
@@ -90,20 +118,37 @@ const Layout = ({ children }: LayoutProps) => {
         </div>
       </header>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 relative">
+        {/* オーバーレイ（モバイルでサイドバー開いている時のみ表示） */}
+        {isSidebarOpen && (
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/30 z-40 md:hidden border-none cursor-pointer"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="メニューを閉じる"
+          />
+        )}
+
         {/* サイドナビゲーション */}
-        <nav className="w-64 bg-gray-900 text-white shadow-lg">
+        {/* biome-ignore lint/correctness/useUniqueElementIds: Layoutはシングルトンコンポーネントのため静的IDで問題なし */}
+        <nav
+          id="sidebar-nav"
+          className={`
+            w-64 bg-gray-900 text-white shadow-lg
+            fixed md:static inset-y-0 left-0 z-50
+            transform transition-transform duration-300
+            ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}
+          style={{ top: `${HEADER_HEIGHT}px` }}
+        >
           <ul className="space-y-0">
             {navItems.map((item) => (
               <li key={item.path} className="border-b border-gray-700">
                 <Link
                   to={item.path}
+                  onClick={() => setIsSidebarOpen(false)}
                   className={`block px-6 py-4 font-medium transition-colors duration-200 ${
-                    location.pathname === item.path ||
-                    (
-                      item.path !== '/' &&
-                        location.pathname.startsWith(item.path)
-                    )
+                    isNavItemActive(item.path)
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
@@ -116,7 +161,7 @@ const Layout = ({ children }: LayoutProps) => {
         </nav>
 
         {/* メインコンテンツ */}
-        <main className="flex-1 p-8 bg-gray-900 text-gray-100 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 bg-gray-900 text-gray-100 overflow-y-auto">
           {children}
         </main>
       </div>
