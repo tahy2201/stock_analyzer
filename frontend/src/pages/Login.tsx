@@ -57,8 +57,8 @@ const Login = () => {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900">
-      <div className="w-full max-w-md p-8 bg-gray-800 rounded-lg shadow-xl">
+    <div className="flex items-start md:items-center justify-center min-h-screen bg-gray-900 pt-16 md:pt-0">
+      <div className="w-full max-w-md p-8 mx-4 bg-gray-800 rounded-lg shadow-xl">
         <h1 className="text-2xl font-bold text-white text-center mb-8">
           株式分析システム
         </h1>
