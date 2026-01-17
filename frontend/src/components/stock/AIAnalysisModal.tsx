@@ -12,6 +12,20 @@ interface AIAnalysisModalProps {
   onClose: () => void
 }
 
+// UTC時刻をJST（日本標準時）に変換して表示
+const formatJST = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toLocaleString('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
 const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => {
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [loading, setLoading] = useState(false)
@@ -124,7 +138,7 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
             AI分析中です。しばらくお待ちください...
           </Paragraph>
           <Text type="secondary">
-            分析開始: {new Date(analysis.created_at).toLocaleString('ja-JP')}
+            分析開始: {formatJST(analysis.created_at)}
           </Text>
         </div>
       )
@@ -163,7 +177,7 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
           }}
         >
           <Text type="secondary">
-            分析日時: {new Date(analysis.created_at).toLocaleString('ja-JP')}
+            分析日時: {formatJST(analysis.created_at)}
           </Text>
           <Button
             icon={<ReloadOutlined />}
