@@ -60,3 +60,18 @@ export interface CandidatesCount {
   medium_score: number
   low_score: number
 }
+
+export interface AIAnalysis {
+  id: number
+  symbol: string
+  status: 'pending' | 'completed' | 'failed'
+  analysis_text: string | null
+  error_message: string | null
+  created_at: string
+  completed_at: string | null
+}
+
+export interface AIAnalysisListResponse {
+  analyses: AIAnalysis[]
+  total: number
+}

@@ -30,4 +30,7 @@ YFINANCE_REQUEST_DELAY = 0.1
 
 MARKET_INDICES = {"NIKKEI": "^N225", "TOPIX": "^TPX", "JASDAQ": "^JASDAQ"}
 
+# Anthropic API設定
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+
 DATA_DIR.mkdir(exist_ok=True)
