@@ -1,10 +1,34 @@
 import { ReloadOutlined } from '@ant-design/icons'
 import { Button, Modal, Spin, Typography } from 'antd'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import Markdown, { type Components } from 'react-markdown'
 import { aiAnalysisApi } from '../../services/api'
 import type { AIAnalysis } from '../../types/stock'
 
 const { Paragraph, Text, Title } = Typography
+
+// Markdown要素にTailwindクラスを適用
+const markdownComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-xl font-semibold text-blue-400 mt-6 mb-2 pb-2 border-b border-gray-600">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-lg font-semibold text-blue-400 mt-4 mb-2">{children}</h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-base font-semibold text-blue-400 mt-3 mb-1">{children}</h3>
+  ),
+  p: ({ children }) => <p className="my-2">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc pl-6 my-2">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-6 my-2">{children}</ol>,
+  li: ({ children }) => <li className="my-1">{children}</li>,
+  strong: ({ children }) => (
+    <strong className="font-semibold text-gray-100">{children}</strong>
+  ),
+  hr: () => <hr className="border-gray-600 my-4" />,
+}
 
 interface AIAnalysisModalProps {
   visible: boolean
@@ -32,14 +56,13 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
   const [polling, setPolling] = useState(false)
 
   // 分析を開始する
-  const startAnalysis = async () => {
+  const startAnalysis = useCallback(async () => {
     setLoading(true)
     setAnalysis(null)
     try {
       const result = await aiAnalysisApi.startAnalysis(symbol)
       setAnalysis(result)
 
-      // pending状態の場合、ポーリングを開始
       if (result.status === 'pending') {
         setPolling(true)
       }
@@ -48,7 +71,7 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
     } finally {
       setLoading(false)
     }
-  }
+  }, [symbol])
 
   // ポーリング処理
   useEffect(() => {
@@ -104,7 +127,7 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
     }
 
     fetchLatestAnalysis()
-  }, [visible, symbol])
+  }, [visible, symbol, startAnalysis])
 
   // 分析結果の表示内容を生成
   const renderContent = () => {
@@ -187,18 +210,10 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
             再分析
           </Button>
         </div>
-        <div
-          style={{
-            maxHeight: '60vh',
-            overflowY: 'auto',
-            padding: '16px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '4px',
-            whiteSpace: 'pre-wrap',
-            lineHeight: 1.8,
-          }}
-        >
-          {analysis.analysis_text}
+        <div className="max-h-[60vh] overflow-y-auto p-4 bg-gray-800 rounded-lg leading-relaxed text-gray-200 border border-gray-600">
+          <Markdown components={markdownComponents}>
+            {analysis.analysis_text || ''}
+          </Markdown>
         </div>
       </div>
     )
