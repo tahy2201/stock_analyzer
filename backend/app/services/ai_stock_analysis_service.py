@@ -7,14 +7,13 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from anthropic import Anthropic
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.config.settings import ANTHROPIC_API_KEY
 from app.database.database_manager import DatabaseManager
 from app.database.models import AIStockAnalysis, Company, StockPrice, TechnicalIndicator
 from app.database.session import SessionLocal
+from app.services.claude_service import ClaudeService
 
 
 class AIStockAnalysisService:
@@ -27,7 +26,7 @@ class AIStockAnalysisService:
             db_manager: データベースマネージャー
         """
         self.db_manager = db_manager
-        self.client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+        self.claude_service = ClaudeService()
 
     def get_stock_data_for_analysis(
         self, session: Session, symbol: str, days: int = 90
@@ -162,51 +161,49 @@ class AIStockAnalysisService:
 
         return prompt
 
+    def _record_analysis_failure(self, analysis_id: int, error_message: str) -> None:
+        """分析失敗をデータベースに記録する
+
+        Args:
+            analysis_id: 分析ID
+            error_message: エラーメッセージ
+        """
+        with SessionLocal() as session:
+            analysis = session.get(AIStockAnalysis, analysis_id)
+            if analysis:
+                analysis.status = "failed"
+                analysis.error_message = error_message
+                analysis.completed_at = datetime.now(timezone.utc)
+                session.commit()
+
     async def analyze_stock_async(
-        self, symbol: str, user_id: int, analysis_id: int, timeout_seconds: int = 60
+        self, symbol: str, analysis_id: int, timeout_seconds: int = 60
     ) -> None:
         """株価をAI分析する（非同期）
 
         Args:
             symbol: 銘柄コード
-            user_id: ユーザーID
             analysis_id: 分析ID
             timeout_seconds: タイムアウト秒数（デフォルト: 60秒）
         """
         try:
-            # タイムアウト付きで分析を実行
             await asyncio.wait_for(
-                self._perform_analysis(symbol, user_id, analysis_id), timeout=timeout_seconds
+                self._perform_analysis(symbol, analysis_id), timeout=timeout_seconds
             )
         except asyncio.TimeoutError:
-            # タイムアウトエラーを記録
-            with SessionLocal() as session:
-                analysis = session.get(AIStockAnalysis, analysis_id)
-                if analysis:
-                    analysis.status = "failed"
-                    analysis.error_message = "分析がタイムアウトしました（60秒）"
-                    analysis.completed_at = datetime.now(timezone.utc)
-                    session.commit()
+            self._record_analysis_failure(analysis_id, "分析がタイムアウトしました（60秒）")
         except Exception as e:
-            # その他のエラーを記録
-            with SessionLocal() as session:
-                analysis = session.get(AIStockAnalysis, analysis_id)
-                if analysis:
-                    analysis.status = "failed"
-                    analysis.error_message = f"分析中にエラーが発生しました: {str(e)}"
-                    analysis.completed_at = datetime.now(timezone.utc)
-                    session.commit()
+            self._record_analysis_failure(analysis_id, f"分析中にエラーが発生しました: {e}")
 
-    async def _perform_analysis(self, symbol: str, user_id: int, analysis_id: int) -> None:
+    async def _perform_analysis(self, symbol: str, analysis_id: int) -> None:
         """分析を実行する内部メソッド
 
         Args:
             symbol: 銘柄コード
-            user_id: ユーザーID
             analysis_id: 分析ID
         """
         # APIキーチェック
-        if not self.client:
+        if not self.claude_service.is_available():
             raise ValueError("Anthropic APIキーが設定されていません")
 
         # 株価データを取得
@@ -217,20 +214,10 @@ class AIStockAnalysisService:
         prompt = self.build_analysis_prompt(data)
 
         # Claude APIに分析を依頼
-        # asyncio.to_thread を使って同期API呼び出しを非同期化
-        response = await asyncio.to_thread(  # type: ignore[arg-type]
-            self.client.messages.create,
-            model="claude-sonnet-4-20250514",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        response = await asyncio.to_thread(self.claude_service.send_message, prompt)
 
         # 分析結果を取得
-        analysis_text = "分析結果を取得できませんでした"
-        if response.content and len(response.content) > 0:
-            first_block = response.content[0]
-            if hasattr(first_block, "text"):
-                analysis_text = first_block.text  # type: ignore[attr-defined]
+        analysis_text = self.claude_service.extract_text_from_response(response)
 
         # データベースに保存
         with SessionLocal() as session:
