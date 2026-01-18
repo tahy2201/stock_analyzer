@@ -1,4 +1,8 @@
-import { ReloadOutlined, ShoppingOutlined } from '@ant-design/icons'
+import {
+  ExperimentOutlined,
+  ReloadOutlined,
+  ShoppingOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import {
   Button,
@@ -10,6 +14,7 @@ import {
   Row,
   Select,
   Slider,
+  Space,
   Table,
   Tag,
 } from 'antd'
@@ -17,24 +22,12 @@ import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BuyModal from '../components/portfolio/BuyModal'
+import AIAnalysisModal from '../components/stock/AIAnalysisModal'
 import { useAuth } from '../contexts/AuthContext'
 import { API_BASE_URL, portfolioApi } from '../services/api'
 import type { PortfolioSummary } from '../types/portfolio'
+import type { InvestmentCandidate } from '../types/stock'
 import { getYahooFinanceUrl } from '../utils/stockUtils'
-
-interface InvestmentCandidate {
-  symbol: string
-  name: string | null
-  sector: string | null
-  market: string | null
-  current_price: number | null
-  ma_25: number | null
-  divergence_rate: number | null
-  dividend_yield: number | null
-  analysis_score: number | null
-  latest_price: number | null
-  price_change_1d: number | null
-}
 
 // 投資候補ページ
 const Candidates = () => {
@@ -57,6 +50,10 @@ const Candidates = () => {
     null,
   )
   const [buyModalVisible, setBuyModalVisible] = useState(false)
+
+  // AI分析モーダル用の状態
+  const [aiAnalysisVisible, setAiAnalysisVisible] = useState(false)
+  const [aiAnalysisSymbol, setAiAnalysisSymbol] = useState<string>('')
 
   // ポートフォリオ一覧取得
   const { data: portfolios } = useQuery<PortfolioSummary[]>({
@@ -108,6 +105,21 @@ const Candidates = () => {
     }
     setPortfolioSelectVisible(false)
     setBuyModalVisible(true)
+  }
+
+  // AI分析ボタンハンドラ
+  const handleAIAnalysis = (symbol: string) => {
+    if (!user) {
+      Modal.info({
+        title: 'ログインが必要です',
+        content: 'AI分析機能を使用するにはログインしてください。',
+        onOk: () => navigate('/login'),
+      })
+      return
+    }
+
+    setAiAnalysisSymbol(symbol)
+    setAiAnalysisVisible(true)
   }
 
   const columns: ColumnsType<InvestmentCandidate> = [
@@ -196,17 +208,26 @@ const Candidates = () => {
     columns.push({
       title: 'アクション',
       key: 'action',
-      width: 100,
+      width: 180,
       fixed: 'right',
       render: (_, record) => (
-        <Button
-          type="primary"
-          size="small"
-          icon={<ShoppingOutlined />}
-          onClick={() => handleBuy(record.symbol)}
-        >
-          購入
-        </Button>
+        <Space size="small">
+          <Button
+            size="small"
+            icon={<ExperimentOutlined />}
+            onClick={() => handleAIAnalysis(record.symbol)}
+          >
+            AI分析
+          </Button>
+          <Button
+            type="primary"
+            size="small"
+            icon={<ShoppingOutlined />}
+            onClick={() => handleBuy(record.symbol)}
+          >
+            購入
+          </Button>
+        </Space>
       ),
     })
   }
@@ -393,6 +414,16 @@ const Candidates = () => {
           initialSymbol={selectedSymbol}
         />
       )}
+
+      {/* AI分析モーダル */}
+      <AIAnalysisModal
+        visible={aiAnalysisVisible}
+        symbol={aiAnalysisSymbol}
+        onClose={() => {
+          setAiAnalysisVisible(false)
+          setAiAnalysisSymbol('')
+        }}
+      />
     </div>
   )
 }

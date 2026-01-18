@@ -22,16 +22,16 @@ export interface StockDetail extends StockInfo {
 
 export interface InvestmentCandidate {
   symbol: string
-  name?: string
-  sector?: string
-  market?: string
-  current_price?: number
-  ma_25?: number
-  divergence_rate?: number
-  dividend_yield?: number
-  analysis_score?: number
-  latest_price?: number
-  price_change_1d?: number
+  name: string | null
+  sector: string | null
+  market: string | null
+  current_price: number | null
+  ma_25: number | null
+  divergence_rate: number | null
+  dividend_yield: number | null
+  analysis_score: number | null
+  latest_price: number | null
+  price_change_1d: number | null
 }
 
 export interface TechnicalAnalysis {
@@ -59,4 +59,19 @@ export interface CandidatesCount {
   high_score: number
   medium_score: number
   low_score: number
+}
+
+export interface AIAnalysis {
+  id: number
+  symbol: string
+  status: 'pending' | 'completed' | 'failed'
+  analysis_text: string | null
+  error_message: string | null
+  created_at: string
+  completed_at: string | null
+}
+
+export interface AIAnalysisListResponse {
+  analyses: AIAnalysis[]
+  total: number
 }

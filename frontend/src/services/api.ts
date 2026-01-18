@@ -20,6 +20,8 @@ import type {
   WithdrawalRequest,
 } from '../types/portfolio'
 import type {
+  AIAnalysis,
+  AIAnalysisListResponse,
   CandidatesCount,
   InvestmentCandidate,
   StockDetail,
@@ -311,6 +313,32 @@ export const companiesApi = {
   > => {
     const response = await api.get('/companies/', {
       params: { search, limit },
+    })
+    return response.data
+  },
+}
+
+// AI Analysis API
+export const aiAnalysisApi = {
+  // 分析開始
+  startAnalysis: async (symbol: string): Promise<AIAnalysis> => {
+    const response = await api.post(`/ai-analysis/${symbol}`)
+    return response.data
+  },
+
+  // 分析結果取得
+  getAnalysis: async (analysisId: number): Promise<AIAnalysis> => {
+    const response = await api.get(`/ai-analysis/${analysisId}`)
+    return response.data
+  },
+
+  // 分析履歴取得
+  getAnalysisHistory: async (
+    symbol: string,
+    limit: number = 10,
+  ): Promise<AIAnalysisListResponse> => {
+    const response = await api.get(`/ai-analysis/history/${symbol}`, {
+      params: { limit },
     })
     return response.data
   },

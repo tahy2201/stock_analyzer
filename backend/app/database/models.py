@@ -282,6 +282,38 @@ class Transaction(Base):
     )
 
 
+class AIStockAnalysis(Base):
+    """AI株価分析結果テーブル"""
+
+    __tablename__ = "ai_stock_analyses"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    symbol: Mapped[str] = mapped_column(String(10), ForeignKey("companies.symbol"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(
+        Enum(
+            "pending",
+            "completed",
+            "failed",
+            name="ai_analysis_status",
+            native_enum=False,
+            validate_strings=True,
+        ),
+        nullable=False,
+    )
+    analysis_text: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    error_message: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index("idx_ai_analyses_user_symbol", "user_id", "symbol"),
+        Index("idx_ai_analyses_status", "status"),
+    )
+
+
 def create_tables() -> None:
     """
     Compatibility function for legacy code.

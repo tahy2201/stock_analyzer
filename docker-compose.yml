@@ -11,6 +11,7 @@ services:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
       - DATABASE_PATH=/app/data/stock_data.db
       - UVICORN_EXTRA_ARGS=--ssl-keyfile=/app/certs/key.pem --ssl-certfile=/app/certs/cert.pem
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     ports:
       - "8000:8000"
 
