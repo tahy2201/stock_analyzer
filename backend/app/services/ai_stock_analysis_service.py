@@ -4,16 +4,20 @@ Claude APIを使用して銘柄の詳細分析を実行する。
 """
 
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config.settings import AI_ANALYSIS_DATA_DAYS, AI_ANALYSIS_TIMEOUT_SECONDS
 from app.database.database_manager import DatabaseManager
 from app.database.models import AIStockAnalysis, Company, StockPrice, TechnicalIndicator
 from app.database.session import SessionLocal
-from app.services.claude_service import ClaudeService
+from app.services.claude_service import ClaudeAPIError, ClaudeService
+
+logger = logging.getLogger(__name__)
 
 
 class AIStockAnalysisService:
@@ -29,24 +33,30 @@ class AIStockAnalysisService:
         self.claude_service = ClaudeService()
 
     def get_stock_data_for_analysis(
-        self, session: Session, symbol: str, days: int = 90
+        self, session: Session, symbol: str, days: int = AI_ANALYSIS_DATA_DAYS
     ) -> dict[str, Any]:
         """分析用の株価データを取得する
 
         Args:
             session: データベースセッション
             symbol: 銘柄コード
-            days: データ取得日数（デフォルト: 90日）
+            days: データ取得日数
 
         Returns:
             株価データと企業情報を含む辞書
+
+        Raises:
+            ValueError: 銘柄が見つからない場合
         """
+        logger.debug("株価データを取得します (symbol=%s, days=%d)", symbol, days)
+
         # 企業情報を取得
         company = session.scalar(select(Company).where(Company.symbol == symbol))
         if not company:
+            logger.warning("銘柄が見つかりません (symbol=%s)", symbol)
             raise ValueError(f"銘柄 {symbol} が見つかりません")
 
-        # 過去90日間の株価データを取得
+        # 過去N日間の株価データを一括取得
         start_date = datetime.now(timezone.utc) - timedelta(days=days)
         stock_prices = session.scalars(
             select(StockPrice)
@@ -60,6 +70,13 @@ class AIStockAnalysisService:
             .where(TechnicalIndicator.symbol == symbol)
             .order_by(TechnicalIndicator.date.desc())
             .limit(1)
+        )
+
+        logger.debug(
+            "株価データを取得しました (symbol=%s, price_count=%d, has_indicator=%s)",
+            symbol,
+            len(stock_prices),
+            latest_indicator is not None,
         )
 
         return {
@@ -107,9 +124,9 @@ class AIStockAnalysisService:
 業種: {company.sector or "不明"}
 市場区分: {company.market or "不明"}
 
-【株価推移（過去90日間）】
+【株価推移（過去{AI_ANALYSIS_DATA_DAYS}日間）】
 現在価格: {current_price:,.0f}円
-90日前価格: {oldest_price:,.0f}円
+{AI_ANALYSIS_DATA_DAYS}日前価格: {oldest_price:,.0f}円
 変動率: {price_change_pct:+.1f}%
 期間最高値: {max_price:,.0f}円
 期間最安値: {min_price:,.0f}円
@@ -124,15 +141,15 @@ class AIStockAnalysisService:
         else:
             prompt += "\nテクニカル指標データなし"
 
-        prompt += """
+        prompt += f"""
 
 【分析指示】
 以下の形式で詳細な分析を提供してください：
 
-## 株価動向分析（過去90日）
+## 株価動向分析（過去{AI_ANALYSIS_DATA_DAYS}日）
 
 **価格推移:**
-- 90日前、現在、最高値、最安値を明記
+- {AI_ANALYSIS_DATA_DAYS}日前、現在、最高値、最安値を明記
 - 主要な変動要因を3つ挙げる
 
 **テクニカル指標:**
@@ -166,8 +183,9 @@ class AIStockAnalysisService:
 
         Args:
             analysis_id: 分析ID
-            error_message: エラーメッセージ
+            error_message: エラーメッセージ（ユーザー向けの安全なメッセージ）
         """
+        logger.info("分析失敗を記録します (analysis_id=%d)", analysis_id)
         with SessionLocal() as session:
             analysis = session.get(AIStockAnalysis, analysis_id)
             if analysis:
@@ -177,23 +195,44 @@ class AIStockAnalysisService:
                 session.commit()
 
     async def analyze_stock_async(
-        self, symbol: str, analysis_id: int, timeout_seconds: int = 60
+        self, symbol: str, analysis_id: int, timeout_seconds: int = AI_ANALYSIS_TIMEOUT_SECONDS
     ) -> None:
         """株価をAI分析する（非同期）
 
         Args:
             symbol: 銘柄コード
             analysis_id: 分析ID
-            timeout_seconds: タイムアウト秒数（デフォルト: 60秒）
+            timeout_seconds: タイムアウト秒数
         """
+        logger.info(
+            "AI分析を開始します (symbol=%s, analysis_id=%d, timeout=%ds)",
+            symbol,
+            analysis_id,
+            timeout_seconds,
+        )
         try:
             await asyncio.wait_for(
                 self._perform_analysis(symbol, analysis_id), timeout=timeout_seconds
             )
+            logger.info("AI分析が完了しました (analysis_id=%d)", analysis_id)
         except asyncio.TimeoutError:
-            self._record_analysis_failure(analysis_id, "分析がタイムアウトしました（60秒）")
-        except Exception as e:
-            self._record_analysis_failure(analysis_id, f"分析中にエラーが発生しました: {e}")
+            logger.warning(
+                "AI分析がタイムアウトしました (analysis_id=%d, timeout=%ds)",
+                analysis_id,
+                timeout_seconds,
+            )
+            self._record_analysis_failure(
+                analysis_id, f"分析がタイムアウトしました（{timeout_seconds}秒）"
+            )
+        except ClaudeAPIError as e:
+            logger.error("Claude APIエラーが発生しました (analysis_id=%d): %s", analysis_id, str(e))
+            self._record_analysis_failure(analysis_id, str(e))
+        except ValueError as e:
+            logger.error("バリデーションエラー (analysis_id=%d): %s", analysis_id, str(e))
+            self._record_analysis_failure(analysis_id, str(e))
+        except Exception:
+            logger.exception("AI分析中に予期しないエラーが発生しました (analysis_id=%d)", analysis_id)
+            self._record_analysis_failure(analysis_id, "分析中に予期しないエラーが発生しました")
 
     async def _perform_analysis(self, symbol: str, analysis_id: int) -> None:
         """分析を実行する内部メソッド
@@ -201,17 +240,19 @@ class AIStockAnalysisService:
         Args:
             symbol: 銘柄コード
             analysis_id: 分析ID
+
+        Raises:
+            ClaudeAPIError: API呼び出しに失敗した場合
+            ValueError: データ取得に失敗した場合
         """
         # APIキーチェック
         if not self.claude_service.is_available():
-            raise ValueError("Anthropic APIキーが設定されていません")
+            raise ClaudeAPIError("APIキーが設定されていません")
 
-        # 株価データを取得
+        # 株価データを取得してプロンプトを構築
         with SessionLocal() as session:
             data = self.get_stock_data_for_analysis(session, symbol)
-
-        # プロンプト構築
-        prompt = self.build_analysis_prompt(data)
+            prompt = self.build_analysis_prompt(data)
 
         # Claude APIに分析を依頼
         response = await asyncio.to_thread(self.claude_service.send_message, prompt)
@@ -227,6 +268,7 @@ class AIStockAnalysisService:
                 analysis.analysis_text = analysis_text
                 analysis.completed_at = datetime.now(timezone.utc)
                 session.commit()
+                logger.debug("分析結果を保存しました (analysis_id=%d)", analysis_id)
 
     def create_analysis_record(self, session: Session, symbol: str, user_id: int) -> int:
         """分析レコードを作成する
@@ -239,6 +281,7 @@ class AIStockAnalysisService:
         Returns:
             作成された分析レコードのID
         """
+        logger.info("分析レコードを作成します (symbol=%s, user_id=%d)", symbol, user_id)
         analysis = AIStockAnalysis(
             symbol=symbol,
             user_id=user_id,
@@ -248,6 +291,7 @@ class AIStockAnalysisService:
         session.add(analysis)
         session.commit()
         session.refresh(analysis)
+        logger.debug("分析レコードを作成しました (analysis_id=%d)", analysis.id)
         return analysis.id
 
     def get_analysis_by_id(self, session: Session, analysis_id: int) -> Optional[AIStockAnalysis]:

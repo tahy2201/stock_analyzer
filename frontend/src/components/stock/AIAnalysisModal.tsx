@@ -1,11 +1,16 @@
 import { ReloadOutlined } from '@ant-design/icons'
-import { Button, Modal, Spin, Typography } from 'antd'
-import { useCallback, useEffect, useState } from 'react'
+import { Button, Modal, Spin, Typography, message } from 'antd'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Markdown, { type Components } from 'react-markdown'
 import { aiAnalysisApi } from '../../services/api'
 import type { AIAnalysis } from '../../types/stock'
 
 const { Paragraph, Text, Title } = Typography
+
+// ポーリング設定
+const POLLING_INITIAL_INTERVAL_MS = 2000
+const POLLING_MAX_INTERVAL_MS = 10000
+const POLLING_BACKOFF_MULTIPLIER = 1.5
 
 // Markdown要素にTailwindクラスを適用
 const markdownComponents: Components = {
@@ -54,11 +59,16 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
   const [analysis, setAnalysis] = useState<AIAnalysis | null>(null)
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const pollingIntervalRef = useRef(POLLING_INITIAL_INTERVAL_MS)
 
   // 分析を開始する
   const startAnalysis = useCallback(async () => {
     setLoading(true)
     setAnalysis(null)
+    setError(null)
+    pollingIntervalRef.current = POLLING_INITIAL_INTERVAL_MS
+
     try {
       const result = await aiAnalysisApi.startAnalysis(symbol)
       setAnalysis(result)
@@ -66,18 +76,20 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
       if (result.status === 'pending') {
         setPolling(true)
       }
-    } catch (error) {
-      console.error('AI分析の開始に失敗しました:', error)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'AI分析の開始に失敗しました'
+      setError(errorMessage)
+      message.error(errorMessage)
     } finally {
       setLoading(false)
     }
   }, [symbol])
 
-  // ポーリング処理
+  // ポーリング処理（指数バックオフ）
   useEffect(() => {
     if (!polling || !analysis) return
 
-    const interval = setInterval(async () => {
+    const poll = async () => {
       try {
         const updated = await aiAnalysisApi.getAnalysis(analysis.id)
         setAnalysis(updated)
@@ -85,14 +97,26 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
         // completed または failed になったらポーリング終了
         if (updated.status === 'completed' || updated.status === 'failed') {
           setPolling(false)
+          pollingIntervalRef.current = POLLING_INITIAL_INTERVAL_MS
         }
-      } catch (error) {
-        console.error('分析結果の取得に失敗しました:', error)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '分析結果の取得に失敗しました'
+        setError(errorMessage)
         setPolling(false)
+        pollingIntervalRef.current = POLLING_INITIAL_INTERVAL_MS
       }
-    }, 3000) // 3秒ごとにポーリング
+    }
 
-    return () => clearInterval(interval)
+    const timeoutId = setTimeout(() => {
+      poll()
+      // 次回のポーリング間隔を増加（指数バックオフ）
+      pollingIntervalRef.current = Math.min(
+        pollingIntervalRef.current * POLLING_BACKOFF_MULTIPLIER,
+        POLLING_MAX_INTERVAL_MS
+      )
+    }, pollingIntervalRef.current)
+
+    return () => clearTimeout(timeoutId)
   }, [polling, analysis])
 
   // モーダルを開いた時に最新の分析履歴を取得
@@ -100,11 +124,15 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
     if (!visible) {
       setAnalysis(null)
       setPolling(false)
+      setError(null)
+      pollingIntervalRef.current = POLLING_INITIAL_INTERVAL_MS
       return
     }
 
     const fetchLatestAnalysis = async () => {
       setLoading(true)
+      setError(null)
+
       try {
         const history = await aiAnalysisApi.getAnalysisHistory(symbol, 1)
         if (history.analyses.length > 0) {
@@ -119,8 +147,9 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
           // 履歴がない場合は自動的に分析を開始
           await startAnalysis()
         }
-      } catch (error) {
-        console.error('分析履歴の取得に失敗しました:', error)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '分析履歴の取得に失敗しました'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }
@@ -138,6 +167,25 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
           <Paragraph style={{ marginTop: 16 }}>
             AI分析を準備しています...
           </Paragraph>
+        </div>
+      )
+    }
+
+    if (error && !analysis) {
+      return (
+        <div style={{ padding: '20px' }}>
+          <Title level={5} type="danger">
+            エラー
+          </Title>
+          <Paragraph type="danger">{error}</Paragraph>
+          <Button
+            type="primary"
+            danger
+            icon={<ReloadOutlined />}
+            onClick={startAnalysis}
+          >
+            再試行
+          </Button>
         </div>
       )
     }
