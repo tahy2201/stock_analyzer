@@ -20,6 +20,7 @@ import Portfolio from './pages/Portfolio'
 import PortfolioDetail from './pages/PortfolioDetail'
 import Register from './pages/Register'
 import StockList from './pages/StockList'
+import Transactions from './pages/Transactions'
 
 // React Query設定
 const queryClient = new QueryClient({
@@ -91,6 +92,14 @@ function AppRoutes() {
                 element={
                   <RequireAuth>
                     <PortfolioDetail />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/portfolio/:id/transactions"
+                element={
+                  <RequireAuth>
+                    <Transactions />
                   </RequireAuth>
                 }
               />
