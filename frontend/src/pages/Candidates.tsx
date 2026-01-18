@@ -26,21 +26,8 @@ import AIAnalysisModal from '../components/stock/AIAnalysisModal'
 import { useAuth } from '../contexts/AuthContext'
 import { API_BASE_URL, portfolioApi } from '../services/api'
 import type { PortfolioSummary } from '../types/portfolio'
+import type { InvestmentCandidate } from '../types/stock'
 import { getYahooFinanceUrl } from '../utils/stockUtils'
-
-interface InvestmentCandidate {
-  symbol: string
-  name: string | null
-  sector: string | null
-  market: string | null
-  current_price: number | null
-  ma_25: number | null
-  divergence_rate: number | null
-  dividend_yield: number | null
-  analysis_score: number | null
-  latest_price: number | null
-  price_change_1d: number | null
-}
 
 // 投資候補ページ
 const Candidates = () => {
