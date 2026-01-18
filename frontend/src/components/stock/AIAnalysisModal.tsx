@@ -102,6 +102,7 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '分析結果の取得に失敗しました'
         setError(errorMessage)
+        message.error(errorMessage)
         setPolling(false)
         pollingIntervalRef.current = POLLING_INITIAL_INTERVAL_MS
       }
@@ -150,6 +151,7 @@ const AIAnalysisModal = ({ visible, symbol, onClose }: AIAnalysisModalProps) => 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '分析履歴の取得に失敗しました'
         setError(errorMessage)
+        message.error(errorMessage)
       } finally {
         setLoading(false)
       }

@@ -4,13 +4,12 @@
 """
 
 import asyncio
-from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-from pydantic import BaseModel
 
 from app.api.dependencies.auth import get_current_user
+from app.api.schemas.ai_analysis import AnalysisListResponse, AnalysisResponse
+from app.config.settings import AI_ANALYSIS_TIMEOUT_SECONDS
 from app.database.database_manager import DatabaseManager
 from app.database.models import AIStockAnalysis, User
 from app.database.session import SessionLocal
@@ -36,25 +35,6 @@ def run_analysis_in_background(
     )
 
 router = APIRouter()
-
-
-class AnalysisResponse(BaseModel):
-    """分析レスポンスモデル"""
-
-    id: int
-    symbol: str
-    status: str
-    analysis_text: Optional[str] = None
-    error_message: Optional[str] = None
-    created_at: datetime
-    completed_at: Optional[datetime] = None
-
-
-class AnalysisListResponse(BaseModel):
-    """分析履歴リストレスポンスモデル"""
-
-    analyses: list[AnalysisResponse]
-    total: int
 
 
 def to_analysis_response(analysis: AIStockAnalysis) -> AnalysisResponse:
@@ -119,12 +99,18 @@ async def start_analysis(
     Raises:
         HTTPException: 銘柄が見つからない場合
     """
-    # 分析レコードを作成
+    # 分析レコードを作成して取得（セッションを1つに統合）
     with SessionLocal() as session:
         try:
             analysis_id = ai_service.create_analysis_record(session, symbol, current_user.id)
         except ValueError as e:
             raise HTTPException(status_code=404, detail=str(e)) from e
+
+        # 作成した分析レコードを取得
+        analysis = ai_service.get_analysis_by_id(session, analysis_id)
+        if not analysis:
+            raise HTTPException(status_code=500, detail="分析レコードの作成に失敗しました")
+        response = to_analysis_response(analysis)
 
     # バックグラウンドで分析を実行
     background_tasks.add_task(
@@ -132,15 +118,10 @@ async def start_analysis(
         ai_service,
         symbol,
         analysis_id,
-        60,
+        AI_ANALYSIS_TIMEOUT_SECONDS,
     )
 
-    # 作成した分析レコードを返す
-    with SessionLocal() as session:
-        analysis = ai_service.get_analysis_by_id(session, analysis_id)
-        if not analysis:
-            raise HTTPException(status_code=500, detail="分析レコードの作成に失敗しました")
-        return to_analysis_response(analysis)
+    return response
 
 
 @router.get("/{analysis_id}", response_model=AnalysisResponse)
