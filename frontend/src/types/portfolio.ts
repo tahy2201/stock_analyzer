@@ -98,3 +98,10 @@ export interface TransactionResponse {
   created_at: string
   notes: string | null
 }
+
+export interface DashboardPortfolioSummary {
+  has_portfolio: boolean
+  positions_count: number
+  total_profit_loss: number
+  total_profit_loss_rate: number
+}

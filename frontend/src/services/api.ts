@@ -10,6 +10,7 @@ import type {
 import { ApiException } from '../types/error'
 import type {
   BuyRequest,
+  DashboardPortfolioSummary,
   DepositRequest,
   PortfolioCreateRequest,
   PortfolioDetail,
@@ -203,6 +204,12 @@ export const adminApi = {
 
 // ポートフォリオAPI
 export const portfolioApi = {
+  // ダッシュボード用ポートフォリオ概要取得
+  getPortfolioSummary: async (): Promise<DashboardPortfolioSummary> => {
+    const response = await api.get('/portfolios/summary')
+    return response.data
+  },
+
   // ポートフォリオ一覧取得
   getPortfolios: async (): Promise<PortfolioSummary[]> => {
     const response = await api.get('/portfolios/')

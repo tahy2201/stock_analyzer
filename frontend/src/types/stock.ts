@@ -47,11 +47,9 @@ export interface TechnicalAnalysis {
 }
 
 export interface SystemStats {
-  companies_count: number
   symbols_with_prices: number
-  symbols_with_technical: number
   latest_price_date?: string
-  latest_analysis_date?: string
+  market_filter?: string
 }
 
 export interface CandidatesCount {
