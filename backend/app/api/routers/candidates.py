@@ -36,18 +36,34 @@ async def get_investment_candidates(
     min_dividend: float = 0.0,  # 配当利回り最小値（0.0で実質無効化）
     max_dividend: float = 100.0,  # 配当利回り最大値（100.0で実質無効化）
     market_filter: str = "prime",  # prime企業のみ
+    min_score: Optional[float] = None,  # 最小スコア
 ):
-    """投資候補銘柄を取得"""
+    """投資候補銘柄を取得。
+
+    Args:
+        limit: 取得上限
+        max_divergence: 乖離率上限（マイナス値、例: -5.0で5%以上下落の銘柄）
+        min_dividend: 配当利回り最小値
+        max_dividend: 配当利回り最大値
+        market_filter: 市場区分（prime, standard, growth）
+        min_score: 分析スコア最小値（0〜10、指定時はこの値以上の銘柄のみ）
+    """
     try:
         analyzer = TechnicalAnalyzerService()
+        # 空文字の場合はNoneに変換
+        filter_value = market_filter if market_filter else None
 
         # 投資候補を取得
         candidates = analyzer.get_investment_candidates(
             divergence_threshold=max_divergence,  # 乖離率の上限（マイナス値）
             dividend_min=min_dividend,
             dividend_max=max_dividend,
-            market_filter=market_filter,
+            market_filter=filter_value,
         )
+
+        # スコアフィルタを適用
+        if min_score is not None:
+            candidates = [c for c in candidates if c.get("analysis_score", 0) >= min_score]
 
         # レスポンス形式に変換（NaN値を除外）
         result = []
@@ -75,11 +91,29 @@ async def get_investment_candidates(
 
 
 @router.get("/count")
-async def get_candidates_count():
-    """投資候補銘柄数を取得"""
+async def get_candidates_count(
+    market_filter: str = "prime",
+    max_divergence: float = -5.0,
+    min_dividend: float = 3.0,
+):
+    """投資候補銘柄数を取得。
+
+    ダッシュボードのデフォルト条件（乖離率-5%以下、配当利回り3%以上）でカウント。
+
+    Args:
+        market_filter: 市場区分（prime, standard, growth）。デフォルトはprime。
+        max_divergence: 乖離率上限。デフォルトは-5.0。
+        min_dividend: 配当利回り最小値。デフォルトは3.0。
+    """
     try:
         analyzer = TechnicalAnalyzerService()
-        candidates = analyzer.get_investment_candidates()
+        # 空文字の場合はNoneに変換してフィルタ無効化
+        filter_value = market_filter if market_filter else None
+        candidates = analyzer.get_investment_candidates(
+            divergence_threshold=max_divergence,
+            dividend_min=min_dividend,
+            market_filter=filter_value,
+        )
 
         return {
             "total_candidates": len(candidates),
