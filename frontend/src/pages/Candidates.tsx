@@ -53,7 +53,7 @@ const Candidates = () => {
     if (param === null) return defaultValue
     if (typeof defaultValue === 'number') {
       const parsed = parseFloat(param)
-      return isNaN(parsed) ? defaultValue : parsed
+      return Number.isNaN(parsed) ? defaultValue : parsed
     }
     return param
   }
