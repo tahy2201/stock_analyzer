@@ -5,6 +5,7 @@ import pandas as pd
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
+from app.config.constants import MARKET_NAME_MAPPING
 from app.config.logging_config import get_service_logger
 from app.config.settings import DATABASE_PATH
 from app.database.models import Company, StockPrice, TechnicalIndicator, TickerInfo
@@ -729,37 +730,46 @@ class DatabaseManager:
             if not self._external_session:
                 session.close()
 
-    def get_database_stats(self) -> dict:
-        """データベース統計情報を取得"""
+    def get_database_stats(self, market_filter: Optional[str] = None) -> dict:
+        """データベース統計情報を取得。
+
+        Args:
+            market_filter: 市場区分でフィルタ（例: "prime", "standard", "growth"）
+        """
         session = self._get_session()
         try:
-            companies_count = session.query(func.count(Company.symbol)).scalar()
+            # 市場フィルタ適用の有無でクエリを分岐
+            if market_filter:
+                # 市場名をデータベースの日本語表記に変換
+                actual_market = MARKET_NAME_MAPPING.get(market_filter, market_filter)
 
-            symbols_with_prices = session.query(
-                func.count(func.distinct(StockPrice.symbol))
-            ).scalar()
+                # 指定市場の企業シンボルを取得（サブクエリとして使用）
+                market_symbols_subq = session.query(Company.symbol).filter(
+                    Company.market == actual_market
+                )
 
-            symbols_with_indicators = session.query(
-                func.count(func.distinct(TechnicalIndicator.symbol))
-            ).scalar()
+                symbols_with_prices = (
+                    session.query(func.count(func.distinct(StockPrice.symbol)))
+                    .filter(StockPrice.symbol.in_(market_symbols_subq))
+                    .scalar()
+                )
 
-            symbols_with_ticker_info = session.query(
-                func.count(func.distinct(TickerInfo.symbol))
-            ).scalar()
+                latest_price_date = (
+                    session.query(func.max(StockPrice.date))
+                    .filter(StockPrice.symbol.in_(market_symbols_subq))
+                    .scalar()
+                )
+            else:
+                symbols_with_prices = session.query(
+                    func.count(func.distinct(StockPrice.symbol))
+                ).scalar()
 
-            latest_price_date = session.query(func.max(StockPrice.date)).scalar()
-
-            latest_ticker_update = session.query(func.max(TickerInfo.last_updated)).scalar()
+                latest_price_date = session.query(func.max(StockPrice.date)).scalar()
 
             return {
-                "companies_count": companies_count or 0,
                 "symbols_with_prices": symbols_with_prices or 0,
-                "symbols_with_indicators": symbols_with_indicators or 0,
-                "symbols_with_ticker_info": symbols_with_ticker_info or 0,
                 "latest_price_date": latest_price_date.isoformat() if latest_price_date else None,
-                "latest_ticker_update": latest_ticker_update.isoformat()
-                if latest_ticker_update
-                else None,
+                "market_filter": market_filter,
             }
         except Exception as e:
             logger.error(f"Error getting database stats: {e}")

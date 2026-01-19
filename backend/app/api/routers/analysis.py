@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app.database.database_manager import DatabaseManager
@@ -24,11 +24,11 @@ class TechnicalAnalysis(BaseModel):
 
 
 class SystemStats(BaseModel):
-    companies_count: int
+    """システム統計情報のレスポンスモデル。"""
+
     symbols_with_prices: int
-    symbols_with_technical: int
     latest_price_date: Optional[str] = None
-    latest_analysis_date: Optional[str] = None
+    market_filter: Optional[str] = None
 
 
 @router.get("/{symbol}", response_model=TechnicalAnalysis)
@@ -67,18 +67,24 @@ async def get_technical_analysis(symbol: str):
 
 
 @router.get("/stats/system", response_model=SystemStats)
-async def get_system_stats():
-    """システム統計情報を取得"""
+async def get_system_stats(
+    market_filter: str = Query(default="prime", description="市場区分フィルタ"),
+):
+    """システム統計情報を取得。
+
+    Args:
+        market_filter: 市場区分（prime, standard, growth）。空文字で全市場。
+    """
     try:
         db_manager = DatabaseManager()
-        stats = db_manager.get_database_stats()
+        # 空文字の場合はNoneに変換
+        filter_value = market_filter if market_filter else None
+        stats = db_manager.get_database_stats(market_filter=filter_value)
 
         return SystemStats(
-            companies_count=stats.get("companies_count", 0),
             symbols_with_prices=stats.get("symbols_with_prices", 0),
-            symbols_with_technical=stats.get("symbols_with_technical", 0),
             latest_price_date=stats.get("latest_price_date"),
-            latest_analysis_date=stats.get("latest_analysis_date"),
+            market_filter=stats.get("market_filter"),
         )
 
     except Exception as e:
