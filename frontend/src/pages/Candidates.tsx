@@ -20,7 +20,7 @@ import {
 } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import BuyModal from '../components/portfolio/BuyModal'
 import AIAnalysisModal from '../components/stock/AIAnalysisModal'
 import { useAuth } from '../contexts/AuthContext'
@@ -29,18 +29,48 @@ import type { PortfolioSummary } from '../types/portfolio'
 import type { InvestmentCandidate } from '../types/stock'
 import { getYahooFinanceUrl } from '../utils/stockUtils'
 
+// デフォルト値
+const DEFAULT_MIN_DIVIDEND = 3.0
+const DEFAULT_MAX_DIVERGENCE = -5.0
+const DEFAULT_MARKET_FILTER = 'prime'
+const DEFAULT_MIN_SCORE = 0
+
 // 投資候補ページ
 const Candidates = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
   const [candidates, setCandidates] = useState<InvestmentCandidate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // URLパラメータから初期値を取得
+  const getInitialValue = (
+    key: string,
+    defaultValue: number | string,
+  ): number | string => {
+    const param = searchParams.get(key)
+    if (param === null) return defaultValue
+    if (typeof defaultValue === 'number') {
+      const parsed = parseFloat(param)
+      return isNaN(parsed) ? defaultValue : parsed
+    }
+    return param
+  }
+
   // フィルター状態
-  const [minDividend, setMinDividend] = useState<number>(3.0)
-  const [maxDivergence, setMaxDivergence] = useState<number>(-5.0)
-  const [marketFilter, setMarketFilter] = useState<string>('prime')
+  const [minDividend, setMinDividend] = useState<number>(
+    getInitialValue('minDividend', DEFAULT_MIN_DIVIDEND) as number,
+  )
+  const [maxDivergence, setMaxDivergence] = useState<number>(
+    getInitialValue('maxDivergence', DEFAULT_MAX_DIVERGENCE) as number,
+  )
+  const [marketFilter, setMarketFilter] = useState<string>(
+    (getInitialValue('market', DEFAULT_MARKET_FILTER) as string) || '',
+  )
+  const [minScore, setMinScore] = useState<number>(
+    getInitialValue('minScore', DEFAULT_MIN_SCORE) as number,
+  )
   const [form] = Form.useForm()
 
   // ポートフォリオ選択モーダル用の状態
@@ -54,6 +84,16 @@ const Candidates = () => {
   // AI分析モーダル用の状態
   const [aiAnalysisVisible, setAiAnalysisVisible] = useState(false)
   const [aiAnalysisSymbol, setAiAnalysisSymbol] = useState<string>('')
+
+  // URLパラメータが変わったらフォームの値も更新
+  useEffect(() => {
+    form.setFieldsValue({
+      minDividend,
+      maxDivergence,
+      marketFilter,
+      minScore,
+    })
+  }, [form, minDividend, maxDivergence, marketFilter, minScore])
 
   // ポートフォリオ一覧取得
   const { data: portfolios } = useQuery<PortfolioSummary[]>({
@@ -201,6 +241,23 @@ const Candidates = () => {
         return <Tag color={color}>{yield_val.toFixed(2)}%</Tag>
       },
     },
+    {
+      title: 'スコア',
+      dataIndex: 'analysis_score',
+      key: 'analysis_score',
+      width: 90,
+      align: 'right',
+      sorter: (a, b) => (a.analysis_score || 0) - (b.analysis_score || 0),
+      defaultSortOrder: 'descend',
+      render: (score: number | null) => {
+        if (score === null || score === undefined) return '---'
+        let color = 'default'
+        if (score >= 7) color = 'green'
+        else if (score >= 5) color = 'blue'
+        else if (score >= 3) color = 'orange'
+        return <Tag color={color}>{score.toFixed(1)}</Tag>
+      },
+    },
   ]
 
   // ログイン時のみアクションカラムを追加
@@ -243,6 +300,10 @@ const Candidates = () => {
         min_dividend: minDividend.toString(),
         market_filter: marketFilter,
       })
+      // minScoreが0より大きい場合のみパラメータに追加
+      if (minScore > 0) {
+        params.append('min_score', minScore.toString())
+      }
       const response = await fetch(`${API_BASE_URL}/candidates/?${params}`)
       if (!response.ok) {
         throw new Error('データの取得に失敗しました')
@@ -256,7 +317,7 @@ const Candidates = () => {
     } finally {
       setLoading(false)
     }
-  }, [minDividend, maxDivergence, marketFilter])
+  }, [minDividend, maxDivergence, marketFilter, minScore])
 
   // フィルター値変更時に自動検索
   useEffect(() => {
@@ -265,20 +326,22 @@ const Candidates = () => {
 
   // リセット
   const handleReset = () => {
-    setMinDividend(3.0)
-    setMaxDivergence(-5.0)
-    setMarketFilter('prime')
+    setMinDividend(DEFAULT_MIN_DIVIDEND)
+    setMaxDivergence(DEFAULT_MAX_DIVERGENCE)
+    setMarketFilter(DEFAULT_MARKET_FILTER)
+    setMinScore(DEFAULT_MIN_SCORE)
     form.setFieldsValue({
-      minDividend: 3.0,
-      maxDivergence: -5.0,
-      marketFilter: 'prime',
+      minDividend: DEFAULT_MIN_DIVIDEND,
+      maxDivergence: DEFAULT_MAX_DIVERGENCE,
+      marketFilter: DEFAULT_MARKET_FILTER,
+      minScore: DEFAULT_MIN_SCORE,
     })
   }
 
   if (error) {
     return (
       <div style={{ padding: 24 }}>
-        <h1 style={{ marginBottom: 16 }}>🎯 投資候補</h1>
+        <h1 style={{ marginBottom: 16 }}>投資候補</h1>
         <p style={{ color: '#ff4d4f' }}>エラー: {error}</p>
       </div>
     )
@@ -286,7 +349,7 @@ const Candidates = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ marginBottom: 8 }}>🎯 投資候補</h1>
+      <h1 style={{ marginBottom: 8 }}>投資候補</h1>
       <p style={{ marginBottom: 24, color: '#8c8c8c' }}>
         技術分析に基づいた投資候補銘柄を検索できます
       </p>
@@ -297,13 +360,14 @@ const Candidates = () => {
           form={form}
           layout="vertical"
           initialValues={{
-            minDividend: 3.0,
-            maxDivergence: -5.0,
-            marketFilter: 'prime',
+            minDividend,
+            maxDivergence,
+            marketFilter,
+            minScore,
           }}
         >
           <Row gutter={[16, 24]}>
-            <Col xs={24} sm={24} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Form.Item
                 label={`配当利回り: ${minDividend}%以上`}
                 name="minDividend"
@@ -322,7 +386,7 @@ const Candidates = () => {
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={24} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Form.Item
                 label={`乖離率: ${maxDivergence}%以下`}
                 name="maxDivergence"
@@ -341,7 +405,26 @@ const Candidates = () => {
                 />
               </Form.Item>
             </Col>
-            <Col xs={24} sm={24} md={8}>
+            <Col xs={24} sm={12} md={6}>
+              <Form.Item
+                label={`最小スコア: ${minScore}`}
+                name="minScore"
+              >
+                <Slider
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={minScore}
+                  onChange={(value) => setMinScore(value)}
+                  marks={{
+                    0: '0',
+                    5: '5',
+                    10: '10',
+                  }}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
               <Form.Item label="市場区分" name="marketFilter">
                 <Select
                   style={{ width: '100%' }}
@@ -377,7 +460,7 @@ const Candidates = () => {
           showSizeChanger: true,
           showTotal: (total) => `全${total}件`,
         }}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1300 }}
       />
 
       {/* ポートフォリオ選択モーダル */}
