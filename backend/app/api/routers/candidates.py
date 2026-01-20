@@ -61,9 +61,12 @@ async def get_investment_candidates(
             market_filter=filter_value,
         )
 
-        # スコアフィルタを適用
+        # スコアフィルタを適用（analysis_scoreがNoneの銘柄は除外）
         if min_score is not None:
-            candidates = [c for c in candidates if c.get("analysis_score", 0) >= min_score]
+            candidates = [
+                c for c in candidates
+                if c.get("analysis_score") is not None and c["analysis_score"] >= min_score
+            ]
 
         # レスポンス形式に変換（NaN値を除外）
         result = []

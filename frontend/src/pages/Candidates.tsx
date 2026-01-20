@@ -294,13 +294,15 @@ const Candidates = () => {
     setLoading(true)
     setError(null)
     try {
+      // フロントエンドとバックエンドのデフォルト値が異なるため、常にパラメータを送信
+      // （例: フロントエンドのminDividendデフォルトは3.0、バックエンドは0.0）
       const params = new URLSearchParams({
         limit: '50',
         max_divergence: maxDivergence.toString(),
         min_dividend: minDividend.toString(),
         market_filter: marketFilter,
       })
-      // minScoreが0より大きい場合のみパラメータに追加
+      // minScoreは0の場合「フィルタなし」と同義のため省略可能
       if (minScore > 0) {
         params.append('min_score', minScore.toString())
       }

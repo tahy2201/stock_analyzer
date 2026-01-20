@@ -75,7 +75,7 @@ const Dashboard = () => {
           <Card
             hoverable
             onClick={handleCandidatesClick}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', borderColor: '#1890ff' }}
           >
             <Statistic
               title="投資候補"
@@ -94,7 +94,7 @@ const Dashboard = () => {
           <Card
             hoverable
             onClick={handleHighScoreClick}
-            style={{ cursor: 'pointer' }}
+            style={{ cursor: 'pointer', borderColor: '#1890ff' }}
           >
             <Statistic
               title="高スコア候補"
