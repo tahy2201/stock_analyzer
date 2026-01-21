@@ -156,6 +156,15 @@ class TransactionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class DashboardPortfolioSummary(BaseModel):
+    """ダッシュボード用ポートフォリオ概要のレスポンスモデル。"""
+
+    has_portfolio: bool
+    positions_count: int
+    total_profit_loss: float
+    total_profit_loss_rate: float
+
+
 # ========== Helper Functions ==========
 
 
@@ -187,6 +196,49 @@ def verify_portfolio_ownership(portfolio_id: int, user_id: int, db: Session) -> 
 
 
 # ========== Portfolio Management Endpoints ==========
+
+
+@router.get("/summary", response_model=DashboardPortfolioSummary)
+def get_portfolio_summary(db: DBSession, current_user: CurrentUser):
+    """ダッシュボード用のポートフォリオ概要を取得する。
+
+    全ポートフォリオの合計保有銘柄数、総損益、損益率を返す。
+    """
+    service = PortfolioService(db)
+    portfolios = service.get_user_portfolios(current_user.id)
+
+    if not portfolios:
+        return DashboardPortfolioSummary(
+            has_portfolio=False,
+            positions_count=0,
+            total_profit_loss=0.0,
+            total_profit_loss_rate=0.0,
+        )
+
+    total_positions_count = 0
+    total_profit_loss = 0.0
+    total_initial_capital = 0.0
+
+    for portfolio in portfolios:
+        calc = service.calculate_portfolio_value(portfolio.id)
+        positions_count = (
+            db.query(models.Position).filter(models.Position.portfolio_id == portfolio.id).count()
+        )
+        total_positions_count += positions_count
+        total_profit_loss += calc["total_profit_loss"]
+        total_initial_capital += float(portfolio.initial_capital)
+
+    # 総損益率の計算（全ポートフォリオの初期資本に対する割合）
+    total_profit_loss_rate = (
+        (total_profit_loss / total_initial_capital) * 100 if total_initial_capital > 0 else 0.0
+    )
+
+    return DashboardPortfolioSummary(
+        has_portfolio=True,
+        positions_count=total_positions_count,
+        total_profit_loss=total_profit_loss,
+        total_profit_loss_rate=total_profit_loss_rate,
+    )
 
 
 @router.get("/", response_model=list[PortfolioSummary])
